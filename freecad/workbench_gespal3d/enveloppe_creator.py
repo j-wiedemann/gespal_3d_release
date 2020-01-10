@@ -52,11 +52,9 @@ class _CommandEnveloppe:
     "the Arch Structure command definition"
 
     def __init__(self):
-
         self.beammode = True
 
     def GetResources(self):
-
         return {'Pixmap': 'Arch_Space',
                 'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Produit"),
                 'Accel': "P, R",

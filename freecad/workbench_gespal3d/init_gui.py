@@ -5,6 +5,11 @@ from freecad.workbench_gespal3d import ICONPATH
 from freecad.workbench_gespal3d import enveloppe_creator
 from freecad.workbench_gespal3d import beam_creator
 from freecad.workbench_gespal3d import panel_creator
+from freecad.workbench_gespal3d import list_creator
+
+__title__="Gespal 3D InitGui"
+__author__ = "Jonathan Wiedemann"
+__url__ = "https://freecad-france.com"
 
 
 class gespal3d_workbench(Gui.Workbench):
@@ -12,14 +17,14 @@ class gespal3d_workbench(Gui.Workbench):
     class which gets initiated at starup of the gui
     """
 
-    MenuText = "Gespal3D Creator"
-    ToolTip = "a simple template workbench"
+    MenuText = "Gespal 3D"
+    ToolTip = "Fabrication de palettes"
     Icon = os.path.join(ICONPATH, "template_resource.svg")
     toolbox_gespal3d = [
         "EnveloppeCreator",
         "BeamCreator",
         "PanelCreator",
-        # "Export",
+        "ListCreator",
         # "Plan",
         # "Rendu"
         ]

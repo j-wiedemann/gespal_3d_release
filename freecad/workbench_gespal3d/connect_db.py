@@ -10,7 +10,7 @@ def sql_connection():
     no_database = "true"
     sqlite_db = p.GetString("sqlitedb", no_database)
     if sqlite_db is "true":
-        App.Console.PrintMessage("define databse path in BaseApp/Preferences/Mod/Gespal3D")
+        App.Console.PrintMessage("define database path in BaseApp/Preferences/Mod/Gespal3D")
         return
     try:
 

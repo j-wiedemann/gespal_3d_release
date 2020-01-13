@@ -78,7 +78,7 @@ selected object (sketch, wire, face or solid)")}
         return active
 
     def Activated(self):
-        makeEnveloppe(1200.0, 900.0, 560.0)
+        makeEnveloppe(None, 1200.0, 900.0, 560.0)
         # Set view
         FreeCADGui.activeDocument().activeView().viewIsometric()
         FreeCADGui.SendMsgToActiveView("ViewFit")

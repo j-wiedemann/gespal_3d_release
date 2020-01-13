@@ -20,6 +20,8 @@ Avoir un compte Github (www.github.com)
 
 Avoir un contrat Gespal 3D
 
+Installer Git (www.git-scm.com)
+
 ### 3. Personnalisation
 
 Afficher la vue rapport :

@@ -17,7 +17,7 @@ else:
 
 def makeEnveloppe(id=None, length=1000, width=1000, height=1000):
     box = FreeCAD.ActiveDocument.addObject("Part::Box", "Product")
-    if not id
+    if not id :
         id = "Product"
     box.Label = id
     box.Length = length

@@ -1,23 +1,36 @@
 # gespal3d
 Atelier FreeCAD de conception de palettes et emballages
 
-## Installation
 
-### Préparation
+### 1. Installation de FreeCAD
+
+Se connecter à cette adresse : https://github.com/FreeCAD/FreeCAD/releases/tag/0.19_pre
+
+Télécharger le fichier : FreeCAD_0.19.xxxxx_x64_Conda_Py3QT5-WinVS2015.7z
+
+xxxxx peut varier au fil du temps.
+
+Extraire l'archive avec 7zip
+
+Naviguer dans le dossier bin et double Cliquer sur FreeCAD.exe
+
+### 2. Préparation
 
 Avoir un compte Github (www.github.com)
 
 Avoir un contrat Gespal 3D
 
-### Installation de FreeCAD en version 0.19 minimum
+### 3. Personnalisation
 
-Installer FreeCAD version 0.19
+Afficher la vue rapport :
 
-Créer un compte sur Github
+    menu Affichage
+    Panneaux
+    cocher Vue Rapport
 
-Être collaborateur (contrat)
+### 4. Installation de Gespal 3D
 
-Dans FreeCAD:
+Démarrer FreeCAD:
 menu Outils
     Addon Manager
         Configure
@@ -37,8 +50,6 @@ menu Outils
 
 Dans le sélecteur d'atelier vous trouverez Gespal 3D
 
-Sur Linux : Installer python3-git
-Windows : DL
 
 ## Paramétrage
 Lancer FreeCAD

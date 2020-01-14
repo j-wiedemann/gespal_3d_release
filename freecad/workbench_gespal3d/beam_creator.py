@@ -254,55 +254,55 @@ class _CommandComposant:
         self.insert_group = QtGui.QButtonGroup()
         buttons_grid = QtGui.QGridLayout()
 
-        insert = QtGui.QRadioButton("7")
+        insert = QtGui.QRadioButton("&7")
         if self.InsertPoint == 7:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 7)
         buttons_grid.addWidget(insert, 0, 0, 1, 1)
 
-        insert = QtGui.QRadioButton("8")
+        insert = QtGui.QRadioButton("&8")
         if self.InsertPoint == 8:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 8)
         buttons_grid.addWidget(insert, 0, 1, 1, 1)
 
-        insert = QtGui.QRadioButton("9")
+        insert = QtGui.QRadioButton("&9")
         if self.InsertPoint == 9:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 9)
         buttons_grid.addWidget(insert, 0, 2, 1, 1)
 
-        insert = QtGui.QRadioButton("4")
+        insert = QtGui.QRadioButton("&4")
         if self.InsertPoint == 4:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 4)
         buttons_grid.addWidget(insert, 1, 0, 1, 1)
 
-        insert = QtGui.QRadioButton("5")
+        insert = QtGui.QRadioButton("&5")
         if self.InsertPoint == 5:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 5)
         buttons_grid.addWidget(insert, 1, 1, 1, 1)
 
-        insert = QtGui.QRadioButton("6")
+        insert = QtGui.QRadioButton("&6")
         if self.InsertPoint == 6:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 6)
         buttons_grid.addWidget(insert, 1, 2, 1, 1)
 
-        insert = QtGui.QRadioButton("1")
+        insert = QtGui.QRadioButton("&1")
         if self.InsertPoint == 1:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 1)
         buttons_grid.addWidget(insert, 2, 0, 1, 1)
 
-        insert = QtGui.QRadioButton("2")
+        insert = QtGui.QRadioButton("&2")
         if self.InsertPoint == 2:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 2)
         buttons_grid.addWidget(insert, 2, 1, 1, 1)
 
-        insert = QtGui.QRadioButton("3")
+        insert = QtGui.QRadioButton("&3")
         if self.InsertPoint == 3:
             insert.setChecked(True)
         self.insert_group.addButton(insert, 3)

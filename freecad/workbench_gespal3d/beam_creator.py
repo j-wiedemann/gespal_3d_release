@@ -774,6 +774,19 @@ class _CommandComposant:
                 + str(self.Height)
                 + ')')
 
+        FreeCADGui.doCommand(
+            's.Label = "'
+            + self.Profile[1]
+            + '"'
+            )
+        FreeCADGui.doCommand('s.IfcType = u"Transport Element"')
+        FreeCADGui.doCommand('s.PredefinedType = u"NOTDEFINED"')
+        FreeCADGui.doCommand(
+            's.Description = "'
+            + str(self.Profile[0])
+            +'"'
+        )
+
         # calculate rotation
         if self.mode == "line" and self.bpoint is not None:
             FreeCADGui.doCommand(

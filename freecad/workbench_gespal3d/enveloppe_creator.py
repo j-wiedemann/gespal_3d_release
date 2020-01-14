@@ -62,9 +62,8 @@ class _CommandEnveloppe:
                 'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Produit"),
                 'Accel': "P, R",
                 'ToolTip': QT_TRANSLATE_NOOP(
-                    "Arch_Structure",
-                    "Creates a structure object from scratch or from a \
-selected object (sketch, wire, face or solid)")}
+                    "Gespal3D",
+                    "Créer un composant de type bois ou dès.")}
 
     def IsActive(self):
         active = True

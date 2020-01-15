@@ -22,6 +22,12 @@ Avoir un contrat Gespal 3D
 
 Installer Git (www.git-scm.com)
 
+configurer git :
+https://help.github.com/en/github/using-git/setting-your-username-in-git
+
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+
 ### 3. Personnalisation
 
 Afficher la vue rapport :

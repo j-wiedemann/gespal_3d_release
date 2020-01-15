@@ -781,6 +781,7 @@ class _CommandComposant:
             )
         FreeCADGui.doCommand('s.IfcType = u"Transport Element"')
         FreeCADGui.doCommand('s.PredefinedType = u"NOTDEFINED"')
+        FreeCADGui.doCommand('s.Tag = u"Gespal"')
         FreeCADGui.doCommand(
             's.Description = "'
             + str(self.Profile[0])

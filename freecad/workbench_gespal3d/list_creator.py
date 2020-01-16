@@ -32,7 +32,8 @@ class _ListCreator():
                 (liste, image et plan). \
                 <br><br> \
                 Pour que <b>l'outil soit disponible</b> vous devez: \
-                <ul><li>avoir un objet Produit dans le document</li> \
+                <ul><li>enregistrer votre document</li> \
+                <li>avoir un objet Produit dans le document</li> \
                 <li>être sur la vue 3D</li> \
                 </p></body></html>"}
 
@@ -52,6 +53,7 @@ class _ListCreator():
             # makeListing()
             objs = doc.Objects
             objlist = []
+            objother = []
             mySheet = False
             for obj in objs:
                 if hasattr(obj, "Tag"):
@@ -63,6 +65,10 @@ class _ListCreator():
                     mySheet = obj
                     obj.clearAll()
                     FreeCAD.ActiveDocument.recompute()
+                elif obj.Name == 'Product':
+                    objproduct = obj
+                else:
+                    objother.append(obj)
             if len(objlist) < 0:
                 FreeCAD.Console.PrintWarning("La liste des composants Gespal est vide.")
             if not mySheet:
@@ -85,6 +91,9 @@ class _ListCreator():
             mySheet.exportFile(path_csv)
 
             # makeImage()
+            objproduct.ViewObject.Visibility = False
+            for obj in objother:
+                obj.ViewObject.Visibility = False
             FreeCADGui.activeDocument().activeView().viewIsometric()
             FreeCADGui.SendMsgToActiveView("ViewFit")
             FreeCADGui.activeDocument().activeView().saveImage(
@@ -106,10 +115,12 @@ class _ListCreator():
 
         active = False
         if FreeCAD.ActiveDocument:
-            for obj in FreeCAD.ActiveDocument.Objects:
-                if obj.Name == "Product":
-                    if hasattr(FreeCADGui.activeDocument().activeView(), 'zoomIn'):
-                        active = True
+            doc = FreeCAD.ActiveDocument
+            if len(doc.FileName) > 0:
+                if hasattr(FreeCADGui.activeDocument().activeView(), 'zoomIn'):
+                    for obj in doc.Objects:
+                        if obj.Name == "Product":
+                            active = True
         return active
 
 if FreeCAD.GuiUp:

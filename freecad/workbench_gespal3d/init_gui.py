@@ -45,6 +45,8 @@ class gespal3d_workbench(Gui.Workbench):
         App.Console.PrintMessage("Initialisation de l'atelier Gespal3D")
 
         p = App.ParamGet(str(PARAMPATH))
+        c = App.ParamGet("User parameter:BaseApp/Preferences/Document")
+        c.SetBool('DuplicateLabels', True)
 
         self.appendToolbar("Gespal3D", self.toolbox_gespal3d)
         self.appendMenu("Gespal3D", self.toolbox_gespal3d)

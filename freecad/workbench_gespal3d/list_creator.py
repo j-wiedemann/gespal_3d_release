@@ -28,32 +28,46 @@ class _ListCreator():
         return {'Pixmap'  :  os.path.join(ICONPATH, "Gespal3D_Listing.svg"),
                 'Accel' : "E,L",
                 'MenuText': "Gespal 3D Export",
-                'ToolTip' : "Exporte le projet dans Gespal (liste, image et plan)"}
+                'ToolTip' : "<html><head/><body><p><b>Exporte le projet dans Gespal</b> \
+                (liste, image et plan). \
+                <br><br> \
+                Pour que <b>l'outil soit disponible</b> vous devez: \
+                <ul><li>avoir un objet Produit dans le document</li> \
+                <li>être sur la vue 3D</li> \
+                </p></body></html>"}
 
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         path_doc = doc.FileName
         if len(path_doc) > 0:
             path_project = os.path.split(path_doc)
-            name_image = doc.Name + '.png'
-            name_csv = doc.Name + '.csv'
+            name_image = '3D_' + doc.Name + '.png'
+            name_csv = 'CP_' + doc.Name + '.csv'
+            plan_pdf = 'PF_' + doc.Name + '.pdf'
             path_image = os.path.join(path_project[0], name_image)
             path_csv = os.path.join(path_project[0], name_csv)
+            path_plan = os.path.join(path_project[0], plan_pdf)
 
 
             # makeListing()
             objs = doc.Objects
             objlist = []
+            mySheet = False
             for obj in objs:
                 if hasattr(obj, "Tag"):
                     if obj.Tag == "Gespal":
                         if hasattr(obj, "Description"):
                             if obj.Description is not None:
                                 objlist.append(obj)
+                elif obj.Name == 'Gespal3DListe':
+                    mySheet = obj
+                    obj.clearAll()
+                    FreeCAD.ActiveDocument.recompute()
             if len(objlist) < 0:
                 FreeCAD.Console.PrintWarning("La liste des composants Gespal est vide.")
-            mySheet = FreeCAD.ActiveDocument.addObject('Spreadsheet::Sheet','Gespal3DListe')
-            FreeCAD.ActiveDocument.recompute()
+            if not mySheet:
+                mySheet = FreeCAD.ActiveDocument.addObject('Spreadsheet::Sheet','Gespal3DListe')
+                FreeCAD.ActiveDocument.recompute()
             mySheet.set('A1','ID')
             mySheet.set('B1','Largeur')
             mySheet.set('C1','Hauteur')
@@ -94,8 +108,8 @@ class _ListCreator():
         if FreeCAD.ActiveDocument:
             for obj in FreeCAD.ActiveDocument.Objects:
                 if obj.Name == "Product":
-                    active = True
-
+                    if hasattr(FreeCADGui.activeDocument().activeView(), 'zoomIn'):
+                        active = True
         return active
 
 if FreeCAD.GuiUp:

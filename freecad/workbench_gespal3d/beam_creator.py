@@ -826,6 +826,7 @@ class _CommandComposant:
         FreeCADGui.addModule("Draft")
         FreeCADGui.doCommand("Draft.autogroup(s)")
         FreeCAD.ActiveDocument.commitTransaction()
+        FreeCADGui.Snapper.toggleGrid()
         FreeCAD.ActiveDocument.recompute()
         if self.continueCmd:
             self.Activated()

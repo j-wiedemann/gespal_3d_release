@@ -2,6 +2,7 @@ import os
 import FreeCADGui as Gui
 import FreeCAD as App
 from freecad.workbench_gespal3d import ICONPATH
+from freecad.workbench_gespal3d import PARAMPATH
 from freecad.workbench_gespal3d import enveloppe_creator
 from freecad.workbench_gespal3d import beam_creator
 from freecad.workbench_gespal3d import panel_creator
@@ -42,6 +43,8 @@ class gespal3d_workbench(Gui.Workbench):
         here is the place to import all the commands
         """
         App.Console.PrintMessage("Initialisation de l'atelier Gespal3D")
+
+        p = App.ParamGet(str(PARAMPATH))
 
         self.appendToolbar("Gespal3D", self.toolbox_gespal3d)
         self.appendMenu("Gespal3D", self.toolbox_gespal3d)

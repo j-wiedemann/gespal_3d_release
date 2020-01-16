@@ -2,6 +2,7 @@ import FreeCAD
 import DraftVecUtils
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
+from freecad.workbench_gespal3d import PARAMPATH
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -61,7 +62,7 @@ class _CommandPanel:
     def Activated(self):
         # parameters
         path = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
-        self.p = FreeCAD.ParamGet(str(path))
+        self.p = FreeCAD.ParamGet(str(PARAMPATH))
 
         self.continueCmd = self.p.GetBool("PanelContinue", False)
 

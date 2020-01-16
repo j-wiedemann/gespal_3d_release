@@ -2,11 +2,11 @@ import FreeCAD as App
 import sqlite3
 from sqlite3 import Error
 from freecad.workbench_gespal3d import DEBUG
+from freecad.workbench_gespal3d import PARAMPATH
 
 
 def sql_connection():
-    path = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
-    p = App.ParamGet(str(path))
+    p = App.ParamGet(str(PARAMPATH))
     no_database = "true"
     sqlite_db = p.GetString("sqlitedb", no_database)
     if sqlite_db is "true":

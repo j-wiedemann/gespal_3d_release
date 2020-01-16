@@ -28,6 +28,7 @@ from FreeCAD import Vector
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
+from freecad.workbench_gespal3d import PARAMPATH
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -98,8 +99,7 @@ class _CommandComposant:
         # Reads preset profiles and categorizes them
         self.categories = connect_db.getCategories(exclude=["Panneaux"])
 
-        path = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
-        self.p = FreeCAD.ParamGet(str(path))
+        self.p = FreeCAD.ParamGet(str(PARAMPATH))
 
         product = FreeCAD.ActiveDocument.getObject("Product")
         self.product = [

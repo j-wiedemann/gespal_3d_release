@@ -33,6 +33,12 @@ class gespal3d_workbench(Gui.Workbench):
         "Draft_Move",
         "Draft_Rotate",
         ]
+    toolbox_create = [
+        "Draft_Line",
+        "Draft_Circle",
+        "Draft_Rectangle",
+        "Draft_Dimension",
+        ]
 
     def GetClassName(self):
         return "Gui::PythonWorkbench"
@@ -53,6 +59,9 @@ class gespal3d_workbench(Gui.Workbench):
 
         self.appendToolbar("Modification", self.toolbox_mod)
         self.appendMenu("Modification", self.toolbox_mod)
+
+        self.appendToolbar(u"Creation", self.toolbox_create)
+        self.appendMenu(u"Creation", self.toolbox_create)
 
     def Activated(self):
         '''

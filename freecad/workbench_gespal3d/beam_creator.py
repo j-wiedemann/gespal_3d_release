@@ -136,9 +136,11 @@ class _CommandComposant:
 
         # init Snapper
         if self.mode == "point":
-            title = translate("Arch", "Base point of the beam") + ":"
+            title = translate("Gespal3D", "Point d'insertion du composant") + ":"
+        elif self.mode == "array":
+            title = translate("Gespal3D", "Point de départ de la répartition") + ":"
         else:
-            title = translate("Arch", "First point of the beam") + ":"
+            title = translate("Gespal3D", "Point de départ du composant") + ":"
         FreeCADGui.Snapper.getPoint(
             callback=self.getPoint,
             movecallback=self.update,
@@ -160,7 +162,7 @@ class _CommandComposant:
                 callback=self.getPoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Arch", "Next point")+":",
+                title=translate("Gespal3D", "Point suivant")+":",
                 mode="line")
             return
         # mode array
@@ -171,7 +173,7 @@ class _CommandComposant:
                 callback=self.getPoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Arch", "Next point")+":",
+                title=translate("Gespal3D", "Point suivant")+":",
                 mode="line")
             return
         # premier clic en mode 1 ou second en mode 2
@@ -187,9 +189,9 @@ class _CommandComposant:
             if self.mode == "point":
                 self.tracker.setPosition(point)
                 self.tracker.on()
-            else:
+            elif self.mode == "array":
                 self.tracker.off()
-            """else:
+            elif self.mode == "line":
                 if self.bpoint:
                     self.tracker.update(
                         [self.bpoint.add(delta), point.add(delta)])
@@ -201,7 +203,11 @@ class _CommandComposant:
                             FreeCAD.Units.Length
                         ).UserString)
                 else:
-                    self.tracker.off()"""
+                    self.tracker.off()
+            else:
+                self.tracker.off()
+        else:
+            FreeCADGui.Snapper.toggleGrid()
 
     def taskbox(self):
         "sets up a taskbox widget"
@@ -342,7 +348,7 @@ class _CommandComposant:
         grid.addWidget(self.height_input, 13, 1, 1, 1)
 
         # repartition
-        self.repartition_cb = QtGui.QCheckBox("Répartition")
+        self.repartition_cb = QtGui.QCheckBox(translate("Gespal3D", "&Répartition"))
         self.repartition_input = QtGui.QSpinBox()
         self.repartition_input.setRange(1, 99)
         # self.rep_start = QtGui.QCheckBox("Élément au début")
@@ -353,7 +359,7 @@ class _CommandComposant:
         # grid.addWidget(self.rep_end, 16, 1, 1, 1)
 
         # continue button
-        continue_label = QtGui.QLabel(translate("Arch", "Con&tinue"))
+        continue_label = QtGui.QLabel(translate("Gespal3D", "&Continuer"))
         continue_cb = QtGui.QCheckBox()
         continue_cb.setObjectName("ContinueCmd")
         continue_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
@@ -514,6 +520,8 @@ class _CommandComposant:
         # self.update()
 
     def setWorkingPlane(self, idx):
+        if idx == 6:
+            idx = 0
         axis_list = [
             FreeCAD.Vector(1, 0, 0),
             FreeCAD.Vector(0, 1, 0),
@@ -543,7 +551,6 @@ class _CommandComposant:
         idx = self.direction_cb.currentIndex()
         if idx > 2:
             idx -= 3
-        array = self.repartition_cb.isChecked()
         if idx == 3:
             self.mode = "line"
             self.repartition_cb.setChecked(False)
@@ -552,7 +559,7 @@ class _CommandComposant:
             # self.rep_start.setDisabled(True)
             # self.rep_end.setDisabled(True)
         else:
-            if array is True:
+            if self.repartition_cb.isChecked():
                 self.mode = "array"
             else:
                 self.mode = "point"

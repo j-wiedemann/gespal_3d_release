@@ -37,6 +37,22 @@ class _ListCreator():
                 <li>être sur la vue 3D</li> \
                 </p></body></html>"}
 
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+
+        active = False
+        if FreeCAD.ActiveDocument:
+            doc = FreeCAD.ActiveDocument
+            if len(doc.FileName) > 0:
+                if hasattr(FreeCADGui.activeDocument().activeView(), 'zoomIn'):
+                    for obj in doc.Objects:
+                        if obj.Name == "Product":
+                            active = True
+        return active
+
+
     def Activated(self):
         doc = FreeCAD.ActiveDocument
         path_doc = doc.FileName
@@ -48,7 +64,6 @@ class _ListCreator():
             path_image = os.path.join(path_project[0], name_image)
             path_csv = os.path.join(path_project[0], name_csv)
             path_plan = os.path.join(path_project[0], plan_pdf)
-
 
             # makeListing()
             objs = doc.Objects
@@ -109,19 +124,6 @@ class _ListCreator():
 
         return
 
-    def IsActive(self):
-        """Here you can define if the command must be active or not (greyed) if certain conditions
-        are met or not. This function is optional."""
-
-        active = False
-        if FreeCAD.ActiveDocument:
-            doc = FreeCAD.ActiveDocument
-            if len(doc.FileName) > 0:
-                if hasattr(FreeCADGui.activeDocument().activeView(), 'zoomIn'):
-                    for obj in doc.Objects:
-                        if obj.Name == "Product":
-                            active = True
-        return active
 
 if FreeCAD.GuiUp:
     FreeCADGui.addCommand('ListCreator', _ListCreator())

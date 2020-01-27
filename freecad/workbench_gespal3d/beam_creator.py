@@ -29,6 +29,7 @@ from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
 from freecad.workbench_gespal3d import PARAMPATH
+import math
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -63,6 +64,19 @@ def makeArray(p1, p2, qte, w):
     points_list.append(interval_ext)
     return points_list
 
+"""def makeFill(obj, p1, p2, space, dir):
+    print("Making Filling")
+    length = DraftVecUtils.dist(p1, p2)
+    div = length / obj.Width
+    qte = math.round(div, 0) + 1
+    spare = qte * obj.Width - length
+    if dir == 'X':
+         obj.Width
+         Draft.move(
+            obj,
+            FreeCAD.Vector(0.0, obj.Width + space, 0.0),
+            copy=True)"""
+
 
 class _CommandComposant:
 
@@ -73,6 +87,7 @@ class _CommandComposant:
         #       "point"
         #       "line"
         #       "array"
+        #       "fill"
         self.mode = "point"
 
     def GetResources(self):
@@ -113,7 +128,9 @@ class _CommandComposant:
         self.Profile = None
         self.InsertPoint = self.p.GetInt("BeamInsertPoint", 1)
         self.Deversement = self.p.GetFloat("BeamDev", 0.0)
-        self.continueCmd = self.p.GetBool("BeamContinue", False)
+        self.continueCmd = self.p.GetBool("BeamContinue", True)
+        self.p.GetString("BeamMode", self.mode)
+        self.FillSpace = self.p.GetFloat("BeamFillSpace", 0.0)
         self.bpoint = None
 
         # interactive mode
@@ -139,6 +156,8 @@ class _CommandComposant:
             title = translate("Gespal3D", "Point d'insertion du composant") + ":"
         elif self.mode == "array":
             title = translate("Gespal3D", "Point de départ de la répartition") + ":"
+        elif self.mode == "fill":
+            title = translate("Gespal3D", "Point de départ du remplissage") + ":"
         else:
             title = translate("Gespal3D", "Point de départ du composant") + ":"
         FreeCADGui.Snapper.getPoint(
@@ -176,6 +195,17 @@ class _CommandComposant:
                 title=translate("Gespal3D", "Point suivant")+":",
                 mode="line")
             return
+        # mode array
+        if (self.mode == "fill") and (self.bpoint is None):
+            self.bpoint = point
+            FreeCADGui.Snapper.getPoint(
+                last=point,
+                callback=self.getPoint,
+                movecallback=self.update,
+                extradlg=[self.taskbox()],
+                title=translate("Gespal3D", "Point suivant")+":",
+                mode="line")
+            return
         # premier clic en mode 1 ou second en mode 2
         self.tracker.finalize()
         self.makeTransaction(point)
@@ -186,10 +216,14 @@ class _CommandComposant:
             print("_CommandComposant update")
 
         if FreeCADGui.Control.activeDialog():
+            if DEBUG:
+                print("Current Mode is : ", self.mode)
             if self.mode == "point":
                 self.tracker.setPosition(point)
                 self.tracker.on()
             elif self.mode == "array":
+                self.tracker.off()
+            elif self.mode == "fill":
                 self.tracker.off()
             elif self.mode == "line":
                 if self.bpoint:
@@ -215,25 +249,30 @@ class _CommandComposant:
         taskwidget = QtGui.QWidget()
         ui = FreeCADGui.UiLoader()
         taskwidget.setWindowTitle(translate("Gespal3D", "Options de l'éléments"))
-        grid = QtGui.QGridLayout(taskwidget)
+        layout_widget = QtGui.QVBoxLayout(taskwidget)
+        grid = QtGui.QGridLayout()
+        layout_widget.addLayout(grid)
 
         # categories box
         categories_items = [x[1] for x in self.categories]
-        categories_label = QtGui.QLabel(translate("Arch", "Category"))
+        categories_label = QtGui.QLabel(translate("Gespal3D", "C&atégorie"))
         self.categories_cb = QtGui.QComboBox()
+        categories_label.setBuddy(self.categories_cb)
         self.categories_cb.addItems(categories_items)
         grid.addWidget(categories_label, 2, 0, 1, 1)
         grid.addWidget(self.categories_cb, 2, 1, 1, 1)
 
         # presets box
-        presets_label = QtGui.QLabel(translate("Arch", "Preset"))
+        presets_label = QtGui.QLabel(translate("Gespal3D", "&Type"))
         self.composant_cb = QtGui.QComboBox()
+        presets_label.setBuddy(self.composant_cb)
         grid.addWidget(presets_label, 3, 0, 1, 1)
         grid.addWidget(self.composant_cb, 3, 1, 1, 1)
 
         # direction
-        direction_label = QtGui.QLabel(translate("Arch", "Direction"))
+        direction_label = QtGui.QLabel(translate("Gespal3D", "D&irection"))
         self.direction_cb = QtGui.QComboBox()
+        direction_label.setBuddy(self.direction_cb)
         self.direction_cb.addItems([
             "Direction X",
             "Direction Y",
@@ -246,13 +285,12 @@ class _CommandComposant:
         grid.addWidget(self.direction_cb, 4, 1, 1, 1)
 
         # length
-        length_label = QtGui.QLabel(translate("Arch", "Length"))
+        length_label = QtGui.QLabel(translate("Gespal3D", "Longueur"))
         self.length_input = ui.createWidget("Gui::InputField")
         self.length_input.setText(
                 FreeCAD.Units.Quantity(
                     self.Length, FreeCAD.Units.Length).UserString)
         grid.addWidget(length_label, 5, 0, 1, 1)
-        # grid.addWidget(self.mode_lg, 4, 1, 1, 1)
         grid.addWidget(self.length_input, 5, 1, 1, 1)
 
         # insert point box
@@ -314,18 +352,37 @@ class _CommandComposant:
         self.insert_group.addButton(insert, 3)
         buttons_grid.addWidget(insert, 2, 2, 1, 1)
 
+        # horizontal layout for insert point box
+        horizontal_layout = QtGui.QHBoxLayout()
+        spacerItemLeft = QtGui.QSpacerItem(
+            20, 40,
+            QtGui.QSizePolicy.Expanding,
+            QtGui.QSizePolicy.Minimum)
+        horizontal_layout.addSpacerItem(spacerItemLeft)
+
+        horizontal_layout.addLayout(buttons_grid)
+
+        spacerItemRight = QtGui.QSpacerItem(
+            20, 40,
+            QtGui.QSizePolicy.Expanding,
+            QtGui.QSizePolicy.Minimum)
+        horizontal_layout.addSpacerItem(spacerItemRight)
+
         grid.addWidget(insert_label, 7, 0, 1, 1)
-        grid.addLayout(buttons_grid, 7, 1, 1, 1)
+        grid.addLayout(horizontal_layout, 7, 1, 1, 1)
 
         # deversement
         deversement_label = QtGui.QLabel(translate("Gespal3D", "Déversement"))
         self.deversement_input = QtGui.QComboBox()
         self.deversement_input.addItems(["À plat", "Sur chant"])
-        """self.deversement_input = ui.createWidget("Gui::InputField")
+        """
+        # with angle
+        self.deversement_input = ui.createWidget("Gui::InputField")
         self.deversement_input.setText(
             FreeCAD.Units.Quantity(
                 self.Deversement,
-                FreeCAD.Units.Angle).UserString)"""
+                FreeCAD.Units.Angle).UserString)
+        """
         grid.addWidget(deversement_label, 8, 0, 1, 1)
         grid.addWidget(self.deversement_input, 8, 1, 1, 1)
 
@@ -347,28 +404,59 @@ class _CommandComposant:
         grid.addWidget(height_label, 13, 0, 1, 1)
         grid.addWidget(self.height_input, 13, 1, 1, 1)
 
+        layout_h = QtGui.QHBoxLayout()
+        layout_widget.addLayout(layout_h)
+
+        layout_repartition = QtGui.QGridLayout()
+        layout_h.addLayout(layout_repartition)
+
+        line_vertical = QtGui.QFrame()
+        line_vertical.setFrameStyle(QtGui.QFrame.VLine)
+        layout_h.addWidget(line_vertical)
+
+        layout_remplissage = QtGui.QGridLayout()
+        layout_h.addLayout(layout_remplissage)
+
         # repartition
         self.repartition_cb = QtGui.QCheckBox(translate("Gespal3D", "&Répartition"))
+        repartition_label = QtGui.QLabel(translate("Gespal3D", "Quantité"))
         self.repartition_input = QtGui.QSpinBox()
-        self.repartition_input.setRange(1, 99)
-        # self.rep_start = QtGui.QCheckBox("Élément au début")
-        # self.rep_end = QtGui.QCheckBox("Élément à la fin")
-        grid.addWidget(self.repartition_cb, 14, 0, 1, 1)
-        grid.addWidget(self.repartition_input, 14, 1, 1, 1)
-        # grid.addWidget(self.rep_start, 15, 1, 1, 1)
-        # grid.addWidget(self.rep_end, 16, 1, 1, 1)
+        self.repartition_input.setRange(1, 9999)
+        self.repartition_input.setDisabled(True)
+        self.rep_start = QtGui.QCheckBox("Début")
+        self.rep_start.setDisabled(True)
+        self.rep_end = QtGui.QCheckBox("Fin")
+        self.rep_end.setDisabled(True)
+        layout_repartition.addWidget(self.repartition_cb, 0, 0, 1, 1)
+        layout_repartition.addWidget(repartition_label, 1, 0, 1, 1)
+        layout_repartition.addWidget(self.repartition_input, 1, 1, 1, 1)
+        layout_repartition.addWidget(self.rep_start, 2, 0, 1, 1)
+        layout_repartition.addWidget(self.rep_end, 2, 1, 1, 1)
+        layout_repartition.setColumnStretch(1, 1)
+
+        # remplissage
+        self.remplissage_cb = QtGui.QCheckBox(translate("Gespal3D", "Rem&plissage"))
+        remplissage_label = QtGui.QLabel(translate("Gespal3D", "Claire voie"))
+        self.remplissage_input = ui.createWidget("Gui::InputField")
+        self.remplissage_input.setDisabled(True)
+        self.remplissage_input.setText(
+            FreeCAD.Units.Quantity(
+                0.0,
+                FreeCAD.Units.Length).UserString)
+        layout_remplissage.addWidget(self.remplissage_cb, 0, 0, 1, 1)
+        layout_remplissage.addWidget(remplissage_label, 1, 0, 1, 1)
+        layout_remplissage.addWidget(self.remplissage_input, 1, 1, 1, 1)
 
         # continue button
         continue_label = QtGui.QLabel(translate("Gespal3D", "&Continuer"))
-        continue_cb = QtGui.QCheckBox()
-        continue_cb.setObjectName("ContinueCmd")
-        continue_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
-        continue_label.setBuddy(continue_cb)
-        if hasattr(FreeCADGui, "draftToolBar"):
-            continue_cb.setChecked(FreeCADGui.draftToolBar.continueMode)
-            self.continueCmd = FreeCADGui.draftToolBar.continueMode
+        self.continue_cb = QtGui.QCheckBox()
+        self.continue_cb.setObjectName("ContinueCmd")
+        self.continue_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
+        continue_label.setBuddy(self.continue_cb)
         grid.addWidget(continue_label, 17, 0, 1, 1)
-        grid.addWidget(continue_cb, 17, 1, 1, 1)
+        grid.addWidget(self.continue_cb, 17, 1, 1, 1)
+
+        grid.setColumnStretch(1, 1)
 
         # connect slots
         QtCore.QObject.connect(
@@ -407,11 +495,19 @@ class _CommandComposant:
         QtCore.QObject.connect(
             self.repartition_cb,
             QtCore.SIGNAL("stateChanged(int)"),
-            self.setMode)
+            self.setArrayMode)
         QtCore.QObject.connect(
-            continue_cb,
+            self.continue_cb,
             QtCore.SIGNAL("stateChanged(int)"),
             self.setContinue)
+        QtCore.QObject.connect(
+            self.remplissage_cb,
+            QtCore.SIGNAL("stateChanged(int)"),
+            self.setFillMode)
+        QtCore.QObject.connect(
+            self.remplissage_input,
+            QtCore.SIGNAL("valueChanged(double)"),
+            self.setFillSpace)
 
         # restore preset
         self.restoreOptions()
@@ -424,6 +520,9 @@ class _CommandComposant:
         stored_composant = self.p.GetInt("BeamPreset", 1)
         stored_direction = self.p.GetInt("BeamDirection", 0)
         stored_deversement = self.p.GetFloat("BeamDev", 0)
+        stored_continue = self.p.GetBool("BeamDev", 0)
+        stored_mode = self.p.GetString("BeamMode", self.mode)
+        stored_fillspace = self.p.GetFloat("BeamFillSpace", 0.0)
 
         if stored_composant:
             if DEBUG:
@@ -458,15 +557,34 @@ class _CommandComposant:
             else:
                 self.deversement_input.setCurrentIndex(1)
 
-    def setCategory(self, i):
+        if stored_mode:
+            if DEBUG:
+                print("restore mode")
+            if stored_mode == "fill":
+                self.remplissage_cb.setChecked(True)
+            elif stored_mode == "array":
+                self.repartition_cb.setChecked(True)
 
+        if stored_fillspace:
+            if DEBUG:
+                print("restore fillspace")
+            self.remplissage_input.setText(
+                FreeCAD.Units.Quantity(
+                    stored_fillspace,
+                    FreeCAD.Units.Length).UserString)
+
+
+
+
+        self.continue_cb.setChecked(self.continueCmd)
+
+    def setCategory(self, i):
         self.composant_cb.clear()
         fc_compteur = self.categories[i][0]
         self.composant_items = connect_db.getComposants(categorie=fc_compteur)
         self.composant_cb.addItems([x[1] for x in self.composant_items])
 
     def setComposant(self, i):
-
         self.Profile = None
         id = self.composant_items[i][0]
         comp = connect_db.getComposant(id=id)
@@ -547,36 +665,67 @@ class _CommandComposant:
 
         FreeCADGui.Snapper.setGrid()
 
+    def setFillMode(self, state):
+        if state == 2:
+            # Change mode to "fill"
+            self.mode = "fill"
+            self.p.SetString("BeamMode", self.mode)
+            # Unlock remplissage_input
+            self.remplissage_input.setDisabled(False)
+            # Lock other parameters
+            self.repartition_input.setDisabled(True)
+            self.rep_start.setDisabled(True)
+            self.rep_end.setDisabled(True)
+            self.repartition_cb.setChecked(False)
+        else:
+            # Lock remplissage_input
+            self.remplissage_input.setDisabled(True)
+
+    def setArrayMode(self, state):
+        if state == 2:
+            # Change mode to "fill"
+            self.mode = "array"
+            self.p.SetString("BeamMode", self.mode)
+            # Lock other parameters
+            self.remplissage_input.setDisabled(True)
+            self.remplissage_cb.setChecked(False)
+            # Unlock remplissage_input
+            self.repartition_input.setDisabled(False)
+            self.rep_start.setDisabled(False)
+            self.rep_end.setDisabled(False)
+        else:
+            # Lock array parameters
+            self.repartition_input.setDisabled(True)
+            self.rep_start.setDisabled(True)
+            self.rep_end.setDisabled(True)
+
     def setMode(self):
         idx = self.direction_cb.currentIndex()
         if idx > 2:
             idx -= 3
         if idx == 3:
             self.mode = "line"
+            self.p.SetString("BeamMode", self.mode)
             self.repartition_cb.setChecked(False)
+            self.remplissage_cb.setChecked(False)
             self.repartition_cb.setDisabled(True)
-            self.repartition_input.setDisabled(True)
-            # self.rep_start.setDisabled(True)
-            # self.rep_end.setDisabled(True)
+            self.remplissage_cb.setDisabled(True)
         else:
-            if self.repartition_cb.isChecked():
-                self.mode = "array"
+            self.mode = "point"
+            self.p.SetString("BeamMode", self.mode)
+            self.repartition_cb.setDisabled(False)
+            self.remplissage_cb.setDisabled(False)
+            if float(self.Profile[3]) > 0.0:
+                self.setLength(self.Profile[3])
+                self.length_input.setText(
+                    FreeCAD.Units.Quantity(
+                        self.Length, FreeCAD.Units.Length).UserString)
             else:
-                self.mode = "point"
-                self.repartition_cb.setDisabled(False)
-                self.repartition_input.setDisabled(False)
-                # self.rep_start.setDisabled(False)
-                # self.rep_end.setDisabled(False)
-                if float(self.Profile[3]) > 0.0:
-                    self.setLength(self.Profile[3])
-                    self.length_input.setText(
-                        FreeCAD.Units.Quantity(
-                            self.Length, FreeCAD.Units.Length).UserString)
-                else:
-                    self.setLength(self.product[idx])
-                    self.length_input.setText(
-                        FreeCAD.Units.Quantity(
-                            self.Length, FreeCAD.Units.Length).UserString)
+                self.setLength(self.product[idx])
+                self.length_input.setText(
+                    FreeCAD.Units.Quantity(
+                        self.Length, FreeCAD.Units.Length).UserString)
+
         self.tracker.setPlacement(
             snap_bp=None,
             bp_idx=self.InsertPoint,
@@ -708,6 +857,12 @@ class _CommandComposant:
         self.tracker.height(d)
         self.p.SetFloat("BeamHeight", d)
 
+    def setFillSpace(self, d):
+
+        self.FillSpace = d
+        #self.tracker.height(d)
+        self.p.SetFloat("BeamFillSpace", d)
+
     def setTrackerPlacement(self):
         self.tracker.setPlacement(
             snap_bp=None,
@@ -715,15 +870,14 @@ class _CommandComposant:
             dev=self.Deversement)
 
     def setContinue(self, i):
-
         self.continueCmd = bool(i)
-        if hasattr(FreeCADGui, "draftToolBar"):
-            FreeCADGui.draftToolBar.continueMode = bool(i)
         self.p.SetBool("BeamContinue", bool(i))
 
     def makeTransaction(self, point=None):
         FreeCAD.ActiveDocument.openTransaction(
             translate("Gespal3D", "Create Beam"))
+        print("Mode is", self.mode)
+        FreeCADGui.addModule("Draft")
         FreeCADGui.addModule("Arch")
         FreeCADGui.addModule("freecad.workbench_gespal3d.profiles_parser")
 
@@ -804,33 +958,62 @@ class _CommandComposant:
                 + DraftVecUtils.toString(point)
                 + ")"
             )
-        elif self.mode == "array" and self.bpoint is not None:
-            pass
+
         else:
             axis = FreeCAD.DraftWorkingPlane.axis
+            space = self.FillSpace
+            delta = self.Height + space
             if axis.x != 0.0:
+                vec = 'FreeCAD.Vector(0.0, %s, 0.0)'
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
             elif axis.y != 0.0:
+                vec = 'FreeCAD.Vector(%s, 0.0, 0.0)'
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
             elif axis.z != 0.0:
+                vec = 'FreeCAD.Vector(%s, 0.0, 0.0)'
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
 
-            FreeCADGui.doCommand(
-                's.Placement.Base = '
-                + DraftVecUtils.toString(point)
-            )
-            FreeCADGui.doCommand(
-                's.Placement.Rotation = s.Placement.Rotation.multiply( \
-                    FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
-            )
 
-        FreeCADGui.addModule("Draft")
+            if self.mode == "fill" and self.bpoint is not None:
+                FreeCADGui.doCommand(
+                    's.Placement.Base = '
+                    + DraftVecUtils.toString(self.bpoint)
+                )
+                FreeCADGui.doCommand(
+                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                )
+                length = DraftVecUtils.dist(self.bpoint, point)
+                div = length / self.Height
+                qte = math.ceil(div) - 1
+                space = self.FillSpace
+                delta = self.Height + space
+                for x in range(qte):
+                    FreeCADGui.doCommand(
+                        'Draft.move(s,'
+                        + vec % str(delta * (x+1))
+                        + ', copy=True)'
+                    )
+
+            elif self.mode == "array" and self.bpoint is not None:
+                pass
+            else:
+                FreeCADGui.doCommand(
+                    's.Placement.Base = '
+                    + DraftVecUtils.toString(point)
+                )
+                FreeCADGui.doCommand(
+                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                )
+
+
         FreeCADGui.doCommand("Draft.autogroup(s)")
         FreeCAD.ActiveDocument.commitTransaction()
         FreeCADGui.Snapper.toggleGrid()

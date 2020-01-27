@@ -35,21 +35,26 @@ class boxTracker(Tracker):
 
     def setRotation(self, rot):
         if DEBUG:
-            print("tracker setRotation", rot)
+            msg = 'tracker setRotation : %s \n' % rot
+            FreeCAD.Console.PrintMessage(msg)
         self.trans.rotation.setValue(rot.Q)
 
     def setPosition(self, p):
         if DEBUG:
-            print("tracker setPosition", p)
+            msg = 'tracker setPosition : %s \n' % p
+            FreeCAD.Console.PrintMessage(msg)
         p = p.add(self.delta)
         self.trans.translation.setValue(DraftVecUtils.tup(p))
 
     def setPlacement(self, snap_bp, bp_idx, dev):
         if DEBUG:
-            print("tracker setPlacement")
-            print("snap_bp", snap_bp)
-            print("bp_idx", bp_idx)
-            print("dev", dev)
+            FreeCAD.Console.PrintMessage("tracker setPlacement \n")
+            msg = 'snap_bp : %s \n' % snap_bp
+            FreeCAD.Console.PrintMessage(msg)
+            msg = 'bp_idx : %s \n' % bp_idx
+            FreeCAD.Console.PrintMessage(msg)
+            msg = 'dev : %s \n' % dev
+            FreeCAD.Console.PrintMessage(msg)
         w = self.width()
         h = self.height()
         d = self.length()
@@ -249,7 +254,7 @@ class rectangleTracker(Tracker):
 
     def __init__(self, dotted=False, scolor=None, swidth=None, face=False):
         if DEBUG:
-            print("rectangle tracker : __init__")
+            FreeCAD.Console.PrintMessage("rectangle tracker : __init__ \n")
         self.origin = FreeCAD.Vector(0.0, 0.0, 0.0)
         line = coin.SoLineSet()
         line.numVertices.setValue(5)
@@ -283,7 +288,7 @@ class rectangleTracker(Tracker):
     def setorigin(self, point):
         """sets the base point of the rectangle"""
         if DEBUG:
-            print("rectangle tracker : set origin")
+            FreeCAD.Console.PrintMessage("rectangle tracker : set origin \n")
         self.coords.point.set1Value(0, point.x, point.y, point.z)
         self.coords.point.set1Value(4, point.x, point.y, point.z)
         self.origin = point
@@ -291,7 +296,7 @@ class rectangleTracker(Tracker):
     def update(self, point):
         """sets the opposite (diagonal) point of the rectangle"""
         if DEBUG:
-            print("rectangle tracker : update")
+            FreeCAD.Console.PrintMessage("rectangle tracker : update \n")
         diagonal = point.sub(self.origin)
         inpoint1 = self.origin.add(DraftVecUtils.project(diagonal, self.v))
         inpoint2 = self.origin.add(DraftVecUtils.project(diagonal, self.u))
@@ -303,7 +308,7 @@ class rectangleTracker(Tracker):
         """sets given (u,v) vectors as working plane. You can give only u
         and v will be deduced automatically given current workplane"""
         if DEBUG:
-            print("rectangle tracker : set plane")
+            FreeCAD.Console.PrintMessage("rectangle tracker : set plane \n")
         self.u = u
         if v:
             self.v = v

@@ -64,23 +64,10 @@ def makeArray(p1, p2, qte, w):
     points_list.append(interval_ext)
     return points_list
 
-"""def makeFill(obj, p1, p2, space, dir):
-    print("Making Filling")
-    length = DraftVecUtils.dist(p1, p2)
-    div = length / obj.Width
-    qte = math.round(div, 0) + 1
-    spare = qte * obj.Width - length
-    if dir == 'X':
-         obj.Width
-         Draft.move(
-            obj,
-            FreeCAD.Vector(0.0, obj.Width + space, 0.0),
-            copy=True)"""
-
 
 class _CommandComposant:
 
-    "the Arch Structure command definition"
+    "Gespal 3D - Beam Creator tool"
 
     def __init__(self):
         # input mode are:
@@ -95,10 +82,12 @@ class _CommandComposant:
         return {'Pixmap': 'Arch_Structure',
                 'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Composant"),
                 'Accel': "C, O",
-                'ToolTip': QT_TRANSLATE_NOOP(
-                    "Arch_Structure",
-                    "Creates a structure object from scratch or from a \
-                    selected object (sketch, wire, face or solid)")}
+                'ToolTip': "<html><head/><body><p><b>Ajouter un composant</b> \
+                    (hors panneaux) . \
+                    <br><br> \
+                    Possibilité d'ajouter le composant par répartition ou \
+                    par remplissage. \
+                    </p></body></html>"}
 
     def IsActive(self):
         active = False
@@ -132,6 +121,19 @@ class _CommandComposant:
         self.p.GetString("BeamMode", self.mode)
         self.FillSpace = self.p.GetFloat("BeamFillSpace", 0.0)
         self.bpoint = None
+
+        if DEBUG:
+            msg = "TODO: Debug Beam Creator Activated"
+            FreeCAD.Console.PrintMessage(msg)
+            # TODO
+            #msg = 'Beam Creator Activated : '
+            #+ 'Params : '
+            #+ 'width = %s, height = %s, length = %s, profile = %s,'
+            #+ 'insert_point = %s, deversement = %s, continue = %s '
+            #+ '\n' % (self.Width, self.Height, self.Length, self.Profile,
+            #self.InsertPoint, self.Deversement, self.continueCmd)
+            #FreeCAD.Console.PrintMessage(msg)
+
 
         # interactive mode
         self.initTracker()
@@ -213,18 +215,21 @@ class _CommandComposant:
     def update(self, point, info):
         "this function is called by the Snapper when the mouse is moved"
         if DEBUG:
-            print("_CommandComposant update")
+            FreeCAD.Console.PrintMessage("_CommandComposant update \n")
 
         if FreeCADGui.Control.activeDialog():
             if DEBUG:
-                print("Current Mode is : ", self.mode)
+                msg = "Current Mode is : %s \n" % self.mode
+                FreeCAD.Console.PrintMessage(msg)
             if self.mode == "point":
                 self.tracker.setPosition(point)
                 self.tracker.on()
             elif self.mode == "array":
-                self.tracker.off()
+                self.tracker.setPosition(point)
+                self.tracker.on()
             elif self.mode == "fill":
-                self.tracker.off()
+                self.tracker.setPosition(point)
+                self.tracker.on()
             elif self.mode == "line":
                 if self.bpoint:
                     self.tracker.update(
@@ -516,7 +521,7 @@ class _CommandComposant:
 
     def restoreOptions(self):
         if DEBUG:
-            print("restoreOptions")
+            FreeCAD.Console.PrintMessage("restoreOptions \n")
         stored_composant = self.p.GetInt("BeamPreset", 1)
         stored_direction = self.p.GetInt("BeamDirection", 0)
         stored_deversement = self.p.GetFloat("BeamDev", 0)
@@ -526,7 +531,7 @@ class _CommandComposant:
 
         if stored_composant:
             if DEBUG:
-                print("restore composant")
+                FreeCAD.Console.PrintMessage("restore composant \n")
             comp = connect_db.getComposant(id=stored_composant)
             cat = comp[2]
             n = 0
@@ -545,13 +550,13 @@ class _CommandComposant:
 
         if stored_direction:
             if DEBUG:
-                print("restore direction")
+                FreeCAD.Console.PrintMessage("restore direction \n")
             self.direction_cb.setCurrentIndex(int(stored_direction))
             self.setDirection()
 
         if stored_deversement:
             if DEBUG:
-                print("restore deversement")
+                FreeCAD.Console.PrintMessage("restore deversement \n")
             if stored_deversement == 0.0:
                 self.deversement_input.setCurrentIndex(0)
             else:
@@ -559,7 +564,7 @@ class _CommandComposant:
 
         if stored_mode:
             if DEBUG:
-                print("restore mode")
+                FreeCAD.Console.PrintMessage("restore mode \n")
             if stored_mode == "fill":
                 self.remplissage_cb.setChecked(True)
             elif stored_mode == "array":
@@ -567,7 +572,7 @@ class _CommandComposant:
 
         if stored_fillspace:
             if DEBUG:
-                print("restore fillspace")
+                FreeCAD.Console.PrintMessage("restore fillspace \n")
             self.remplissage_input.setText(
                 FreeCAD.Units.Quantity(
                     stored_fillspace,
@@ -627,7 +632,8 @@ class _CommandComposant:
     def setDirection(self):
         idx = self.direction_cb.currentIndex()
         if DEBUG:
-            print(idx)
+            msg = 'idx setDirection : %s \n' % idx
+            FreeCAD.Console.PrintMessage(msg)
         self.p.SetInt("BeamDirection", idx)
         self.setWorkingPlane(idx)
         self.setMode()
@@ -683,7 +689,7 @@ class _CommandComposant:
 
     def setArrayMode(self, state):
         if state == 2:
-            # Change mode to "fill"
+            # Change mode to "array"
             self.mode = "array"
             self.p.SetString("BeamMode", self.mode)
             # Lock other parameters
@@ -700,6 +706,11 @@ class _CommandComposant:
             self.rep_end.setDisabled(True)
 
     def setMode(self):
+        if DEBUG:
+            msg = "Set Mode \n"
+            FreeCAD.Console.PrintMessage(msg)
+            msg = "Current Mode is : %s \n" % self.mode
+            FreeCAD.Console.PrintMessage(msg)
         idx = self.direction_cb.currentIndex()
         if idx > 2:
             idx -= 3
@@ -711,10 +722,13 @@ class _CommandComposant:
             self.repartition_cb.setDisabled(True)
             self.remplissage_cb.setDisabled(True)
         else:
-            self.mode = "point"
+            if self.remplissage_cb.isChecked():
+                self.mode = 'fill'
+            elif self.repartition_cb.isChecked():
+                self.mode = 'array'
+            else:
+                self.mode = 'point'
             self.p.SetString("BeamMode", self.mode)
-            self.repartition_cb.setDisabled(False)
-            self.remplissage_cb.setDisabled(False)
             if float(self.Profile[3]) > 0.0:
                 self.setLength(self.Profile[3])
                 self.length_input.setText(
@@ -725,6 +739,11 @@ class _CommandComposant:
                 self.length_input.setText(
                     FreeCAD.Units.Quantity(
                         self.Length, FreeCAD.Units.Length).UserString)
+
+
+        if DEBUG:
+            msg = "New Mode is : %s \n" % self.mode
+            FreeCAD.Console.PrintMessage(msg)
 
         self.tracker.setPlacement(
             snap_bp=None,
@@ -876,7 +895,14 @@ class _CommandComposant:
     def makeTransaction(self, point=None):
         FreeCAD.ActiveDocument.openTransaction(
             translate("Gespal3D", "Create Beam"))
-        print("Mode is", self.mode)
+        if DEBUG:
+            FreeCAD.Console.PrintMessage('BeamCreator.makeTransaction : \n')
+            msg = "Current Mode is : %s \n" % self.mode
+            FreeCAD.Console.PrintMessage(msg)
+            msg = 'self.bpoint = %s \n' % self.bpoint
+            FreeCAD.Console.PrintMessage(msg)
+            msg = 'point = %s \n' % point
+            FreeCAD.Console.PrintMessage(msg)
         FreeCADGui.addModule("Draft")
         FreeCADGui.addModule("Arch")
         FreeCADGui.addModule("freecad.workbench_gespal3d.profiles_parser")
@@ -960,25 +986,57 @@ class _CommandComposant:
             )
 
         else:
+            if self.bpoint is not None:
+                tracker_vec = point.sub(self.bpoint)
+            else:
+                tracker_vec = FreeCAD.Vector(0.0,0.0,0.0)
+            if DEBUG:
+                msg = 'tracker_vec = %s \n' % tracker_vec
+                FreeCAD.Console.PrintWarning(msg)
             axis = FreeCAD.DraftWorkingPlane.axis
             space = self.FillSpace
             delta = self.Height + space
             if axis.x != 0.0:
-                vec = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                if tracker_vec.y > 0.0:
+                    vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                else:
+                    vec_transaction = 'FreeCAD.Vector(0.0, -%s, 0.0)'
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
             elif axis.y != 0.0:
-                vec = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                if tracker_vec.y > 0.0:
+                    vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                else:
+                    vec_transaction = 'FreeCAD.Vector(-%s, 0.0, 0.0)'
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
             elif axis.z != 0.0:
-                vec = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                if (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
+                    if tracker_vec.x > tracker_vec.y:
+                        vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                    else:
+                        vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                elif (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
+                    if tracker_vec.x > tracker_vec.y:
+                        vec_transaction = 'FreeCAD.Vector(0.0, -%s, 0.0)'
+                    else:
+                        vec_transaction = 'FreeCAD.Vector(-%s, 0.0, 0.0)'
+                else:
+                    vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                    if DEBUG:
+                        FreeCAD.Console.PrintWarning("Unexpected situation !\n")
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
-
+                    if tracker_vec.x < tracker_vec.y:
+                        vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                    else:
+                        vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+            if DEBUG:
+                msg = 'vec_transaction = %s \n' % vec_transaction
+                FreeCAD.Console.PrintWarning(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
                 FreeCADGui.doCommand(
@@ -990,14 +1048,14 @@ class _CommandComposant:
                         FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
                 )
                 length = DraftVecUtils.dist(self.bpoint, point)
-                div = length / self.Height
-                qte = math.ceil(div) - 1
                 space = self.FillSpace
                 delta = self.Height + space
+                div = length / delta
+                qte = math.ceil(div) - 1
                 for x in range(qte):
                     FreeCADGui.doCommand(
                         'Draft.move(s,'
-                        + vec % str(delta * (x+1))
+                        + vec_transaction % str(delta * (x+1))
                         + ', copy=True)'
                     )
 

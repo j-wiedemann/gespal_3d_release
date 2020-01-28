@@ -15,10 +15,12 @@ else:
         return txt
 
 
-def makeEnveloppe(id=None, length=1000, width=1000, height=1000):
+def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
     box = FreeCAD.ActiveDocument.addObject("Part::Box", "Product")
     if not id :
         id = "Produit"
+    if name:
+        FreeCAD.ActiveDocument.Comment = name
     box.Label = id
     box.Length = length
     box.Height = height

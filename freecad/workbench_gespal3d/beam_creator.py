@@ -728,6 +728,8 @@ class _CommandComposant:
             self.repartition_cb.setDisabled(True)
             self.remplissage_cb.setDisabled(True)
         else:
+            self.repartition_cb.setDisabled(False)
+            self.remplissage_cb.setDisabled(False)
             if self.remplissage_cb.isChecked():
                 self.mode = 'fill'
             elif self.repartition_cb.isChecked():

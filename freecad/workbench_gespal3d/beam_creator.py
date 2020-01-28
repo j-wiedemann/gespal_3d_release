@@ -51,20 +51,6 @@ __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
-def makeArray(p1, p2, qte, w):
-    points_list = []
-    length = DraftVecUtils.dist(p1, p2)
-    interval_init = (length - qte * w) / (qte + 1)
-    interval_ext = interval_init + (w / 2)
-    interval = interval_init + w
-    points_list.append(interval_ext)
-    if qte > 1:
-        for x in range(qte-1):
-            points_list.append(interval)
-    points_list.append(interval_ext)
-    return points_list
-
-
 class _CommandComposant:
 
     "Gespal 3D - Beam Creator tool"
@@ -121,6 +107,7 @@ class _CommandComposant:
         self.p.GetString("BeamMode", self.mode)
         self.FillSpace = self.p.GetFloat("BeamFillSpace", 0.0)
         self.bpoint = None
+        self.array_qty = self.p.GetInt("BeamArrayQty", 1)
 
         if DEBUG:
             msg = "TODO: Debug Beam Creator Activated"
@@ -513,6 +500,10 @@ class _CommandComposant:
             self.remplissage_input,
             QtCore.SIGNAL("valueChanged(double)"),
             self.setFillSpace)
+        QtCore.QObject.connect(
+            self.repartition_input,
+            QtCore.SIGNAL("valueChanged(int)"),
+            self.setArrayQty)
 
         # restore preset
         self.restoreOptions()
@@ -528,6 +519,7 @@ class _CommandComposant:
         stored_continue = self.p.GetBool("BeamDev", 0)
         stored_mode = self.p.GetString("BeamMode", self.mode)
         stored_fillspace = self.p.GetFloat("BeamFillSpace", 0.0)
+        stored_array_qty = self.p.GetInt("BeamArrayQty", 1)
 
         if stored_composant:
             if DEBUG:
@@ -578,8 +570,10 @@ class _CommandComposant:
                     stored_fillspace,
                     FreeCAD.Units.Length).UserString)
 
-
-
+        if stored_array_qty:
+            if DEBUG:
+                FreeCAD.Console.PrintMessage("restore array_qty \n")
+            self.repartition_input.setValue(stored_array_qty)
 
         self.continue_cb.setChecked(self.continueCmd)
 
@@ -674,8 +668,8 @@ class _CommandComposant:
     def setFillMode(self, state):
         if state == 2:
             # Change mode to "fill"
-            self.mode = "fill"
-            self.p.SetString("BeamMode", self.mode)
+            #self.mode = "fill"
+            #self.p.SetString("BeamMode", self.mode)
             # Unlock remplissage_input
             self.remplissage_input.setDisabled(False)
             # Lock other parameters
@@ -685,13 +679,17 @@ class _CommandComposant:
             self.repartition_cb.setChecked(False)
         else:
             # Lock remplissage_input
+            #self.mode = "point"
+            #self.p.SetString("BeamMode", self.mode)
             self.remplissage_input.setDisabled(True)
+
+        self.setMode()
 
     def setArrayMode(self, state):
         if state == 2:
             # Change mode to "array"
-            self.mode = "array"
-            self.p.SetString("BeamMode", self.mode)
+            #self.mode = "array"
+            #self.p.SetString("BeamMode", self.mode)
             # Lock other parameters
             self.remplissage_input.setDisabled(True)
             self.remplissage_cb.setChecked(False)
@@ -701,9 +699,17 @@ class _CommandComposant:
             self.rep_end.setDisabled(False)
         else:
             # Lock array parameters
+            #self.mode = "point"
+            #self.p.SetString("BeamMode", self.mode)
             self.repartition_input.setDisabled(True)
             self.rep_start.setDisabled(True)
             self.rep_end.setDisabled(True)
+
+        self.setMode()
+
+    def setArrayQty(self):
+        self.array_qty = self.repartition_input.value()
+        self.p.SetInt("BeamArrayQty", self.array_qty)
 
     def setMode(self):
         if DEBUG:
@@ -994,8 +1000,6 @@ class _CommandComposant:
                 msg = 'tracker_vec = %s \n' % tracker_vec
                 FreeCAD.Console.PrintWarning(msg)
             axis = FreeCAD.DraftWorkingPlane.axis
-            space = self.FillSpace
-            delta = self.Height + space
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
                     vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
@@ -1005,7 +1009,7 @@ class _CommandComposant:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
             elif axis.y != 0.0:
-                if tracker_vec.y > 0.0:
+                if tracker_vec.x > 0.0:
                     vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
                 else:
                     vec_transaction = 'FreeCAD.Vector(-%s, 0.0, 0.0)'
@@ -1060,7 +1064,46 @@ class _CommandComposant:
                     )
 
             elif self.mode == "array" and self.bpoint is not None:
-                pass
+                length = DraftVecUtils.dist(self.bpoint, point)
+                space = length / (self.array_qty + 1)
+                spaces_list = []
+                for x in range(self.array_qty):
+                    spaces_list.append(space * (x+1))
+                vec_str = vec_transaction % str(spaces_list[0])
+                d = vec_str.split('(')[1].split(')')[0].split(',')
+                d_vec = FreeCAD.Vector(float(d[0]), float(d[1]), float(d[2]))
+                first_vec = self.bpoint.add(d_vec)
+
+                if DEBUG:
+                    FreeCAD.Console.PrintMessage('Array : \n')
+                    msg = "length : %s \n" % length
+                    FreeCAD.Console.PrintMessage(msg)
+                    msg = "qte : %s \n" % self.array_qty
+                    FreeCAD.Console.PrintMessage(msg)
+                    msg = "space : %s \n" % space
+                    FreeCAD.Console.PrintMessage(msg)
+                    msg = "spaces_list : %s \n" % spaces_list
+                    FreeCAD.Console.PrintMessage(msg)
+                    msg = "d_vec : %s \n" % d_vec
+                    FreeCAD.Console.PrintMessage(msg)
+                    msg = "first_vec : %s \n" % first_vec
+                    FreeCAD.Console.PrintMessage(msg)
+
+                FreeCADGui.doCommand(
+                    's.Placement.Base = '
+                    + DraftVecUtils.toString(first_vec)
+                )
+                FreeCADGui.doCommand(
+                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                )
+
+                for x in spaces_list[1:]:
+                    FreeCADGui.doCommand(
+                        'Draft.move(s,'
+                        + vec_transaction % str(x-space)
+                        + ', copy=True)'
+                    )
             else:
                 FreeCADGui.doCommand(
                     's.Placement.Base = '

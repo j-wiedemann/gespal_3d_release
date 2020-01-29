@@ -48,7 +48,7 @@ class gespal3d_workbench(Gui.Workbench):
         This function is called at the first activation of the workbench.
         here is the place to import all the commands
         """
-        App.Console.PrintMessage("Initialisation de l'atelier Gespal3D")
+        App.Console.PrintMessage("Initialisation de l'atelier Gespal3D \n")
 
         p = App.ParamGet(str(PARAMPATH))
         c = App.ParamGet("User parameter:BaseApp/Preferences/Document")
@@ -67,7 +67,7 @@ class gespal3d_workbench(Gui.Workbench):
         '''
         code which should be computed when a user switch to this workbench
         '''
-        App.Console.PrintMessage("Bienvenue sur l'atelier Gespal 3D")
+        App.Console.PrintMessage("Bienvenue sur l'atelier Gespal 3D \n")
 
         if hasattr(Gui, "draftToolBar"):
             Gui.draftToolBar.Activated()

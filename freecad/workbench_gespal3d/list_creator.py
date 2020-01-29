@@ -57,10 +57,11 @@ class _ListCreator():
         doc = FreeCAD.ActiveDocument
         path_doc = doc.FileName
         if len(path_doc) > 0:
+            id = doc.Name.split("_")[1]
             path_project = os.path.split(path_doc)
-            name_image = '3D_' + doc.Name + '.png'
-            name_csv = 'CP_' + doc.Name + '.csv'
-            plan_pdf = 'PF_' + doc.Name + '.pdf'
+            name_image = '3D_' + id + '.png'
+            name_csv = 'CP_' + id + '.csv'
+            plan_pdf = 'PF_' + id + '.pdf'
             path_image = os.path.join(path_project[0], name_image)
             path_csv = os.path.join(path_project[0], name_csv)
             path_plan = os.path.join(path_project[0], plan_pdf)
@@ -69,6 +70,7 @@ class _ListCreator():
             objs = doc.Objects
             objlist = []
             objother = []
+            objproduct = None
             mySheet = False
             for obj in objs:
                 if hasattr(obj, "Tag"):
@@ -116,6 +118,53 @@ class _ListCreator():
                 2560,
                 1600,
                 'White')
+            objproduct.ViewObject.Visibility = True
+            for obj in objother:
+                obj.ViewObject.Visibility = True
+
+            # makePlan()
+            if doc.getObject("Page"):
+                doc.removeObject('Page')
+                #doc.recompute()
+            page = doc.addObject('TechDraw::DrawPage','Page')
+            template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
+            template.Template = "/home/jo/Documents/FreeCAD/FreeCADFrance/Clients/Pascal BERTRAND/Dev/A4_Landscape_JanesTimber.svg"
+            page.Template = template
+            projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
+            page.addView(projgroup)
+            projgroup.Source = objlist
+            #projgroup.ScaleType = u"Automatic"
+            projgroup.ScaleType = u"Custom"
+            projgroup.Scale = 0.10
+            projgroup.addProjection('Front')
+            projgroup.Anchor.Direction = FreeCAD.Vector(0.000,0.000,1.000)
+            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000,0.000,0.000)
+            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000,0.000,0.000)
+            projgroup.Anchor.recompute()
+            projgroup.addProjection('Bottom')
+            projgroup.addProjection('Left')
+            x = (objproduct.Length.Value * projgroup.Scale) / 2 + 20.0
+            y = (objproduct.Width.Value * projgroup.Scale) / 2 + 40.0
+            projgroup.X = x
+            projgroup.Y = y
+
+            iso_view = doc.addObject('TechDraw::DrawViewPart','View')
+            page.addView(iso_view)
+            iso_view.Source = objlist
+            iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
+            iso_view.XDirection = FreeCAD.Vector(0.707,0.707,-0.000)
+            iso_view.Scale = 0.05
+            iso_view.X = 240.0
+            iso_view.Y = 170.0
+            iso_view.recompute()
+
+            template.setEditFieldContent("NOM", doc.Comment)
+            template.setEditFieldContent("FC-SH", doc.Name)
+            template.setEditFieldContent("FC-DATE", "01/01/2020")
+            template.setEditFieldContent("FC-SC", "1/10")
+
+
+            page.recompute(True)
         else:
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")

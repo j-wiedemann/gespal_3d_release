@@ -20,7 +20,7 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
     if not id :
         id = "Produit"
     if name:
-        FreeCAD.ActiveDocument.Comment = name
+        FreeCAD.ActiveDocument.Comment = str(name)
     box.Label = id
     box.Length = length
     box.Height = height
@@ -79,7 +79,7 @@ class _CommandEnveloppe:
         return active
 
     def Activated(self):
-        makeEnveloppe(None, 1200.0, 900.0, 560.0)
+        makeEnveloppe(None, "Test", 1200.0, 900.0, 560.0)
         # Set view
         FreeCADGui.activeDocument().activeView().viewIsometric()
         FreeCADGui.SendMsgToActiveView("ViewFit")

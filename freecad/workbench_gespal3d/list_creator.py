@@ -7,6 +7,7 @@ if FreeCAD.GuiUp:
     from FreeCAD import Base, Console, Vector, Rotation
     import math, DraftGeomUtils, DraftVecUtils
     import os
+    from datetime import datetime
 
 else:
     def translate(ctxt,txt):
@@ -61,10 +62,12 @@ class _ListCreator():
             path_project = os.path.split(path_doc)
             name_image = '3D_' + id + '.png'
             name_csv = 'CP_' + id + '.csv'
-            plan_pdf = 'PF_' + id + '.pdf'
+            pc_pdf = 'PC_' + id + '.pdf'
+            pf_pdf = 'PF_' + id + '.pdf'
             path_image = os.path.join(path_project[0], name_image)
             path_csv = os.path.join(path_project[0], name_csv)
-            path_plan = os.path.join(path_project[0], plan_pdf)
+            path_pc = os.path.join(path_project[0], pc_pdf)
+            path_pf = os.path.join(path_project[0], pf_pdf)
 
             # makeListing()
             objs = doc.Objects
@@ -160,11 +163,19 @@ class _ListCreator():
 
             template.setEditFieldContent("NOM", doc.Comment)
             template.setEditFieldContent("FC-SH", doc.Name)
-            template.setEditFieldContent("FC-DATE", "01/01/2020")
+            now = datetime.now()
+            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+            template.setEditFieldContent("FC-DATE", dt_string)
             template.setEditFieldContent("FC-SC", "1/10")
 
 
             page.recompute(True)
+            page.ViewObject.show()
+            __objs__=[]
+            __objs__.append(page)
+            FreeCADGui.export(__objs__, path_pc)
+            FreeCADGui.export(__objs__, path_pf)
+            del __objs__
         else:
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")

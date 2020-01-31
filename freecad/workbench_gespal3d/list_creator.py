@@ -8,7 +8,7 @@ if FreeCAD.GuiUp:
     import math, DraftGeomUtils, DraftVecUtils
     import os
     from datetime import datetime
-
+    from freecad.workbench_gespal3d import PARAMPATH
 else:
     def translate(ctxt,txt):
         return txt
@@ -68,6 +68,8 @@ class _ListCreator():
             path_csv = os.path.join(path_project[0], name_csv)
             path_pc = os.path.join(path_project[0], pc_pdf)
             path_pf = os.path.join(path_project[0], pf_pdf)
+            self.p = FreeCAD.ParamGet(str(PARAMPATH))
+            path_template = self.p.GetString('PathTemplate', '')
 
             # makeListing()
             objs = doc.Objects
@@ -131,7 +133,8 @@ class _ListCreator():
                 #doc.recompute()
             page = doc.addObject('TechDraw::DrawPage','Page')
             template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
-            template.Template = "/home/jo/Documents/FreeCAD/FreeCADFrance/Clients/Pascal BERTRAND/Dev/A4_Landscape_JanesTimber.svg"
+            #template.Template = "/home/jo/Documents/FreeCAD/FreeCADFrance/Clients/Pascal BERTRAND/Dev/A4_Landscape_JanesTimber.svg"
+            template.Template = path_template
             page.Template = template
             projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
             page.addView(projgroup)

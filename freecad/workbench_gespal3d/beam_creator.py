@@ -557,10 +557,11 @@ class _CommandComposant:
         if stored_mode:
             if DEBUG:
                 FreeCAD.Console.PrintMessage("restore mode \n")
-            if stored_mode == "fill":
-                self.remplissage_cb.setChecked(True)
-            elif stored_mode == "array":
-                self.repartition_cb.setChecked(True)
+            if self.bpoint:
+                if stored_mode == "fill":
+                    self.remplissage_cb.setChecked(True)
+                elif stored_mode == "array":
+                    self.repartition_cb.setChecked(True)
 
         if stored_fillspace:
             if DEBUG:

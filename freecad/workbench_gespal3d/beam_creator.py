@@ -279,11 +279,15 @@ class _CommandComposant:
         # length
         length_label = QtGui.QLabel(translate("Gespal3D", "Longueur"))
         self.length_input = ui.createWidget("Gui::InputField")
-        self.length_input.setText(
-                FreeCAD.Units.Quantity(
-                    self.Length, FreeCAD.Units.Length).UserString)
         grid.addWidget(length_label, 5, 0, 1, 1)
-        grid.addWidget(self.length_input, 5, 1, 1, 1)
+
+        vlay = QtGui.QHBoxLayout()
+        self.fixlength_checkbox = QtGui.QCheckBox("Fixer")
+        #self.setLengthInput(self.Length)
+        vlay.addWidget(self.length_input)
+        vlay.addWidget(self.fixlength_checkbox)
+
+        grid.addLayout(vlay, 5, 1, 1, 1)
 
         # insert point box
         insert_label = QtGui.QLabel(translate("Gespal3D", "Insertion"))

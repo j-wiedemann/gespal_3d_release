@@ -9,6 +9,7 @@ if FreeCAD.GuiUp:
     import os
     from datetime import datetime
     from freecad.workbench_gespal3d import PARAMPATH
+    from freecad.workbench_gespal3d import DEBUG
 else:
     def translate(ctxt,txt):
         return txt
@@ -75,7 +76,8 @@ class _ListCreator():
             objs = doc.Objects
             objlist = []
             objother = []
-            objproduct = None
+            self.objproduct = None
+            self.grp_dimension = []
             mySheet = False
             for obj in objs:
                 if hasattr(obj, "Tag"):
@@ -88,7 +90,9 @@ class _ListCreator():
                     obj.clearAll()
                     FreeCAD.ActiveDocument.recompute()
                 elif obj.Name == 'Product':
-                    objproduct = obj
+                    self.objproduct = obj
+                elif "Dimension" in obj.Name:
+                    self.grp_dimension.append(obj)
                 else:
                     objother.append(obj)
             if len(objlist) < 0:
@@ -112,81 +116,96 @@ class _ListCreator():
             FreeCAD.ActiveDocument.recompute()
             mySheet.exportFile(path_csv)
 
-            # makeImage()
-            objproduct.ViewObject.Visibility = False
-            for obj in objother:
-                obj.ViewObject.Visibility = False
-            FreeCADGui.activeDocument().activeView().viewIsometric()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-            FreeCADGui.activeDocument().activeView().saveImage(
-                path_image,
-                2560,
-                1600,
-                'White')
-            objproduct.ViewObject.Visibility = True
-            for obj in objother:
-                obj.ViewObject.Visibility = True
+            # Image
+            self.makeImage(path_image)
 
-            # makePlan()
+            # Plan
             if doc.getObject("Page"):
-                doc.removeObject('Page')
-                #doc.recompute()
-            page = doc.addObject('TechDraw::DrawPage','Page')
-            template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
-            #template.Template = "/home/jo/Documents/FreeCAD/FreeCADFrance/Clients/Pascal BERTRAND/Dev/A4_Landscape_JanesTimber.svg"
-            template.Template = path_template
-            page.Template = template
-            projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
-            page.addView(projgroup)
-            projgroup.Source = objlist
-            #projgroup.ScaleType = u"Automatic"
-            projgroup.ScaleType = u"Custom"
-            projgroup.Scale = 0.10
-            projgroup.addProjection('Front')
-            projgroup.Anchor.Direction = FreeCAD.Vector(0.000,0.000,1.000)
-            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000,0.000,0.000)
-            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000,0.000,0.000)
-            projgroup.Anchor.recompute()
-            projgroup.addProjection('Bottom')
-            projgroup.addProjection('Left')
-            x = (objproduct.Length.Value * projgroup.Scale) / 2 + 20.0
-            y = (objproduct.Width.Value * projgroup.Scale) / 2 + 40.0
-            projgroup.X = x
-            projgroup.Y = y
-
-            iso_view = doc.addObject('TechDraw::DrawViewPart','View')
-            page.addView(iso_view)
-            iso_view.Source = objlist
-            iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
-            iso_view.XDirection = FreeCAD.Vector(0.707,0.707,-0.000)
-            iso_view.Scale = 0.05
-            iso_view.X = 240.0
-            iso_view.Y = 170.0
-            iso_view.recompute()
-
-            template.setEditFieldContent("NOM", doc.Comment)
-            template.setEditFieldContent("FC-SH", doc.Name)
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-            template.setEditFieldContent("FC-DATE", dt_string)
-            template.setEditFieldContent("FC-SC", "1/10")
-
-
-            page.recompute(True)
-            page.ViewObject.show()
-            __objs__=[]
-            __objs__.append(page)
-            FreeCADGui.export(__objs__, path_pc)
-            FreeCADGui.export(__objs__, path_pf)
-            del __objs__
+                doc.getObject("Page").recompute(True)
+            else:
+                paths = [path_pc, path_pf]
+                self.makePlan(objlist, paths)
         else:
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")
 
-        # makePlan()
-
         return
 
+    def makeImage(self, path):
+        self.objproduct.ViewObject.Visibility = False
+        for obj in self.grp_dimension:
+            obj.ViewObject.Visibility = False
+        if hasattr(FreeCADGui,"Snapper"):
+            FreeCADGui.Snapper.setTrackers()
+            if FreeCADGui.Snapper.grid:
+                if FreeCADGui.Snapper.grid.Visible:
+                    FreeCADGui.Snapper.grid.off()
+                    FreeCADGui.Snapper.forceGridOff=True
+        FreeCADGui.activeDocument().activeView().setCameraType("Perspective")
+        FreeCADGui.activeDocument().activeView().viewIsometric()
+        FreeCADGui.SendMsgToActiveView("ViewFit")
+        FreeCADGui.activeDocument().activeView().saveImage(
+            path,
+            2560,
+            1600,
+            'White')
+        self.objproduct.ViewObject.Visibility = True
+        for obj in self.grp_dimension:
+            obj.ViewObject.Visibility = True
+        FreeCADGui.activeDocument().activeView().setCameraType("Orthographic")
+
+    def makePlan(self, objlist, paths):
+        doc = FreeCAD.activeDocument()
+        # Page
+        page = doc.addObject('TechDraw::DrawPage','Page')
+        # Template
+        path = FreeCAD.ParamGet(str(PARAMPATH)).GetString('PathTemplate', '')
+        template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
+        template.Template = path
+        page.Template = template
+        template.setEditFieldContent("NOM", doc.Comment)
+        template.setEditFieldContent("FC-SH", doc.Name)
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        template.setEditFieldContent("FC-DATE", dt_string)
+        template.setEditFieldContent("FC-SC", "1/10")
+        # ProjGroup
+        projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
+        page.addView(projgroup)
+        projgroup.Source = objlist
+        projgroup.ScaleType = u"Custom"
+        projgroup.Scale = 0.10
+        projgroup.addProjection('Front')
+        projgroup.Anchor.Direction = FreeCAD.Vector(0.000,0.000,1.000)
+        projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000,0.000,0.000)
+        projgroup.Anchor.XDirection = FreeCAD.Vector(1.000,0.000,0.000)
+        projgroup.Anchor.recompute()
+        projgroup.addProjection('Bottom')
+        projgroup.addProjection('Left')
+        x = (self.objproduct.Length.Value * projgroup.Scale) / 2 + 20.0
+        y = (self.objproduct.Width.Value * projgroup.Scale) / 2 + 40.0
+        projgroup.X = x
+        projgroup.Y = y
+        # Iso View
+        iso_view = doc.addObject('TechDraw::DrawViewPart','View')
+        page.addView(iso_view)
+        iso_view.Source = objlist
+        iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
+        iso_view.XDirection = FreeCAD.Vector(0.707,0.707,-0.000)
+        iso_view.Scale = 0.05
+        iso_view.X = 240.0
+        iso_view.Y = 170.0
+        iso_view.recompute()
+        # Recompute
+        page.recompute(True)
+        page.ViewObject.show()
+        # Export
+        __objs__=[]
+        __objs__.append(page)
+        #FreeCADGui.export(__objs__, paths[0])
+        #FreeCADGui.export(__objs__, paths[1])
+        del __objs__
+        return
 
 if FreeCAD.GuiUp:
     FreeCADGui.addCommand('ListCreator', _ListCreator())

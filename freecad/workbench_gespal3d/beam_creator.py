@@ -182,7 +182,7 @@ class _CommandComposant:
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
                 title=translate("Gespal3D", "Point suivant")+":",
-                mode="line")
+                mode="point")
             return
         # mode array
         if (self.mode == "fill") and (self.bpoint is None):
@@ -193,7 +193,7 @@ class _CommandComposant:
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
                 title=translate("Gespal3D", "Point suivant")+":",
-                mode="line")
+                mode="point")
             return
         # premier clic en mode 1 ou second en mode 2
         self.tracker.finalize()

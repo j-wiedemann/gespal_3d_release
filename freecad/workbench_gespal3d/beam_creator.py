@@ -508,6 +508,10 @@ class _CommandComposant:
             self.repartition_input,
             QtCore.SIGNAL("valueChanged(int)"),
             self.setArrayQty)
+        QtCore.QObject.connect(
+            self.fixlength_checkbox,
+            QtCore.SIGNAL("stateChanged(int)"),
+            self.setFixedLength)
 
         # restore preset
         self.restoreOptions()
@@ -524,6 +528,8 @@ class _CommandComposant:
         stored_mode = self.p.GetString("BeamMode", self.mode)
         stored_fillspace = self.p.GetFloat("BeamFillSpace", 0.0)
         stored_array_qty = self.p.GetInt("BeamArrayQty", 1)
+        stored_fixlength = self.p.GetBool("BeamFixLength", 0)
+        #print(stored_fixlength)
 
         if stored_composant:
             if DEBUG:
@@ -579,6 +585,11 @@ class _CommandComposant:
             if DEBUG:
                 FreeCAD.Console.PrintMessage("restore array_qty \n")
             self.repartition_input.setValue(stored_array_qty)
+
+        if stored_fixlength:
+            if DEBUG:
+                FreeCAD.Console.PrintMessage("restore fixlength \n")
+            self.fixlength_checkbox.setChecked(bool(stored_fixlength))
 
         self.continue_cb.setChecked(self.continueCmd)
 
@@ -747,8 +758,16 @@ class _CommandComposant:
                 self.length_input.setText(
                     FreeCAD.Units.Quantity(
                         self.Length, FreeCAD.Units.Length).UserString)
-            else:
+            elif (self.mode == "array") or (self.mode == "fill"):
+                self.length_input.setText(
+                    FreeCAD.Units.Quantity(
+                        self.Length, FreeCAD.Units.Length).UserString)
+            elif self.p.GetBool("BeamFixLength", 0) is False:
                 self.setLength(self.product[idx])
+                self.length_input.setText(
+                    FreeCAD.Units.Quantity(
+                        self.Length, FreeCAD.Units.Length).UserString)
+            else:
                 self.length_input.setText(
                     FreeCAD.Units.Quantity(
                         self.Length, FreeCAD.Units.Length).UserString)
@@ -871,20 +890,20 @@ class _CommandComposant:
             bp_idx=self.InsertPoint,
             dev=self.Deversement)
 
-    def setLength(self, d):
+    def setFixedLength(self, i):
+        self.p.SetBool("BeamFixLength", bool(i))
 
+    def setLength(self, d):
         self.Length = d
         self.tracker.length(d)
         self.p.SetFloat("BeamLength", d)
 
     def setWidth(self, d):
-
         self.Width = d
         self.tracker.width(d)
         self.p.SetFloat("BeamWidth", d)
 
     def setHeight(self, d):
-
         self.Height = d
         self.tracker.height(d)
         self.p.SetFloat("BeamHeight", d)

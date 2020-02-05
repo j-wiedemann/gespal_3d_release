@@ -163,18 +163,21 @@ class _ListCreator():
         template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
         template.Template = path
         page.Template = template
+        r = template.Width.Value / self.objproduct.Length.Value
+        r = r / 2.5
+        scale = round(r, 2)
         template.setEditFieldContent("NOM", doc.Comment)
         template.setEditFieldContent("FC-SH", doc.Name)
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)
-        template.setEditFieldContent("FC-SC", "1/10")
+        template.setEditFieldContent("FC-SC", str(scale))
         # ProjGroup
         projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
         page.addView(projgroup)
         projgroup.Source = objlist
         projgroup.ScaleType = u"Custom"
-        projgroup.Scale = 0.10
+        projgroup.Scale = scale
         projgroup.addProjection('Front')
         projgroup.Anchor.Direction = FreeCAD.Vector(0.000,0.000,1.000)
         projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000,0.000,0.000)
@@ -192,7 +195,7 @@ class _ListCreator():
         iso_view.Source = objlist
         iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
         iso_view.XDirection = FreeCAD.Vector(0.707,0.707,-0.000)
-        iso_view.Scale = 0.05
+        iso_view.Scale = scale / 2
         iso_view.X = 240.0
         iso_view.Y = 170.0
         iso_view.recompute()

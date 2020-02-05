@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>483</height>
+    <width>362</width>
+    <height>541</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -120,13 +120,6 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox">
-       <property name="toolTip">
-        <string>Définir la longueur du composant (elle s'adapte automatiquement aux dimensions du produit en fonction de la direction donnée).</string>
-       </property>
-      </widget>
-     </item>
      <item row="4" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_6">
        <item>
@@ -221,6 +214,24 @@
           </size>
          </property>
         </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+       <item>
+        <widget class="QDoubleSpinBox" name="doubleSpinBox">
+         <property name="toolTip">
+          <string>Définir la longueur du composant (elle s'adapte automatiquement aux dimensions du produit en fonction de la direction donnée).</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBox">
+         <property name="text">
+          <string>Fixer</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

@@ -795,7 +795,7 @@ class _CommandComposant:
             Vector(-self.Height/2, -self.Width/2, 0.0)
             ], [
             Vector(self.Width/2, self.Height/2, 0.0),
-            Vector(0.0, 0.0, 0.0),
+            Vector(0.0, self.Height/2, 0.0),
             Vector(-self.Width/2, self.Height/2, 0.0),
             Vector(self.Width/2, 0.0, 0.0),
             Vector(0.0, 0.0, 0.0),
@@ -815,7 +815,7 @@ class _CommandComposant:
             Vector(self.Height/2, -self.Width/2, 0.0)
             ], [
             Vector(-self.Width/2, self.Height/2, 0.0),
-            Vector(0.0, 0.0, 0.0),
+            Vector(0.0, self.Height/2, 0.0),
             Vector(self.Width/2, self.Height/2, 0.0),
             Vector(-self.Width/2, 0.0, 0.0),
             Vector(0.0, 0.0, 0.0),
@@ -835,13 +835,13 @@ class _CommandComposant:
             Vector(self.Height/2, -self.Width/2, 0.0)
             ], [
             Vector(-self.Width/2, self.Height/2, 0.0),
-            Vector(-self.Height/2, 0.0, 0.0),
+            Vector(-self.Width/2, 0.0, 0.0),
             Vector(-self.Width/2, -self.Height/2, 0.0),
             Vector(0.0, self.Height/2, 0.0),
             Vector(0.0, 0.0, 0.0),
             Vector(0.0, -self.Height/2, 0.0),
             Vector(self.Width/2, self.Height/2, 0.0),
-            Vector(self.Height/2, 0.0, 0.0),
+            Vector(self.Width/2, 0.0, 0.0),
             Vector(self.Width/2, -self.Height/2, 0.0)
             ]]
         point_idx = self.InsertPoint - 1

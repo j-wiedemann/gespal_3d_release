@@ -138,6 +138,7 @@ class _ListCreator():
         return
 
     def makeImage(self, path):
+        FreeCADGui.ActiveDocument.ActiveView.setAxisCross(False)
         self.objproduct.ViewObject.Visibility = False
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = False
@@ -159,6 +160,7 @@ class _ListCreator():
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = True
         FreeCADGui.activeDocument().activeView().setCameraType("Orthographic")
+        # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
 
     def makePlan(self, objlist, paths):
         doc = FreeCAD.activeDocument()

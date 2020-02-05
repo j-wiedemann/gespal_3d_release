@@ -39,6 +39,7 @@ class _CommandPanel:
     "the Gespal3D Panel command definition"
 
     def __init__(self):
+        self.thickness = 10.00
         pass
 
     def GetResources(self):
@@ -117,7 +118,7 @@ class _CommandPanel:
         "sets up a taskbox widget"
 
         taskwidget = QtGui.QWidget()
-        # ui = FreeCADGui.UiLoader()
+        ui = FreeCADGui.UiLoader()
         taskwidget.setWindowTitle(translate("Gespal3D", "Ajout d'un panneau"))
         grid = QtGui.QGridLayout(taskwidget)
 
@@ -134,6 +135,16 @@ class _CommandPanel:
         self.wp_cb.addItems(["+XY", "+XZ", "+YZ", "-XY", "-XZ", "-YZ"])
         grid.addWidget(presets_label, 0, 0, 1, 1)
         grid.addWidget(self.wp_cb, 0, 1, 1, 1)
+
+        # length
+        thickness_label = QtGui.QLabel(translate("Gespal3D", "Épaisseur"))
+        self.thickness_input = ui.createWidget("Gui::InputField")
+        self.thickness_input.setText(
+            FreeCAD.Units.Quantity(
+                10.0,
+                FreeCAD.Units.Length).UserString)
+        grid.addWidget(thickness_label, 1, 0, 1, 1)
+        grid.addWidget(self.thickness_input, 1, 1, 1, 1)
 
         # continue button
         continue_label = QtGui.QLabel(translate("Arch", "Con&tinue"))
@@ -157,6 +168,11 @@ class _CommandPanel:
             continue_cb,
             QtCore.SIGNAL("stateChanged(int)"),
             self.setContinue)
+
+        QtCore.QObject.connect(
+            self.thickness_input,
+            QtCore.SIGNAL("valueChanged(double)"),
+            self.setThickness)
 
         self.restoreParams()
 
@@ -205,6 +221,9 @@ class _CommandPanel:
 
         FreeCADGui.Snapper.setGrid()
         self.tracker.setPlane(axis_list[idx])
+
+    def setThickness(self, d):
+        self.thickness = d
 
     def setContinue(self, i):
         self.continueCmd = bool(i)
@@ -269,13 +288,28 @@ class _CommandPanel:
                 'p = Arch.makePanel('
                 + 'length=' + str(length) + ','
                 + 'width=' + str(height) + ','
-                + 'thickness=' + str(12.0)
+                + 'thickness=' + str(self.thickness)
                 + ')')
 
             FreeCADGui.doCommand('pl = FreeCAD.Placement()')
             FreeCADGui.doCommand('pl.Rotation.Q = ' + qr)
             FreeCADGui.doCommand('pl.Base = ' + DraftVecUtils.toString(base))
             FreeCADGui.doCommand('p.Placement = pl')
+
+            # Info Gespal
+            FreeCADGui.doCommand(
+                'p.Label = "'
+                + 'Aggloméré 10 mm'
+                + '"'
+                )
+            FreeCADGui.doCommand('p.IfcType = u"Transport Element"')
+            FreeCADGui.doCommand('p.PredefinedType = u"NOTDEFINED"')
+            FreeCADGui.doCommand('p.Tag = u"Gespal"')
+            FreeCADGui.doCommand(
+                'p.Description = "'
+                + str(5)
+                +'"'
+            )
 
             FreeCAD.ActiveDocument.commitTransaction()
             FreeCAD.ActiveDocument.recompute()

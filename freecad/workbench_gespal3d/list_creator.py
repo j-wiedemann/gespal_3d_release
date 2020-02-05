@@ -107,10 +107,16 @@ class _ListCreator():
             mySheet.set('E1','Usinage')
             n=1
             for obj in objlist:
+                if hasattr(obj, 'Height'):
+                    height = obj.Height
+                elif hasattr(obj, 'Thickness'):
+                    height = obj.Thickness
+                else:
+                    height = 0.0
                 desc = "'" + str(obj.Description)
                 mySheet.set('A'+str(n+1), str(desc))
                 mySheet.set('B'+str(n+1), str(obj.Width))
-                mySheet.set('C'+str(n+1), str(obj.Height))
+                mySheet.set('C'+str(n+1), str(height))
                 mySheet.set('D'+str(n+1), str(obj.Length))
                 n += 1
             FreeCAD.ActiveDocument.recompute()

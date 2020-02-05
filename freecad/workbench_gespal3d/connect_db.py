@@ -51,7 +51,7 @@ def getComposants(categorie=None):
         con = sql_connection()
         cursorObj = con.cursor()
         cursorObj.execute(
-            'SELECT * FROM Composant WHERE CO_FAMILLE = ' + str(categorie))
+            'SELECT * FROM Composant WHERE CO_FAMILLE = ' + str(categorie) + ' ORDER BY CO_NOM')
         rows = cursorObj.fetchall()
         if DEBUG:
             print("getComposants :")

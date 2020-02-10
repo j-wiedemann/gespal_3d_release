@@ -3,6 +3,7 @@ import DraftVecUtils
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import PARAMPATH
+from freecad.workbench_gespal3d import DEBUG
 
 if FreeCAD.GuiUp:
     import FreeCADGui
@@ -62,13 +63,12 @@ class _CommandPanel:
 
     def Activated(self):
         # parameters
-        path = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
         self.p = FreeCAD.ParamGet(str(PARAMPATH))
 
         self.continueCmd = self.p.GetBool("PanelContinue", False)
 
         # fetch data from sqlite database
-        # self.panelDB = connect_db.getPanelDB()
+        self.categories = connect_db.getCategories(include=["Panneaux"])
 
         self.wp = FreeCAD.DraftWorkingPlane
         self.basepoint = None
@@ -122,19 +122,28 @@ class _CommandPanel:
         taskwidget.setWindowTitle(translate("Gespal3D", "Ajout d'un panneau"))
         grid = QtGui.QGridLayout(taskwidget)
 
-        # categories
-        """categories_label = QtGui.QLabel(translate("Gespal3D", "Famille"))
+        # categories box
+        categories_items = [x[1] for x in self.categories]
+        categories_label = QtGui.QLabel(translate("Gespal3D", "C&atégorie"))
         self.categories_cb = QtGui.QComboBox()
-        self.categories_cb.addItems(
-            [str(cat[1]) for cat in self.panelDB["categories"]])
-        grid.addWidget(categories_label, 0, 0, 1, 1)
-        grid.addWidget(self.categories_cb, 0, 1, 1, 1)"""
+        categories_label.setBuddy(self.categories_cb)
+        self.categories_cb.addItems(categories_items)
+        grid.addWidget(categories_label, 2, 0, 1, 1)
+        grid.addWidget(self.categories_cb, 2, 1, 1, 1)
+
+        # presets box
+        presets_label = QtGui.QLabel(translate("Gespal3D", "&Type"))
+        self.composant_cb = QtGui.QComboBox()
+        presets_label.setBuddy(self.composant_cb)
+        grid.addWidget(presets_label, 3, 0, 1, 1)
+        grid.addWidget(self.composant_cb, 3, 1, 1, 1)
+
         # presets box
         presets_label = QtGui.QLabel(translate("Gespal3D", "Plan"))
         self.wp_cb = QtGui.QComboBox()
         self.wp_cb.addItems(["+XY", "+XZ", "+YZ", "-XY", "-XZ", "-YZ"])
-        grid.addWidget(presets_label, 0, 0, 1, 1)
-        grid.addWidget(self.wp_cb, 0, 1, 1, 1)
+        grid.addWidget(presets_label, 4, 0, 1, 1)
+        grid.addWidget(self.wp_cb, 4, 1, 1, 1)
 
         # length
         thickness_label = QtGui.QLabel(translate("Gespal3D", "Épaisseur"))
@@ -143,8 +152,8 @@ class _CommandPanel:
             FreeCAD.Units.Quantity(
                 10.0,
                 FreeCAD.Units.Length).UserString)
-        grid.addWidget(thickness_label, 1, 0, 1, 1)
-        grid.addWidget(self.thickness_input, 1, 1, 1, 1)
+        grid.addWidget(thickness_label, 6, 0, 1, 1)
+        grid.addWidget(self.thickness_input, 6, 1, 1, 1)
 
         # continue button
         continue_label = QtGui.QLabel(translate("Arch", "Con&tinue"))
@@ -159,6 +168,15 @@ class _CommandPanel:
         grid.addWidget(continue_cb, 17, 1, 1, 1)
 
         # connect slots
+        QtCore.QObject.connect(
+            self.categories_cb,
+            QtCore.SIGNAL("currentIndexChanged(int)"),
+            self.setCategory)
+        QtCore.QObject.connect(
+            self.composant_cb,
+            QtCore.SIGNAL("currentIndexChanged(int)"),
+            self.setComposant)
+
         QtCore.QObject.connect(
             self.wp_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
@@ -179,11 +197,81 @@ class _CommandPanel:
         return taskwidget
 
     def restoreParams(self):
-        # wp
-        wp = self.p.GetInt("PanelWP", 0)
-        if wp:
+        if DEBUG:
+            FreeCAD.Console.PrintMessage("Panel restoreParams \n")
+        stored_composant = self.p.GetInt("PanelPreset", 5)
+        stored_wp = wp = self.p.GetInt("PanelWP", 0)
+
+        if stored_composant:
+            if DEBUG:
+                FreeCAD.Console.PrintMessage("restore composant \n")
+            comp = connect_db.getComposant(id=stored_composant)
+            cat = comp[2]
+            n = 0
+            for x in self.categories:
+                if x[0] == cat:
+                    self.categories_cb.setCurrentIndex(n)
+                n += 1
+            self.composant_items = connect_db.getComposants(categorie=cat)
+            self.composant_cb.clear()
+            self.composant_cb.addItems([x[1] for x in self.composant_items])
+            n = 0
+            for x in self.composant_items:
+                if x[0] == stored_composant:
+                    self.composant_cb.setCurrentIndex(n)
+                n += 1
+
+        if stored_wp:
             self.wp_cb.setCurrentIndex(wp)
         self.setWorkingPlane()
+
+
+    def setCategory(self, i):
+        self.composant_cb.clear()
+        fc_compteur = self.categories[i][0]
+        self.composant_items = connect_db.getComposants(categorie=fc_compteur)
+        self.composant_cb.addItems([x[1] for x in self.composant_items])
+
+    def setComposant(self, i):
+        self.Profile = None
+        id = self.composant_items[i][0]
+        comp = connect_db.getComposant(id=id)
+
+        if comp:
+            self.Profile = comp
+            # width
+            if float(comp[5]) > 0.0:
+                self.thickness_input.setText(
+                    FreeCAD.Units.Quantity(
+                        float(comp[5]),
+                        FreeCAD.Units.Length).UserString)
+                self.thickness_input.setDisabled(True)
+            else:
+                self.thickness_input.setDisabled(False)
+
+            """# height
+            if float(comp[4]) > 0.0:
+                self.height_input.setText(
+                    FreeCAD.Units.Quantity(
+                        float(comp[4]),
+                        FreeCAD.Units.Length).UserString)
+                self.height_input.setDisabled(True)
+            else:
+                self.height_input.setDisabled(False)
+
+            # length
+            if float(comp[3]) > 0.0:
+                self.length_input.setText(
+                    FreeCAD.Units.Quantity(
+                        float(comp[3]),
+                        FreeCAD.Units.Length).UserString)
+                self.length_input.setDisabled(True)
+            else:
+                self.setDirection()
+                self.length_input.setDisabled(False)"""
+
+            self.p.SetInt("PanelPreset", comp[0])
+
 
     def setWorkingPlane(self, idx=None, point=None):
         if idx is None:
@@ -299,7 +387,7 @@ class _CommandPanel:
             # Info Gespal
             FreeCADGui.doCommand(
                 'p.Label = "'
-                + 'Aggloméré 10 mm'
+                + self.Profile[1]
                 + '"'
                 )
             FreeCADGui.doCommand('p.IfcType = u"Transport Element"')
@@ -307,7 +395,7 @@ class _CommandPanel:
             FreeCADGui.doCommand('p.Tag = u"Gespal"')
             FreeCADGui.doCommand(
                 'p.Description = "'
-                + str(5)
+                + str(self.Profile[0])
                 +'"'
             )
 

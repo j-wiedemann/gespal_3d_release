@@ -32,6 +32,7 @@ class gespal3d_workbench(Gui.Workbench):
     toolbox_mod = [
         "Draft_Move",
         "Draft_Rotate",
+        "Arch_CutPlane"
         ]
     toolbox_create = [
         "Draft_Line",

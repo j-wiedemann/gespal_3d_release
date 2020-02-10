@@ -144,7 +144,8 @@ class _ListCreator():
         return
 
     def makeImage(self, path):
-        FreeCADGui.ActiveDocument.ActiveView.setAxisCross(False)
+        av = FreeCADGui.activeDocument().activeView()
+        av.setAxisCross(False)
         self.objproduct.ViewObject.Visibility = False
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = False
@@ -154,10 +155,10 @@ class _ListCreator():
                 if FreeCADGui.Snapper.grid.Visible:
                     FreeCADGui.Snapper.grid.off()
                     FreeCADGui.Snapper.forceGridOff=True
-        FreeCADGui.activeDocument().activeView().setCameraType("Perspective")
-        FreeCADGui.activeDocument().activeView().viewIsometric()
         FreeCADGui.SendMsgToActiveView("ViewFit")
-        FreeCADGui.activeDocument().activeView().saveImage(
+        av.setCameraType("Orthographic")
+        #av.setCameraType("Perspective")
+        av.saveImage(
             path,
             2560,
             1600,
@@ -165,7 +166,7 @@ class _ListCreator():
         self.objproduct.ViewObject.Visibility = True
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = True
-        FreeCADGui.activeDocument().activeView().setCameraType("Orthographic")
+        av.setCameraType("Orthographic")
         # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
 
     def makePlan(self, objlist, paths):

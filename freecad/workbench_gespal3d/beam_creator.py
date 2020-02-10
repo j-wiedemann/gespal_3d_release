@@ -514,13 +514,13 @@ class _CommandComposant:
             self.setFixedLength)
 
         # restore preset
-        self.restoreOptions()
+        self.restoreParams()
 
         return taskwidget
 
-    def restoreOptions(self):
+    def restoreParams(self):
         if DEBUG:
-            FreeCAD.Console.PrintMessage("restoreOptions \n")
+            FreeCAD.Console.PrintMessage("restoreParams \n")
         stored_composant = self.p.GetInt("BeamPreset", 1)
         stored_direction = self.p.GetInt("BeamDirection", 0)
         stored_deversement = self.p.GetFloat("BeamDev", 0)

@@ -179,7 +179,13 @@ class _ListCreator():
         template.Template = path
         page.Template = template
         r = template.Width.Value / self.objproduct.Length.Value
-        r = r / 2.5
+        max_length = max(
+            self.objproduct.Length.Value,
+            self.objproduct.Width.Value,
+            self.objproduct.Height.Value,
+            )
+        r = template.Height.Value / max_length
+        r = r / 3
         scale = round(r, 2)
         template.setEditFieldContent("NOM", doc.Comment)
         template.setEditFieldContent("FC-SH", doc.Name)

@@ -113,11 +113,17 @@ class _ListCreator():
                     height = obj.Thickness
                 else:
                     height = 0.0
+                if len(obj.Subtractions) > 0:
+                    usinage = 'C'
+                else:
+                    usinage = None
                 desc = "'" + str(obj.Description)
                 mySheet.set('A'+str(n+1), str(desc))
                 mySheet.set('B'+str(n+1), str(obj.Width))
                 mySheet.set('C'+str(n+1), str(height))
                 mySheet.set('D'+str(n+1), str(obj.Length))
+                if usinage is not None:
+                    mySheet.set('E'+str(n+1), str(usinage))
                 n += 1
             FreeCAD.ActiveDocument.recompute()
             mySheet.exportFile(path_csv)

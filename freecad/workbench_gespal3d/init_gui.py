@@ -7,6 +7,7 @@ from freecad.workbench_gespal3d import enveloppe_creator
 from freecad.workbench_gespal3d import beam_creator
 from freecad.workbench_gespal3d import panel_creator
 from freecad.workbench_gespal3d import list_creator
+from freecad.workbench_gespal3d import __version__ as wb_version
 
 __title__="Gespal 3D InitGui"
 __author__ = "Jonathan Wiedemann"
@@ -26,8 +27,8 @@ class gespal3d_workbench(Gui.Workbench):
         "BeamCreator",
         "PanelCreator",
         "ListCreator",
-        # "Plan",
-        # "Rendu"
+        "PlanCommercial",
+        "PlanFabrication",
         ]
     toolbox_mod = [
         "Draft_Move",
@@ -68,7 +69,10 @@ class gespal3d_workbench(Gui.Workbench):
         '''
         code which should be computed when a user switch to this workbench
         '''
+
         App.Console.PrintMessage("Bienvenue sur l'atelier Gespal 3D \n")
+        msg = "Version : " + str(wb_version) + "\n"
+        App.Console.PrintMessage(msg)
 
         if hasattr(Gui, "draftToolBar"):
             Gui.draftToolBar.Activated()

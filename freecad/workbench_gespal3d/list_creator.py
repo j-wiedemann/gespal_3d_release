@@ -157,6 +157,8 @@ class _ListCreator():
                     FreeCADGui.Snapper.forceGridOff=True
         FreeCADGui.SendMsgToActiveView("ViewFit")
         av.setCameraType("Orthographic")
+        FreeCADGui.Selection.clearSelection()
+        FreeCADGui.Selection.clearPreselection()
         #av.setCameraType("Perspective")
         av.saveImage(
             path,

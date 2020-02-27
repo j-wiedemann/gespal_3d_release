@@ -942,6 +942,11 @@ class _CommandComposant:
         if self.Profile is not None:
             delta = self.setDelta()
 
+            color = self.Profile[-1].split(',')
+            r = str(int(color[0]) / 255)
+            g = str(int(color[1]) / 255)
+            b = str(int(color[2]) / 255)
+
             # Create profil with profiles_parser tools
             FreeCADGui.doCommand(
                 'p = freecad.workbench_gespal3d.profiles_parser.makeProfile('
@@ -983,6 +988,12 @@ class _CommandComposant:
                 + self.Profile[1]
                 + '"'
                 )
+
+            FreeCADGui.doCommand(
+                's.ViewObject.ShapeColor = ('
+                + r + ',' + g + ',' + b + ')'
+                )
+
         else:
             FreeCADGui.doCommand(
                 's = Arch.makeStructure(length='

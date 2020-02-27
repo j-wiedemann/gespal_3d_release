@@ -399,6 +399,15 @@ class _CommandPanel:
                 +'"'
             )
 
+            color = self.Profile[-1].split(',')
+            r = str(int(color[0]) / 255)
+            g = str(int(color[1]) / 255)
+            b = str(int(color[2]) / 255)
+            FreeCADGui.doCommand(
+                'p.ViewObject.ShapeColor = ('
+                + r + ',' + g + ',' + b + ')'
+                )
+
             FreeCAD.ActiveDocument.commitTransaction()
             FreeCAD.ActiveDocument.recompute()
             if self.continueCmd:

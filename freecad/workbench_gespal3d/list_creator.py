@@ -48,7 +48,7 @@ class gespal3d_exports():
             objother = []
             self.objproduct = None
             self.grp_dimension = []
-            self.mySheet = False
+            self.mySheet = None
             for obj in objs:
                 if hasattr(obj, "Tag"):
                     if obj.Tag == "Gespal":
@@ -57,8 +57,6 @@ class gespal3d_exports():
                                 self.objlist.append(obj)
                 elif obj.Name == 'Gespal3DListe':
                     self.mySheet = obj
-                    obj.clearAll()
-                    FreeCAD.ActiveDocument.recompute()
                 elif obj.Name == 'Product':
                     self.objproduct = obj
                 elif "Dimension" in obj.Name:
@@ -67,10 +65,7 @@ class gespal3d_exports():
                     objother.append(obj)
             if len(self.objlist) < 0:
                 FreeCAD.Console.PrintWarning("La liste des composants Gespal est vide.")
-            if not self.mySheet:
-                FreeCAD.ActiveDocument.addObject('Spreadsheet::Sheet','Gespal3DListe')
-                self.mySheet = FreeCAD.ActiveDocument.getObject('Gespal3DListe')
-                FreeCAD.ActiveDocument.recompute()
+
         else:
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")
@@ -148,6 +143,13 @@ class gespal3d_exports():
         return analyse
 
     def makeSpreadsheet(self):
+        if self.mySheet:
+            self.mySheet.clearAll()
+            FreeCAD.ActiveDocument.recompute()
+        else:
+            FreeCAD.ActiveDocument.addObject('Spreadsheet::Sheet','Gespal3DListe')
+            self.mySheet = FreeCAD.ActiveDocument.getObject('Gespal3DListe')
+            FreeCAD.ActiveDocument.recompute()
         mySheet = self.mySheet
         mySheet.set('A1', 'ID')
         mySheet.set('B1', 'Largeur')
@@ -179,6 +181,7 @@ class gespal3d_exports():
             n += 1
         FreeCAD.ActiveDocument.recompute()
         mySheet.exportFile(self.path_csv)
+        return
 
     def makeImage(self):
         av = FreeCADGui.activeDocument().activeView()
@@ -208,6 +211,7 @@ class gespal3d_exports():
             obj.ViewObject.Visibility = True
         av.setCameraType("Orthographic")
         # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
+        return
 
     def makePlan(self, name):
         doc = FreeCAD.activeDocument()
@@ -282,6 +286,7 @@ class gespal3d_exports():
         FreeCADGui.Selection.clearPreselection()
         page = doc.getObject('plan_commercial')
         TechDrawGui.exportPageAsPdf(page, self.path_pc)
+        return
 
     def exportPlanFabrication(self):
         doc = FreeCAD.ActiveDocument
@@ -289,6 +294,7 @@ class gespal3d_exports():
         FreeCADGui.Selection.clearPreselection()
         page = doc.getObject('plan_fabrication')
         TechDrawGui.exportPageAsPdf(page, self.path_pf)
+        return
 
 
 class _ListCreator():

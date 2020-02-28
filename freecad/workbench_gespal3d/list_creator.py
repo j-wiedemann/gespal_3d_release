@@ -334,7 +334,7 @@ class _PlanCommercial():
         return {'Pixmap'  :  os.path.join(ICONPATH, "document-print.svg"),
                 'Accel' : "P,C",
                 'MenuText': "Gespal 3D Export",
-                'ToolTip' : "<html><head/><body><p><b>Exporte le projet dans Gespal</b> \
+                'ToolTip' : "<html><head/><body><p><b>Exporte le plan commercial.</b> \
                 </p></body></html>"}
 
     def IsActive(self):

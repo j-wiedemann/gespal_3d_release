@@ -75,6 +75,78 @@ class gespal3d_exports():
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")
 
+    def getArea(self, face):
+        return face.Area
+
+    def getFacesMax(self, faces):
+        faces = sorted(faces,key=self.getArea, reverse = True)
+        facesMax = faces[0:4]
+        return facesMax
+
+    def getCoupleFacesEquerre(self, faces):
+        listeCouple = []
+        lenfaces = len(faces)
+        faces.append(faces[0])
+        for n in range(lenfaces):
+            norm2 = faces[n+1].normalAt(0,0)
+            norm1 = faces[n].normalAt(0,0)
+            norm0 = faces[n-1].normalAt(0,0)
+            if abs(round(math.degrees(DraftVecUtils.angle(norm1,norm0)))) == 90.:
+                listeCouple.append([faces[n],faces[n-1]])
+            if abs(round(math.degrees(DraftVecUtils.angle(norm1,norm2)))) == 90.:
+                listeCouple.append([faces[n],faces[n+1]])
+        return listeCouple
+
+    def shapeAnalyse(self, shape):
+        ## Create a new object with the shape of the current arch object
+        ## His placment is set to 0,0,0
+        obj = FreeCAD.ActiveDocument.addObject('Part::Feature','shapeAnalyse')
+        obj.Shape=shape
+        obj.Placement.Base = FreeCAD.Vector(0.0,0.0,0.0)
+        obj.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(0.0,0.0,1.0),0.0)
+        FreeCAD.ActiveDocument.recompute()
+        ## Get the face to align with XY plane
+        faces = obj.Shape.Faces
+        facesMax = self.getFacesMax(faces)
+        coupleEquerre = self.getCoupleFacesEquerre(facesMax)
+        ## Get the normal of this face
+        nv1 = coupleEquerre[0][0].normalAt(0,0)
+        ## Get the goal normal vector
+        zv = Vector(0,0,1)
+        ## Find and apply a rotation to the object to align face
+        pla = obj.Placement
+        rot = pla.Rotation
+        rot1 = Rotation(nv1, zv)
+        newrot = rot.multiply(rot1)
+        pla.Rotation = newrot
+        ## Get the face to align with XY plane
+        faces = obj.Shape.Faces
+        facesMax = self.getFacesMax(faces)
+        coupleEquerre = self.getCoupleFacesEquerre(facesMax)
+        ## Get the longest edge from aligned face
+        maxLength = 0.
+        for e in coupleEquerre[0][0].Edges:
+            if e.Length > maxLength:
+                maxLength = e.Length
+                edgeMax = e
+        ## Get the angle between edge and X axis and rotate object
+        vec = DraftGeomUtils.vec(edgeMax)
+        vecZ = FreeCAD.Vector(vec[0],vec[1],0.0)
+        pos2 = obj.Placement.Base
+        rotZ = math.degrees(DraftVecUtils.angle(vecZ,FreeCAD.Vector(1.0,0.0,0.0),zv))
+        Draft.rotate([obj],rotZ,pos2,axis=zv,copy=False)
+        bb = obj.Shape.BoundBox
+        movex = bb.XMin*-1
+        movey = bb.YMin*-1
+        movez = bb.ZMin*-1
+        Draft.move([obj], FreeCAD.Vector(movex, movey, movez))
+        FreeCAD.ActiveDocument.recompute()
+        ## Get the boundbox
+        analyse = [obj.Shape.BoundBox.YLength, obj.Shape.BoundBox.ZLength, obj.Shape.BoundBox.XLength]
+        #if not "Shape" in self.export :
+        FreeCAD.ActiveDocument.removeObject(obj.Name)
+        return analyse
+
     def makeSpreadsheet(self):
         mySheet = self.mySheet
         mySheet.set('A1', 'ID')
@@ -84,6 +156,8 @@ class gespal3d_exports():
         mySheet.set('E1', 'Usinage')
         n=1
         for obj in self.objlist:
+            shape = obj.Shape
+            analyse = self.shapeAnalyse(shape)
             if hasattr(obj, 'Height'):
                 height = obj.Height
             elif hasattr(obj, 'Thickness'):
@@ -98,7 +172,8 @@ class gespal3d_exports():
             mySheet.set('A'+str(n+1), str(desc))
             mySheet.set('B'+str(n+1), str(obj.Width))
             mySheet.set('C'+str(n+1), str(height))
-            mySheet.set('D'+str(n+1), str(obj.Length))
+            #mySheet.set('D'+str(n+1), str(obj.Length))
+            mySheet.set('D'+str(n+1), str(analyse[2]))
             if usinage is not None:
                 mySheet.set('E'+str(n+1), str(usinage))
             n += 1

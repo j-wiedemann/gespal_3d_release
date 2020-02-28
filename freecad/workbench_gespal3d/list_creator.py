@@ -211,6 +211,17 @@ class gespal3d_exports():
 
     def makePlan(self, name):
         doc = FreeCAD.activeDocument()
+        projgrp_name = 'ProjGroup' + str(name)
+        isoview_name = 'View' + str(name)
+        # check if page exist
+        page = doc.getObject(name)
+        if doc.getObject(name):
+            if doc.getObject(projgrp_name):
+                doc.getObject(projgrp_name).Source = self.objlist
+            if doc.getObject(isoview_name):
+                doc.getObject(isoview_name).Source = self.objlist
+            return
+
         # Page
         page = doc.addObject('TechDraw::DrawPage',name)
         # Template
@@ -234,7 +245,7 @@ class gespal3d_exports():
         template.setEditFieldContent("FC-DATE", dt_string)
         template.setEditFieldContent("FC-SC", str(scale))
         # ProjGroup
-        projgroup = doc.addObject('TechDraw::DrawProjGroup','ProjGroup')
+        projgroup = doc.addObject('TechDraw::DrawProjGroup', projgrp_name)
         page.addView(projgroup)
         projgroup.Source = self.objlist
         projgroup.ScaleType = u"Custom"
@@ -251,7 +262,7 @@ class gespal3d_exports():
         projgroup.X = x
         projgroup.Y = y
         # Iso View
-        iso_view = doc.addObject('TechDraw::DrawViewPart','View')
+        iso_view = doc.addObject('TechDraw::DrawViewPart', isoview_name)
         page.addView(iso_view)
         iso_view.Source = self.objlist
         iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
@@ -263,6 +274,7 @@ class gespal3d_exports():
         # Recompute
         page.recompute(True)
         page.ViewObject.show()
+        return
 
     def exportPlanCommercial(self):
         doc = FreeCAD.ActiveDocument

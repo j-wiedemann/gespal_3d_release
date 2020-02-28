@@ -9,6 +9,7 @@ if FreeCAD.GuiUp:
     import math, DraftGeomUtils, DraftVecUtils
     import os
     from datetime import datetime
+    from freecad.workbench_gespal3d import __version__ as wb_version
     from freecad.workbench_gespal3d import PARAMPATH
     from freecad.workbench_gespal3d import DEBUG
 else:
@@ -255,7 +256,7 @@ class _PlanCommercial():
 
     def GetResources(self):
         from freecad.workbench_gespal3d import ICONPATH
-        return {'Pixmap'  :  os.path.join(ICONPATH, "Gespal3D_Listing.svg"),
+        return {'Pixmap'  :  os.path.join(ICONPATH, "document-print.svg"),
                 'Accel' : "P,C",
                 'MenuText': "Gespal 3D Export",
                 'ToolTip' : "<html><head/><body><p><b>Exporte le projet dans Gespal</b> \
@@ -280,7 +281,7 @@ class _PlanFabrication():
 
     def GetResources(self):
         from freecad.workbench_gespal3d import ICONPATH
-        return {'Pixmap'  :  os.path.join(ICONPATH, "Gespal3D_Listing.svg"),
+        return {'Pixmap'  :  os.path.join(ICONPATH, "document-print.svg"),
                 'Accel' : "P,F",
                 'MenuText': "Gespal 3D Export",
                 'ToolTip' : "<html><head/><body><p><b>Exporte le plan de fabrication</b> \
@@ -299,7 +300,34 @@ class _PlanFabrication():
         return
 
 
+class _ShowHelp():
+    """Export plan de fabrication"""
+
+    def GetResources(self):
+        from freecad.workbench_gespal3d import ICONPATH
+        return {'Pixmap'  :  os.path.join(ICONPATH, "help-browser.svg"),
+                'Accel' : "H,F",
+                'MenuText': "Gespal 3D Aide",
+                'ToolTip' : "<html><head/><body><p><b>Affiche la version de Gespal 3D</b> \
+                </p></body></html>"}
+
+    def IsActive(self):
+        """Here you can define if the command must be active or not (greyed) if certain conditions
+        are met or not. This function is optional."""
+
+        active = True
+
+        return active
+
+    def Activated(self):
+        msg = "<html><head/><body><p><b>Gespal 3D</b> \
+        </p><p>Version : %s</p></body></html>" % (str(wb_version))
+        reply = QtGui.QMessageBox.information(None,"",msg)
+        return
+
+
 if FreeCAD.GuiUp:
     FreeCADGui.addCommand('ListCreator', _ListCreator())
     FreeCADGui.addCommand('PlanCommercial', _PlanCommercial())
     FreeCADGui.addCommand('PlanFabrication', _PlanFabrication())
+    FreeCADGui.addCommand('Help', _ShowHelp())

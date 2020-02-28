@@ -29,6 +29,7 @@ class gespal3d_workbench(Gui.Workbench):
         "ListCreator",
         "PlanCommercial",
         "PlanFabrication",
+        "Help"
         ]
     toolbox_mod = [
         "Draft_Move",

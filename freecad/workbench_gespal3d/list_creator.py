@@ -247,7 +247,7 @@ class gespal3d_exports():
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)
-        template.setEditFieldContent("FC-SC", str(scale))
+        # template.setEditFieldContent("FC-SC", str(scale))
         # ProjGroup
         projgroup = doc.addObject('TechDraw::DrawProjGroup', projgrp_name)
         page.addView(projgroup)
@@ -265,6 +265,7 @@ class gespal3d_exports():
         y = (self.objproduct.Width.Value * projgroup.Scale) / 2 + 40.0
         projgroup.X = x
         projgroup.Y = y
+        projgroup.AutoDistribute = False
         # Iso View
         iso_view = doc.addObject('TechDraw::DrawViewPart', isoview_name)
         page.addView(iso_view)

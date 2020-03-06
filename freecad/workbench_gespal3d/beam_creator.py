@@ -92,10 +92,17 @@ class _CommandComposant:
         self.p = FreeCAD.ParamGet(str(PARAMPATH))
 
         product = FreeCAD.ActiveDocument.getObject("Product")
-        self.product = [
-            product.Length.Value,
-            product.Width.Value,
-            product.Height.Value]
+        if hasattr(product, 'Length'):
+            self.product = [
+                product.Length.Value,
+                product.Width.Value,
+                product.Height.Value]
+        else:
+            product = FreeCAD.ActiveDocument.getObject("Box")
+            self.product = [
+                product.Length.Value,
+                product.Width.Value,
+                product.Height.Value]
 
         self.Width = self.p.GetFloat("BeamWidth", 100)
         self.Height = self.p.GetFloat("BeamHeight", 22)

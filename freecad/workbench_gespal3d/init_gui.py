@@ -7,6 +7,7 @@ from freecad.workbench_gespal3d import enveloppe_creator
 from freecad.workbench_gespal3d import beam_creator
 from freecad.workbench_gespal3d import panel_creator
 from freecad.workbench_gespal3d import list_creator
+from freecad.workbench_gespal3d import copy_mirror
 from freecad.workbench_gespal3d import __version__ as wb_version
 
 __title__="Gespal 3D InitGui"
@@ -34,6 +35,7 @@ class gespal3d_workbench(Gui.Workbench):
     toolbox_mod = [
         "Draft_Move",
         "Draft_Rotate",
+        "CopyMirror",
         "Arch_CutPlane"
         ]
     toolbox_create = [

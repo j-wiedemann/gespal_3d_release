@@ -45,8 +45,10 @@ class gespal3d_exports():
 
             objs = doc.Objects
             self.objlist = []
+            self.projgroup_list = []
             objother = []
             self.objproduct = None
+            self.boundbox = None
             self.grp_dimension = []
             self.mySheet = None
             for obj in objs:
@@ -55,10 +57,20 @@ class gespal3d_exports():
                         if hasattr(obj, "Description"):
                             if obj.Description is not None:
                                 self.objlist.append(obj)
+                                self.projgroup_list.append(obj)
+                elif obj.TypeId == 'Part::Mirroring':
+                    src = self.getSource(obj)
+                    if src.Tag == "Gespal":
+                        if hasattr(src, "Description"):
+                            if src.Description is not None:
+                                self.objlist.append(src)
+                    self.projgroup_list.append(obj)
                 elif obj.Name == 'Gespal3DListe':
                     self.mySheet = obj
                 elif obj.Name == 'Product':
                     self.objproduct = obj
+                elif obj.Name == 'Box':
+                    self.boundbox = obj
                 elif "Dimension" in obj.Name:
                     self.grp_dimension.append(obj)
                 else:
@@ -69,6 +81,12 @@ class gespal3d_exports():
         else:
             FreeCAD.Console.PrintWarning(
                 "Sauvegardez d'abord votre document.")
+
+    def getSource(self, obj):
+        src = obj.Source
+        while src.TypeId == 'Part::Mirroring':
+            src = src.Source
+        return src
 
     def getArea(self, face):
         return face.Area
@@ -221,9 +239,9 @@ class gespal3d_exports():
         page = doc.getObject(name)
         if doc.getObject(name):
             if doc.getObject(projgrp_name):
-                doc.getObject(projgrp_name).Source = self.objlist
+                doc.getObject(projgrp_name).Source = self.projgroup_list
             if doc.getObject(isoview_name):
-                doc.getObject(isoview_name).Source = self.objlist
+                doc.getObject(isoview_name).Source = self.projgroup_list
             return
 
         # Page
@@ -233,11 +251,11 @@ class gespal3d_exports():
         template = doc.addObject('TechDraw::DrawSVGTemplate','Template')
         template.Template = path
         page.Template = template
-        r = template.Width.Value / self.objproduct.Length.Value
+        r = template.Width.Value / self.boundbox.Length.Value
         max_length = max(
-            self.objproduct.Length.Value,
-            self.objproduct.Width.Value,
-            self.objproduct.Height.Value,
+            self.boundbox.Length.Value,
+            self.boundbox.Width.Value,
+            self.boundbox.Height.Value,
             )
         r = template.Height.Value / max_length
         r = r / 3
@@ -251,7 +269,7 @@ class gespal3d_exports():
         # ProjGroup
         projgroup = doc.addObject('TechDraw::DrawProjGroup', projgrp_name)
         page.addView(projgroup)
-        projgroup.Source = self.objlist
+        projgroup.Source = self.projgroup_list
         projgroup.ScaleType = u"Custom"
         projgroup.Scale = scale
         projgroup.addProjection('Front')
@@ -261,15 +279,15 @@ class gespal3d_exports():
         projgroup.Anchor.recompute()
         projgroup.addProjection('Bottom')
         projgroup.addProjection('Left')
-        x = (self.objproduct.Length.Value * projgroup.Scale) / 2 + 20.0
-        y = (self.objproduct.Width.Value * projgroup.Scale) / 2 + 40.0
+        x = (self.boundbox.Length.Value * projgroup.Scale) / 2 + 20.0
+        y = (self.boundbox.Width.Value * projgroup.Scale) / 2 + 40.0
         projgroup.X = x
         projgroup.Y = y
         projgroup.AutoDistribute = False
         # Iso View
         iso_view = doc.addObject('TechDraw::DrawViewPart', isoview_name)
         page.addView(iso_view)
-        iso_view.Source = self.objlist
+        iso_view.Source = self.projgroup_list
         iso_view.Direction = FreeCAD.Vector(0.577,-0.577,0.577)
         iso_view.XDirection = FreeCAD.Vector(0.707,0.707,-0.000)
         iso_view.Scale = scale / 2

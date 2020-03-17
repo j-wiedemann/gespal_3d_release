@@ -24,6 +24,7 @@
 import FreeCAD
 import DraftVecUtils
 from FreeCAD import Vector
+
 # from freecad.workbench_gespal3d import profiles_parser
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
@@ -43,6 +44,7 @@ else:
 
     def QT_TRANSLATE_NOOP(ctxt, txt):
         return txt
+
     # \endcond
 
 
@@ -65,15 +67,17 @@ class _CommandComposant:
 
     def GetResources(self):
 
-        return {'Pixmap': 'Arch_Structure',
-                'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Composant"),
-                'Accel': "C, O",
-                'ToolTip': "<html><head/><body><p><b>Ajouter un composant</b> \
+        return {
+            "Pixmap": "Arch_Structure",
+            "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Composant"),
+            "Accel": "C, O",
+            "ToolTip": "<html><head/><body><p><b>Ajouter un composant</b> \
                     (hors panneaux) . \
                     <br><br> \
                     Possibilité d'ajouter le composant par répartition ou \
                     par remplissage. \
-                    </p></body></html>"}
+                    </p></body></html>",
+        }
 
     def IsActive(self):
         active = False
@@ -87,22 +91,24 @@ class _CommandComposant:
     def Activated(self):
 
         # Reads preset profiles and categorizes them
-        self.categories = connect_db.getCategories(exclude=["Panneaux"])
+        self.categories = connect_db.getCategories(include=["BO"])
 
         self.p = FreeCAD.ParamGet(str(PARAMPATH))
 
         product = FreeCAD.ActiveDocument.getObject("Product")
-        if hasattr(product, 'Length'):
+        if hasattr(product, "Length"):
             self.product = [
                 product.Length.Value,
                 product.Width.Value,
-                product.Height.Value]
+                product.Height.Value,
+            ]
         else:
             product = FreeCAD.ActiveDocument.getObject("Box")
             self.product = [
                 product.Length.Value,
                 product.Width.Value,
-                product.Height.Value]
+                product.Height.Value,
+            ]
 
         self.Width = self.p.GetFloat("BeamWidth", 100)
         self.Height = self.p.GetFloat("BeamHeight", 22)
@@ -120,14 +126,13 @@ class _CommandComposant:
             msg = "TODO: Debug Beam Creator Activated"
             FreeCAD.Console.PrintMessage(msg)
             # TODO
-            #msg = 'Beam Creator Activated : '
-            #+ 'Params : '
-            #+ 'width = %s, height = %s, length = %s, profile = %s,'
-            #+ 'insert_point = %s, deversement = %s, continue = %s '
-            #+ '\n' % (self.Width, self.Height, self.Length, self.Profile,
-            #self.InsertPoint, self.Deversement, self.continueCmd)
-            #FreeCAD.Console.PrintMessage(msg)
-
+            # msg = 'Beam Creator Activated : '
+            # + 'Params : '
+            # + 'width = %s, height = %s, length = %s, profile = %s,'
+            # + 'insert_point = %s, deversement = %s, continue = %s '
+            # + '\n' % (self.Width, self.Height, self.Length, self.Profile,
+            # self.InsertPoint, self.Deversement, self.continueCmd)
+            # FreeCAD.Console.PrintMessage(msg)
 
         # interactive mode
         self.initTracker()
@@ -141,7 +146,8 @@ class _CommandComposant:
             height=self.Height,
             length=self.Length,
             bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            dev=self.Deversement,
+        )
         self.tracker.setPlacement(
             snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
         )
@@ -160,7 +166,8 @@ class _CommandComposant:
             callback=self.getPoint,
             movecallback=self.update,
             extradlg=[self.taskbox()],
-            title=title)
+            title=title,
+        )
 
     def getPoint(self, point=None, obj=None):
         "this function is called by the snapper when it has a 3D point"
@@ -177,8 +184,9 @@ class _CommandComposant:
                 callback=self.getPoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Gespal3D", "Point suivant")+":",
-                mode="line")
+                title=translate("Gespal3D", "Point suivant") + ":",
+                mode="line",
+            )
             return
         # mode array
         if (self.mode == "array") and (self.bpoint is None):
@@ -188,8 +196,9 @@ class _CommandComposant:
                 callback=self.getPoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Gespal3D", "Point suivant")+":",
-                mode="point")
+                title=translate("Gespal3D", "Point suivant") + ":",
+                mode="point",
+            )
             return
         # mode array
         if (self.mode == "fill") and (self.bpoint is None):
@@ -199,8 +208,9 @@ class _CommandComposant:
                 callback=self.getPoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Gespal3D", "Point suivant")+":",
-                mode="point")
+                title=translate("Gespal3D", "Point suivant") + ":",
+                mode="point",
+            )
             return
         # premier clic en mode 1 ou second en mode 2
         self.tracker.finalize()
@@ -226,15 +236,14 @@ class _CommandComposant:
                 self.tracker.on()
             elif self.mode == "line":
                 if self.bpoint:
-                    self.tracker.update(
-                        [self.bpoint.add(delta), point.add(delta)])
+                    self.tracker.update([self.bpoint.add(delta), point.add(delta)])
                     self.tracker.on()
                     tracker_length = (point.sub(self.bpoint)).Length
                     self.length_input.setText(
                         FreeCAD.Units.Quantity(
-                            tracker_length,
-                            FreeCAD.Units.Length
-                        ).UserString)
+                            tracker_length, FreeCAD.Units.Length
+                        ).UserString
+                    )
                 else:
                     self.tracker.off()
             else:
@@ -272,14 +281,17 @@ class _CommandComposant:
         direction_label = QtGui.QLabel(translate("Gespal3D", "D&irection"))
         self.direction_cb = QtGui.QComboBox()
         direction_label.setBuddy(self.direction_cb)
-        self.direction_cb.addItems([
-            "Direction X",
-            "Direction Y",
-            "Direction Z",
-            "Direction -X",
-            "Direction -Y",
-            "Direction -Z",
-            "Libre"])
+        self.direction_cb.addItems(
+            [
+                "Direction X",
+                "Direction Y",
+                "Direction Z",
+                "Direction -X",
+                "Direction -Y",
+                "Direction -Z",
+                "Libre",
+            ]
+        )
         grid.addWidget(direction_label, 4, 0, 1, 1)
         grid.addWidget(self.direction_cb, 4, 1, 1, 1)
 
@@ -290,7 +302,7 @@ class _CommandComposant:
 
         vlay = QtGui.QHBoxLayout()
         self.fixlength_checkbox = QtGui.QCheckBox("Fixer")
-        #self.setLengthInput(self.Length)
+        # self.setLengthInput(self.Length)
         vlay.addWidget(self.length_input)
         vlay.addWidget(self.fixlength_checkbox)
 
@@ -358,17 +370,15 @@ class _CommandComposant:
         # horizontal layout for insert point box
         horizontal_layout = QtGui.QHBoxLayout()
         spacerItemLeft = QtGui.QSpacerItem(
-            20, 40,
-            QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Minimum)
+            20, 40, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum
+        )
         horizontal_layout.addSpacerItem(spacerItemLeft)
 
         horizontal_layout.addLayout(buttons_grid)
 
         spacerItemRight = QtGui.QSpacerItem(
-            20, 40,
-            QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Minimum)
+            20, 40, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum
+        )
         horizontal_layout.addSpacerItem(spacerItemRight)
 
         grid.addWidget(insert_label, 7, 0, 1, 1)
@@ -393,8 +403,8 @@ class _CommandComposant:
         width_label = QtGui.QLabel(translate("Arch", "Width"))
         self.width_input = ui.createWidget("Gui::InputField")
         self.width_input.setText(
-            FreeCAD.Units.Quantity(
-                self.Width, FreeCAD.Units.Length).UserString)
+            FreeCAD.Units.Quantity(self.Width, FreeCAD.Units.Length).UserString
+        )
         grid.addWidget(width_label, 12, 0, 1, 1)
         grid.addWidget(self.width_input, 12, 1, 1, 1)
 
@@ -402,8 +412,8 @@ class _CommandComposant:
         height_label = QtGui.QLabel(translate("Arch", "Height"))
         self.height_input = ui.createWidget("Gui::InputField")
         self.height_input.setText(
-            FreeCAD.Units.Quantity(
-                self.Height, FreeCAD.Units.Length).UserString)
+            FreeCAD.Units.Quantity(self.Height, FreeCAD.Units.Length).UserString
+        )
         grid.addWidget(height_label, 13, 0, 1, 1)
         grid.addWidget(self.height_input, 13, 1, 1, 1)
 
@@ -443,9 +453,8 @@ class _CommandComposant:
         self.remplissage_input = ui.createWidget("Gui::InputField")
         self.remplissage_input.setDisabled(True)
         self.remplissage_input.setText(
-            FreeCAD.Units.Quantity(
-                0.0,
-                FreeCAD.Units.Length).UserString)
+            FreeCAD.Units.Quantity(0.0, FreeCAD.Units.Length).UserString
+        )
         layout_remplissage.addWidget(self.remplissage_cb, 0, 0, 1, 1)
         layout_remplissage.addWidget(remplissage_label, 1, 0, 1, 1)
         layout_remplissage.addWidget(self.remplissage_input, 1, 1, 1, 1)
@@ -465,60 +474,58 @@ class _CommandComposant:
         QtCore.QObject.connect(
             self.categories_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setCategory)
+            self.setCategory,
+        )
         QtCore.QObject.connect(
             self.composant_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setComposant)
+            self.setComposant,
+        )
         QtCore.QObject.connect(
             self.direction_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setDirection)
+            self.setDirection,
+        )
         QtCore.QObject.connect(
-            self.length_input,
-            QtCore.SIGNAL("valueChanged(double)"),
-            self.setLength)
+            self.length_input, QtCore.SIGNAL("valueChanged(double)"), self.setLength
+        )
         QtCore.QObject.connect(
             self.deversement_input,
             # QtCore.SIGNAL("valueChanged(double)"),
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setDeversement)
+            self.setDeversement,
+        )
         QtCore.QObject.connect(
-            self.insert_group,
-            QtCore.SIGNAL("buttonClicked(int)"),
-            self.setInsertPoint)
+            self.insert_group, QtCore.SIGNAL("buttonClicked(int)"), self.setInsertPoint
+        )
         QtCore.QObject.connect(
-            self.width_input,
-            QtCore.SIGNAL("valueChanged(double)"),
-            self.setWidth)
+            self.width_input, QtCore.SIGNAL("valueChanged(double)"), self.setWidth
+        )
         QtCore.QObject.connect(
-            self.height_input,
-            QtCore.SIGNAL("valueChanged(double)"),
-            self.setHeight)
+            self.height_input, QtCore.SIGNAL("valueChanged(double)"), self.setHeight
+        )
         QtCore.QObject.connect(
-            self.repartition_cb,
-            QtCore.SIGNAL("stateChanged(int)"),
-            self.setArrayMode)
+            self.repartition_cb, QtCore.SIGNAL("stateChanged(int)"), self.setArrayMode
+        )
         QtCore.QObject.connect(
-            self.continue_cb,
-            QtCore.SIGNAL("stateChanged(int)"),
-            self.setContinue)
+            self.continue_cb, QtCore.SIGNAL("stateChanged(int)"), self.setContinue
+        )
         QtCore.QObject.connect(
-            self.remplissage_cb,
-            QtCore.SIGNAL("stateChanged(int)"),
-            self.setFillMode)
+            self.remplissage_cb, QtCore.SIGNAL("stateChanged(int)"), self.setFillMode
+        )
         QtCore.QObject.connect(
             self.remplissage_input,
             QtCore.SIGNAL("valueChanged(double)"),
-            self.setFillSpace)
+            self.setFillSpace,
+        )
         QtCore.QObject.connect(
-            self.repartition_input,
-            QtCore.SIGNAL("valueChanged(int)"),
-            self.setArrayQty)
+            self.repartition_input, QtCore.SIGNAL("valueChanged(int)"), self.setArrayQty
+        )
         QtCore.QObject.connect(
             self.fixlength_checkbox,
             QtCore.SIGNAL("stateChanged(int)"),
-            self.setFixedLength)
+            self.setFixedLength,
+        )
 
         # restore preset
         self.restoreParams()
@@ -536,7 +543,7 @@ class _CommandComposant:
         stored_fillspace = self.p.GetFloat("BeamFillSpace", 0.0)
         stored_array_qty = self.p.GetInt("BeamArrayQty", 1)
         stored_fixlength = self.p.GetBool("BeamFixLength", 0)
-        #print(stored_fixlength)
+        # print(stored_fixlength)
 
         if stored_composant:
             if DEBUG:
@@ -585,8 +592,9 @@ class _CommandComposant:
                 FreeCAD.Console.PrintMessage("restore fillspace \n")
             self.remplissage_input.setText(
                 FreeCAD.Units.Quantity(
-                    stored_fillspace,
-                    FreeCAD.Units.Length).UserString)
+                    stored_fillspace, FreeCAD.Units.Length
+                ).UserString
+            )
 
         if stored_array_qty:
             if DEBUG:
@@ -617,8 +625,9 @@ class _CommandComposant:
             if float(comp[5]) > 0.0:
                 self.width_input.setText(
                     FreeCAD.Units.Quantity(
-                        float(comp[5]),
-                        FreeCAD.Units.Length).UserString)
+                        float(comp[5]), FreeCAD.Units.Length
+                    ).UserString
+                )
                 self.width_input.setDisabled(True)
             else:
                 self.width_input.setDisabled(False)
@@ -627,8 +636,9 @@ class _CommandComposant:
             if float(comp[4]) > 0.0:
                 self.height_input.setText(
                     FreeCAD.Units.Quantity(
-                        float(comp[4]),
-                        FreeCAD.Units.Length).UserString)
+                        float(comp[4]), FreeCAD.Units.Length
+                    ).UserString
+                )
                 self.height_input.setDisabled(True)
             else:
                 self.height_input.setDisabled(False)
@@ -637,8 +647,9 @@ class _CommandComposant:
             if float(comp[3]) > 0.0:
                 self.length_input.setText(
                     FreeCAD.Units.Quantity(
-                        float(comp[3]),
-                        FreeCAD.Units.Length).UserString)
+                        float(comp[3]), FreeCAD.Units.Length
+                    ).UserString
+                )
                 self.length_input.setDisabled(True)
             else:
                 self.setDirection()
@@ -649,15 +660,14 @@ class _CommandComposant:
     def setDirection(self):
         idx = self.direction_cb.currentIndex()
         if DEBUG:
-            msg = 'idx setDirection : %s \n' % idx
+            msg = "idx setDirection : %s \n" % idx
             FreeCAD.Console.PrintMessage(msg)
         self.p.SetInt("BeamDirection", idx)
         self.setWorkingPlane(idx)
         self.setMode()
         self.tracker.setPlacement(
-            snap_bp=None,
-            bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
+        )
         # self.update()
 
     def setWorkingPlane(self, idx):
@@ -669,7 +679,8 @@ class _CommandComposant:
             FreeCAD.Vector(0, 0, 1),
             FreeCAD.Vector(-1, 0, 0),
             FreeCAD.Vector(0, -1, 0),
-            FreeCAD.Vector(0, 0, -1), ]
+            FreeCAD.Vector(0, 0, -1),
+        ]
 
         upvec_list = [
             FreeCAD.Vector(0.0, 1.0, 0.0),
@@ -677,22 +688,24 @@ class _CommandComposant:
             FreeCAD.Vector(1.0, 0.0, 0.0),
             FreeCAD.Vector(0.0, -1.0, 0.0),
             FreeCAD.Vector(0.0, 0.0, -1.0),
-            FreeCAD.Vector(-1.0, 0.0, 0.0), ]
+            FreeCAD.Vector(-1.0, 0.0, 0.0),
+        ]
 
         if hasattr(FreeCAD, "DraftWorkingPlane"):
             FreeCAD.DraftWorkingPlane.setup(
                 direction=axis_list[idx],
                 point=FreeCAD.Vector(0.0, 0.0, 0.0),
                 upvec=upvec_list[idx],
-                force=True)
+                force=True,
+            )
 
         FreeCADGui.Snapper.setGrid()
 
     def setFillMode(self, state):
         if state == 2:
             # Change mode to "fill"
-            #self.mode = "fill"
-            #self.p.SetString("BeamMode", self.mode)
+            # self.mode = "fill"
+            # self.p.SetString("BeamMode", self.mode)
             # Unlock remplissage_input
             self.remplissage_input.setDisabled(False)
             # Lock other parameters
@@ -702,8 +715,8 @@ class _CommandComposant:
             self.repartition_cb.setChecked(False)
         else:
             # Lock remplissage_input
-            #self.mode = "point"
-            #self.p.SetString("BeamMode", self.mode)
+            # self.mode = "point"
+            # self.p.SetString("BeamMode", self.mode)
             self.remplissage_input.setDisabled(True)
 
         self.setMode()
@@ -711,8 +724,8 @@ class _CommandComposant:
     def setArrayMode(self, state):
         if state == 2:
             # Change mode to "array"
-            #self.mode = "array"
-            #self.p.SetString("BeamMode", self.mode)
+            # self.mode = "array"
+            # self.p.SetString("BeamMode", self.mode)
             # Lock other parameters
             self.remplissage_input.setDisabled(True)
             self.remplissage_cb.setChecked(False)
@@ -722,8 +735,8 @@ class _CommandComposant:
             self.rep_end.setDisabled(False)
         else:
             # Lock array parameters
-            #self.mode = "point"
-            #self.p.SetString("BeamMode", self.mode)
+            # self.mode = "point"
+            # self.p.SetString("BeamMode", self.mode)
             self.repartition_input.setDisabled(True)
             self.rep_start.setDisabled(True)
             self.rep_end.setDisabled(True)
@@ -754,103 +767,108 @@ class _CommandComposant:
             self.repartition_cb.setDisabled(False)
             self.remplissage_cb.setDisabled(False)
             if self.remplissage_cb.isChecked():
-                self.mode = 'fill'
+                self.mode = "fill"
             elif self.repartition_cb.isChecked():
-                self.mode = 'array'
+                self.mode = "array"
             else:
-                self.mode = 'point'
+                self.mode = "point"
             self.p.SetString("BeamMode", self.mode)
             if float(self.Profile[3]) > 0.0:
                 self.setLength(self.Profile[3])
                 self.length_input.setText(
-                    FreeCAD.Units.Quantity(
-                        self.Length, FreeCAD.Units.Length).UserString)
+                    FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                )
             elif (self.mode == "array") or (self.mode == "fill"):
                 self.length_input.setText(
-                    FreeCAD.Units.Quantity(
-                        self.Length, FreeCAD.Units.Length).UserString)
+                    FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                )
             elif self.p.GetBool("BeamFixLength", 0) is False:
                 self.setLength(self.product[idx])
                 self.length_input.setText(
-                    FreeCAD.Units.Quantity(
-                        self.Length, FreeCAD.Units.Length).UserString)
+                    FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                )
             else:
                 self.length_input.setText(
-                    FreeCAD.Units.Quantity(
-                        self.Length, FreeCAD.Units.Length).UserString)
-
+                    FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                )
 
         if DEBUG:
             msg = "New Mode is : %s \n" % self.mode
             FreeCAD.Console.PrintMessage(msg)
 
         self.tracker.setPlacement(
-            snap_bp=None,
-            bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
+        )
 
     def setDelta(self):
-        delta_list = [[
-            Vector(self.Height/2, self.Width/2, 0.0),
-            Vector(0.0, self.Width/2, 0.0),
-            Vector(-self.Height/2, self.Width/2, 0.0),
-            Vector(self.Height/2, 0.0, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(-self.Height/2, 0.0, 0.0),
-            Vector(self.Height/2, -self.Width/2, 0.0),
-            Vector(0.0, -self.Width/2, 0.0),
-            Vector(-self.Height/2, -self.Width/2, 0.0)
-            ], [
-            Vector(self.Width/2, self.Height/2, 0.0),
-            Vector(0.0, self.Height/2, 0.0),
-            Vector(-self.Width/2, self.Height/2, 0.0),
-            Vector(self.Width/2, 0.0, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(-self.Width/2, 0.0, 0.0),
-            Vector(self.Width/2, -self.Height/2, 0.0),
-            Vector(0.0, -self.Height/2, 0.0),
-            Vector(-self.Width/2, -self.Height/2, 0.0)
-            ], [
-            Vector(-self.Height/2, self.Width/2, 0.0),
-            Vector(0.0, self.Width/2, 0.0),
-            Vector(self.Height/2, self.Width/2, 0.0),
-            Vector(-self.Height/2, 0.0, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(self.Height/2, 0.0, 0.0),
-            Vector(-self.Height/2, -self.Width/2, 0.0),
-            Vector(0.0, -self.Width/2, 0.0),
-            Vector(self.Height/2, -self.Width/2, 0.0)
-            ], [
-            Vector(-self.Width/2, self.Height/2, 0.0),
-            Vector(0.0, self.Height/2, 0.0),
-            Vector(self.Width/2, self.Height/2, 0.0),
-            Vector(-self.Width/2, 0.0, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(self.Width/2, 0.0, 0.0),
-            Vector(-self.Width/2, -self.Height/2, 0.0),
-            Vector(0.0, -self.Height/2, 0.0),
-            Vector(self.Width/2, -self.Height/2, 0.0)
-            ], [
-            Vector(-self.Height/2, self.Width/2, 0.0),
-            Vector(-self.Height/2, 0.0, 0.0),
-            Vector(-self.Height/2, -self.Width/2, 0.0),
-            Vector(0.0, self.Width/2, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(0.0, -self.Width/2, 0.0),
-            Vector(self.Height/2, self.Width/2, 0.0),
-            Vector(self.Height/2, 0.0, 0.0),
-            Vector(self.Height/2, -self.Width/2, 0.0)
-            ], [
-            Vector(-self.Width/2, self.Height/2, 0.0),
-            Vector(-self.Width/2, 0.0, 0.0),
-            Vector(-self.Width/2, -self.Height/2, 0.0),
-            Vector(0.0, self.Height/2, 0.0),
-            Vector(0.0, 0.0, 0.0),
-            Vector(0.0, -self.Height/2, 0.0),
-            Vector(self.Width/2, self.Height/2, 0.0),
-            Vector(self.Width/2, 0.0, 0.0),
-            Vector(self.Width/2, -self.Height/2, 0.0)
-            ]]
+        delta_list = [
+            [
+                Vector(self.Height / 2, self.Width / 2, 0.0),
+                Vector(0.0, self.Width / 2, 0.0),
+                Vector(-self.Height / 2, self.Width / 2, 0.0),
+                Vector(self.Height / 2, 0.0, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(-self.Height / 2, 0.0, 0.0),
+                Vector(self.Height / 2, -self.Width / 2, 0.0),
+                Vector(0.0, -self.Width / 2, 0.0),
+                Vector(-self.Height / 2, -self.Width / 2, 0.0),
+            ],
+            [
+                Vector(self.Width / 2, self.Height / 2, 0.0),
+                Vector(0.0, self.Height / 2, 0.0),
+                Vector(-self.Width / 2, self.Height / 2, 0.0),
+                Vector(self.Width / 2, 0.0, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(-self.Width / 2, 0.0, 0.0),
+                Vector(self.Width / 2, -self.Height / 2, 0.0),
+                Vector(0.0, -self.Height / 2, 0.0),
+                Vector(-self.Width / 2, -self.Height / 2, 0.0),
+            ],
+            [
+                Vector(-self.Height / 2, self.Width / 2, 0.0),
+                Vector(0.0, self.Width / 2, 0.0),
+                Vector(self.Height / 2, self.Width / 2, 0.0),
+                Vector(-self.Height / 2, 0.0, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(self.Height / 2, 0.0, 0.0),
+                Vector(-self.Height / 2, -self.Width / 2, 0.0),
+                Vector(0.0, -self.Width / 2, 0.0),
+                Vector(self.Height / 2, -self.Width / 2, 0.0),
+            ],
+            [
+                Vector(-self.Width / 2, self.Height / 2, 0.0),
+                Vector(0.0, self.Height / 2, 0.0),
+                Vector(self.Width / 2, self.Height / 2, 0.0),
+                Vector(-self.Width / 2, 0.0, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(self.Width / 2, 0.0, 0.0),
+                Vector(-self.Width / 2, -self.Height / 2, 0.0),
+                Vector(0.0, -self.Height / 2, 0.0),
+                Vector(self.Width / 2, -self.Height / 2, 0.0),
+            ],
+            [
+                Vector(-self.Height / 2, self.Width / 2, 0.0),
+                Vector(-self.Height / 2, 0.0, 0.0),
+                Vector(-self.Height / 2, -self.Width / 2, 0.0),
+                Vector(0.0, self.Width / 2, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(0.0, -self.Width / 2, 0.0),
+                Vector(self.Height / 2, self.Width / 2, 0.0),
+                Vector(self.Height / 2, 0.0, 0.0),
+                Vector(self.Height / 2, -self.Width / 2, 0.0),
+            ],
+            [
+                Vector(-self.Width / 2, self.Height / 2, 0.0),
+                Vector(-self.Width / 2, 0.0, 0.0),
+                Vector(-self.Width / 2, -self.Height / 2, 0.0),
+                Vector(0.0, self.Height / 2, 0.0),
+                Vector(0.0, 0.0, 0.0),
+                Vector(0.0, -self.Height / 2, 0.0),
+                Vector(self.Width / 2, self.Height / 2, 0.0),
+                Vector(self.Width / 2, 0.0, 0.0),
+                Vector(self.Width / 2, -self.Height / 2, 0.0),
+            ],
+        ]
         point_idx = self.InsertPoint - 1
         axis = FreeCAD.DraftWorkingPlane.axis
         if axis.x != 0.0:
@@ -877,9 +895,8 @@ class _CommandComposant:
         # self.setDelta()
         self.p.SetInt("BeamInsertPoint", id)
         self.tracker.setPlacement(
-            snap_bp=None,
-            bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
+        )
 
     def setDeversement(self, idx):
         if idx == 0:
@@ -893,9 +910,8 @@ class _CommandComposant:
             # self.tracker.width(self.Height)
             # self.tracker.height(self.Width)
         self.tracker.setPlacement(
-            snap_bp=None,
-            bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
+        )
 
     def setFixedLength(self, i):
         self.p.SetBool("BeamFixLength", bool(i))
@@ -918,29 +934,27 @@ class _CommandComposant:
     def setFillSpace(self, d):
 
         self.FillSpace = d
-        #self.tracker.height(d)
+        # self.tracker.height(d)
         self.p.SetFloat("BeamFillSpace", d)
 
     def setTrackerPlacement(self):
         self.tracker.setPlacement(
-            snap_bp=None,
-            bp_idx=self.InsertPoint,
-            dev=self.Deversement)
+            snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
+        )
 
     def setContinue(self, i):
         self.continueCmd = bool(i)
         self.p.SetBool("BeamContinue", bool(i))
 
     def makeTransaction(self, point=None):
-        FreeCAD.ActiveDocument.openTransaction(
-            translate("Gespal3D", "Create Beam"))
+        FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Beam"))
         if DEBUG:
-            FreeCAD.Console.PrintMessage('BeamCreator.makeTransaction : \n')
+            FreeCAD.Console.PrintMessage("BeamCreator.makeTransaction : \n")
             msg = "Current Mode is : %s \n" % self.mode
             FreeCAD.Console.PrintMessage(msg)
-            msg = 'self.bpoint = %s \n' % self.bpoint
+            msg = "self.bpoint = %s \n" % self.bpoint
             FreeCAD.Console.PrintMessage(msg)
-            msg = 'point = %s \n' % point
+            msg = "point = %s \n" % point
             FreeCAD.Console.PrintMessage(msg)
         FreeCADGui.addModule("Draft")
         FreeCADGui.addModule("Arch")
@@ -949,86 +963,61 @@ class _CommandComposant:
         if self.Profile is not None:
             delta = self.setDelta()
 
-            color = self.Profile[-1].split(',')
+            color = self.Profile[-1].split(",")
             r = str(int(color[0]) / 255)
             g = str(int(color[1]) / 255)
             b = str(int(color[2]) / 255)
 
             # Create profil with profiles_parser tools
             FreeCADGui.doCommand(
-                'p = freecad.workbench_gespal3d.profiles_parser.makeProfile('
+                "p = freecad.workbench_gespal3d.profiles_parser.makeProfile("
                 # 'p = Arch.makeProfile('
                 + str(self.Profile)
-                + ')'
-                )
+                + ")"
+            )
 
             # Then rotate it for deversement
-            v1 = 'FreeCAD.Vector(0.0, 0.0, 0.0)'
-            v2 = 'FreeCAD.Vector(0.0, 0.0, 1.0)'
+            v1 = "FreeCAD.Vector(0.0, 0.0, 0.0)"
+            v2 = "FreeCAD.Vector(0.0, 0.0, 1.0)"
             angle = self.Deversement
             FreeCADGui.doCommand(
-                'p.Placement.rotate('
-                + str(v1)
-                + ','
-                + str(v2)
-                + ','
-                + str(angle)
-                + ')'
-                )
+                "p.Placement.rotate(" + str(v1) + "," + str(v2) + "," + str(angle) + ")"
+            )
 
             # Move it according BPoint
-            FreeCADGui.doCommand(
-                'p.Placement.move('
-                + 'FreeCAD.'
-                + str(delta)
-                + ')'
-                )
+            FreeCADGui.doCommand("p.Placement.move(" + "FreeCAD." + str(delta) + ")")
 
             FreeCADGui.doCommand(
-                's = Arch.makeStructure(p, length='
-                + str(self.Length)
-                + ')'
-                )
+                "s = Arch.makeStructure(p, length=" + str(self.Length) + ")"
+            )
+
+            FreeCADGui.doCommand('s.Profile = "' + self.Profile[1] + '"')
 
             FreeCADGui.doCommand(
-                's.Profile = "'
-                + self.Profile[1]
-                + '"'
-                )
-
-            FreeCADGui.doCommand(
-                's.ViewObject.ShapeColor = ('
-                + r + ',' + g + ',' + b + ')'
-                )
+                "s.ViewObject.ShapeColor = (" + r + "," + g + "," + b + ")"
+            )
 
         else:
             FreeCADGui.doCommand(
-                's = Arch.makeStructure(length='
+                "s = Arch.makeStructure(length="
                 + str(self.Length)
-                + ',width='
+                + ",width="
                 + str(self.Width)
-                + ',height='
+                + ",height="
                 + str(self.Height)
-                + ')')
-
-        FreeCADGui.doCommand(
-            's.Label = "'
-            + self.Profile[1]
-            + '"'
+                + ")"
             )
+
+        FreeCADGui.doCommand('s.Label = "' + self.Profile[1] + '"')
         FreeCADGui.doCommand('s.IfcType = u"Transport Element"')
         FreeCADGui.doCommand('s.PredefinedType = u"NOTDEFINED"')
         FreeCADGui.doCommand('s.Tag = u"Gespal"')
-        FreeCADGui.doCommand(
-            's.Description = "'
-            + str(self.Profile[0])
-            +'"'
-        )
+        FreeCADGui.doCommand('s.Description = "' + str(self.Profile[0]) + '"')
 
         # calculate rotation
         if self.mode == "line" and self.bpoint is not None:
             FreeCADGui.doCommand(
-                's.Placement = Arch.placeAlongEdge('
+                "s.Placement = Arch.placeAlongEdge("
                 + DraftVecUtils.toString(self.bpoint)
                 + ","
                 + DraftVecUtils.toString(point)
@@ -1039,61 +1028,60 @@ class _CommandComposant:
             if self.bpoint is not None:
                 tracker_vec = point.sub(self.bpoint)
             else:
-                tracker_vec = FreeCAD.Vector(0.0,0.0,0.0)
+                tracker_vec = FreeCAD.Vector(0.0, 0.0, 0.0)
             if DEBUG:
-                msg = 'tracker_vec = %s \n' % tracker_vec
+                msg = "tracker_vec = %s \n" % tracker_vec
                 FreeCAD.Console.PrintWarning(msg)
             axis = FreeCAD.DraftWorkingPlane.axis
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
-                    vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                    vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
                 else:
-                    vec_transaction = 'FreeCAD.Vector(0.0, -%s, 0.0)'
+                    vec_transaction = "FreeCAD.Vector(0.0, -%s, 0.0)"
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
-                    vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                    vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
                 else:
-                    vec_transaction = 'FreeCAD.Vector(-%s, 0.0, 0.0)'
+                    vec_transaction = "FreeCAD.Vector(-%s, 0.0, 0.0)"
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
             elif axis.z != 0.0:
                 if (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
                     else:
-                        vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
                 elif (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = 'FreeCAD.Vector(0.0, -%s, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(0.0, -%s, 0.0)"
                     else:
-                        vec_transaction = 'FreeCAD.Vector(-%s, 0.0, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(-%s, 0.0, 0.0)"
                 else:
-                    vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                    vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
                     if DEBUG:
                         FreeCAD.Console.PrintWarning("Unexpected situation !\n")
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
                     if tracker_vec.x < tracker_vec.y:
-                        vec_transaction = 'FreeCAD.Vector(%s, 0.0, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
                     else:
-                        vec_transaction = 'FreeCAD.Vector(0.0, %s, 0.0)'
+                        vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
             if DEBUG:
-                msg = 'vec_transaction = %s \n' % vec_transaction
+                msg = "vec_transaction = %s \n" % vec_transaction
                 FreeCAD.Console.PrintWarning(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
                 FreeCADGui.doCommand(
-                    's.Placement.Base = '
-                    + DraftVecUtils.toString(self.bpoint)
+                    "s.Placement.Base = " + DraftVecUtils.toString(self.bpoint)
                 )
                 FreeCADGui.doCommand(
-                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
-                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                    "s.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
                 )
                 length = DraftVecUtils.dist(self.bpoint, point)
                 space = self.FillSpace
@@ -1102,9 +1090,9 @@ class _CommandComposant:
                 qte = math.ceil(div) - 1
                 for x in range(qte):
                     FreeCADGui.doCommand(
-                        'Draft.move(s,'
-                        + vec_transaction % str(delta * (x+1))
-                        + ', copy=True)'
+                        "Draft.move(s,"
+                        + vec_transaction % str(delta * (x + 1))
+                        + ", copy=True)"
                     )
 
             elif self.mode == "array" and self.bpoint is not None:
@@ -1112,14 +1100,14 @@ class _CommandComposant:
                 space = length / (self.array_qty + 1)
                 spaces_list = []
                 for x in range(self.array_qty):
-                    spaces_list.append(space * (x+1))
+                    spaces_list.append(space * (x + 1))
                 vec_str = vec_transaction % str(spaces_list[0])
-                d = vec_str.split('(')[1].split(')')[0].split(',')
+                d = vec_str.split("(")[1].split(")")[0].split(",")
                 d_vec = FreeCAD.Vector(float(d[0]), float(d[1]), float(d[2]))
                 first_vec = self.bpoint.add(d_vec)
 
                 if DEBUG:
-                    FreeCAD.Console.PrintMessage('Array : \n')
+                    FreeCAD.Console.PrintMessage("Array : \n")
                     msg = "length : %s \n" % length
                     FreeCAD.Console.PrintMessage(msg)
                     msg = "qte : %s \n" % self.array_qty
@@ -1134,30 +1122,27 @@ class _CommandComposant:
                     FreeCAD.Console.PrintMessage(msg)
 
                 FreeCADGui.doCommand(
-                    's.Placement.Base = '
-                    + DraftVecUtils.toString(first_vec)
+                    "s.Placement.Base = " + DraftVecUtils.toString(first_vec)
                 )
                 FreeCADGui.doCommand(
-                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
-                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                    "s.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
                 )
 
                 for x in spaces_list[1:]:
                     FreeCADGui.doCommand(
-                        'Draft.move(s,'
-                        + vec_transaction % str(x-space)
-                        + ', copy=True)'
+                        "Draft.move(s,"
+                        + vec_transaction % str(x - space)
+                        + ", copy=True)"
                     )
             else:
                 FreeCADGui.doCommand(
-                    's.Placement.Base = '
-                    + DraftVecUtils.toString(point)
+                    "s.Placement.Base = " + DraftVecUtils.toString(point)
                 )
                 FreeCADGui.doCommand(
-                    's.Placement.Rotation = s.Placement.Rotation.multiply( \
-                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)'
+                    "s.Placement.Rotation = s.Placement.Rotation.multiply( \
+                        FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
                 )
-
 
         FreeCADGui.doCommand("Draft.autogroup(s)")
         FreeCAD.ActiveDocument.commitTransaction()
@@ -1168,4 +1153,4 @@ class _CommandComposant:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand('BeamCreator', _CommandComposant())
+    FreeCADGui.addCommand("BeamCreator", _CommandComposant())

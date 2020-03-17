@@ -10,7 +10,9 @@ def sql_connection():
     no_database = "true"
     sqlite_db = p.GetString("sqlitedb", no_database)
     if sqlite_db is "true":
-        App.Console.PrintMessage("define database path in BaseApp/Preferences/Mod/Gespal3D")
+        App.Console.PrintMessage(
+            "define database path in BaseApp/Preferences/Mod/Gespal3D"
+        )
         return
     try:
 
@@ -30,15 +32,15 @@ def getCategories(include=[], exclude=[]):
     categories_list = []
     con = sql_connection()
     cursorObj = con.cursor()
-    cursorObj.execute('SELECT * FROM Famille_Composant')
+    cursorObj.execute("SELECT * FROM Famille_Composant")
     rows = cursorObj.fetchall()
     if len(include) > 0:
         for row in rows:
-            if row[1] in include:
+            if row[2] in include:
                 categories_list.append(row)
     if len(exclude) > 0:
         for row in rows:
-            if not row[1] in exclude:
+            if not row[2] in exclude:
                 categories_list.append(row)
     if DEBUG:
         print("getCategories :")
@@ -51,7 +53,10 @@ def getComposants(categorie=None):
         con = sql_connection()
         cursorObj = con.cursor()
         cursorObj.execute(
-            'SELECT * FROM Composant WHERE CO_FAMILLE = ' + str(categorie) + ' ORDER BY CO_NOM')
+            "SELECT * FROM Composant WHERE CO_FAMILLE = "
+            + str(categorie)
+            + " ORDER BY CO_NOM"
+        )
         rows = cursorObj.fetchall()
         if DEBUG:
             print("getComposants :")
@@ -62,8 +67,7 @@ def getComposants(categorie=None):
 def getComposant(id=1):
     con = sql_connection()
     cursorObj = con.cursor()
-    cursorObj.execute(
-        'SELECT * FROM Composant WHERE CO_COMPTEUR = ' + str(id))
+    cursorObj.execute("SELECT * FROM Composant WHERE CO_COMPTEUR = " + str(id))
     rows = cursorObj.fetchall()
     if DEBUG:
         App.Console.PrintMessage("getComposant :")

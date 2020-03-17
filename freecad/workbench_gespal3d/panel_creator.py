@@ -17,6 +17,7 @@ else:
 
     def QT_TRANSLATE_NOOP(ctxt, txt):
         return txt
+
     # \endcond
 
 
@@ -45,12 +46,14 @@ class _CommandPanel:
 
     def GetResources(self):
 
-        return {'Pixmap': 'Arch_Panel',
-                'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Panneaux"),
-                'Accel': "P, N",
-                'ToolTip': QT_TRANSLATE_NOOP(
-                    "Paneaux",
-                    "Créer un panneau en cliquant sur deux points.")}
+        return {
+            "Pixmap": "Arch_Panel",
+            "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Panneaux"),
+            "Accel": "P, N",
+            "ToolTip": QT_TRANSLATE_NOOP(
+                "Paneaux", "Créer un panneau en cliquant sur deux points."
+            ),
+        }
 
     def IsActive(self):
         active = False
@@ -68,7 +71,7 @@ class _CommandPanel:
         self.continueCmd = self.p.GetBool("PanelContinue", False)
 
         # fetch data from sqlite database
-        self.categories = connect_db.getCategories(include=["Panneaux"])
+        self.categories = connect_db.getCategories(include=["PX"])
 
         self.wp = FreeCAD.DraftWorkingPlane
         self.basepoint = None
@@ -79,7 +82,8 @@ class _CommandPanel:
             callback=self.getpoint,
             movecallback=self.update,
             extradlg=[self.taskbox()],
-            title=title)
+            title=title,
+        )
 
     def getpoint(self, point=None, obj=None):
         "this function is called by the snapper when it has a 3D point"
@@ -99,8 +103,9 @@ class _CommandPanel:
                 callback=self.getpoint,
                 movecallback=self.update,
                 extradlg=[self.taskbox()],
-                title=translate("Arch", "Next point")+":",
-                mode="rectangle")
+                title=translate("Arch", "Next point") + ":",
+                mode="rectangle",
+            )
             return
         # second clic : make panel
         print("second point : finalize panel tracker")
@@ -149,9 +154,8 @@ class _CommandPanel:
         thickness_label = QtGui.QLabel(translate("Gespal3D", "Épaisseur"))
         self.thickness_input = ui.createWidget("Gui::InputField")
         self.thickness_input.setText(
-            FreeCAD.Units.Quantity(
-                10.0,
-                FreeCAD.Units.Length).UserString)
+            FreeCAD.Units.Quantity(10.0, FreeCAD.Units.Length).UserString
+        )
         grid.addWidget(thickness_label, 6, 0, 1, 1)
         grid.addWidget(self.thickness_input, 6, 1, 1, 1)
 
@@ -171,26 +175,27 @@ class _CommandPanel:
         QtCore.QObject.connect(
             self.categories_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setCategory)
+            self.setCategory,
+        )
         QtCore.QObject.connect(
             self.composant_cb,
             QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setComposant)
+            self.setComposant,
+        )
 
         QtCore.QObject.connect(
-            self.wp_cb,
-            QtCore.SIGNAL("currentIndexChanged(int)"),
-            self.setWorkingPlane)
+            self.wp_cb, QtCore.SIGNAL("currentIndexChanged(int)"), self.setWorkingPlane
+        )
 
         QtCore.QObject.connect(
-            continue_cb,
-            QtCore.SIGNAL("stateChanged(int)"),
-            self.setContinue)
+            continue_cb, QtCore.SIGNAL("stateChanged(int)"), self.setContinue
+        )
 
         QtCore.QObject.connect(
             self.thickness_input,
             QtCore.SIGNAL("valueChanged(double)"),
-            self.setThickness)
+            self.setThickness,
+        )
 
         self.restoreParams()
 
@@ -225,7 +230,6 @@ class _CommandPanel:
             self.wp_cb.setCurrentIndex(wp)
         self.setWorkingPlane()
 
-
     def setCategory(self, i):
         self.composant_cb.clear()
         fc_compteur = self.categories[i][0]
@@ -243,8 +247,9 @@ class _CommandPanel:
             if float(comp[5]) > 0.0:
                 self.thickness_input.setText(
                     FreeCAD.Units.Quantity(
-                        float(comp[5]),
-                        FreeCAD.Units.Length).UserString)
+                        float(comp[5]), FreeCAD.Units.Length
+                    ).UserString
+                )
                 self.thickness_input.setDisabled(True)
             else:
                 self.thickness_input.setDisabled(False)
@@ -272,7 +277,6 @@ class _CommandPanel:
 
             self.p.SetInt("PanelPreset", comp[0])
 
-
     def setWorkingPlane(self, idx=None, point=None):
         if idx is None:
             idx = self.wp_cb.currentIndex()
@@ -284,7 +288,8 @@ class _CommandPanel:
             FreeCAD.Vector(1.0, 0.0, 0.0),
             FreeCAD.Vector(0.0, 0.0, -1.0),
             FreeCAD.Vector(0.0, -1.0, 0.0),
-            FreeCAD.Vector(-1.0, 0.0, 0.0), ]
+            FreeCAD.Vector(-1.0, 0.0, 0.0),
+        ]
 
         upvec_list = [
             FreeCAD.Vector(0.0, 1.0, 0.0),
@@ -292,20 +297,20 @@ class _CommandPanel:
             FreeCAD.Vector(0.0, 0.0, 1.0),
             FreeCAD.Vector(0.0, -1.0, 0.0),
             FreeCAD.Vector(-1.0, 0.0, 0.0),
-            FreeCAD.Vector(0.0, 0.0, -1.0), ]
+            FreeCAD.Vector(0.0, 0.0, -1.0),
+        ]
 
         if point is None:
             self.wp.setup(
                 direction=axis_list[idx],
                 point=FreeCAD.Vector(0.0, 0.0, 0.0),
                 upvec=upvec_list[idx],
-                force=True)
+                force=True,
+            )
         else:
             self.wp.setup(
-                direction=axis_list[idx],
-                point=point,
-                upvec=upvec_list[idx],
-                force=True)
+                direction=axis_list[idx], point=point, upvec=upvec_list[idx], force=True
+            )
 
         FreeCADGui.Snapper.setGrid()
         self.tracker.setPlane(axis_list[idx])
@@ -324,10 +329,8 @@ class _CommandPanel:
             p1 = self.basepoint
             p3 = point
             diagonal = p3.sub(p1)
-            p2 = p1.add(
-                DraftVecUtils.project(diagonal, self.wp.v))
-            p4 = p1.add(
-                DraftVecUtils.project(diagonal, self.wp.u))
+            p2 = p1.add(DraftVecUtils.project(diagonal, self.wp.v))
+            p4 = p1.add(DraftVecUtils.project(diagonal, self.wp.u))
             length = p4.sub(p1).Length
             a = abs(DraftVecUtils.angle(p4.sub(p1), self.wp.u, self.wp.axis))
             if a > 1:
@@ -339,8 +342,17 @@ class _CommandPanel:
             base = p1
             p = self.wp.getRotation()
             qr = p.Rotation.Q
-            qr = '(' + str(qr[0]) + ',' + str(qr[1]) + ',' \
-                + str(qr[2]) + ',' + str(qr[3]) + ')'
+            qr = (
+                "("
+                + str(qr[0])
+                + ","
+                + str(qr[1])
+                + ","
+                + str(qr[2])
+                + ","
+                + str(qr[3])
+                + ")"
+            )
 
             if (length > 0) and (height > 0):
                 print("length > 0) and (height > 0)")
@@ -368,45 +380,43 @@ class _CommandPanel:
                 return
 
             FreeCAD.ActiveDocument.openTransaction(
-                translate("Gespal3D", "Ajouter un panneau"))
+                translate("Gespal3D", "Ajouter un panneau")
+            )
             FreeCADGui.addModule("Arch")
 
             # Create panel wit Arch Tool
             FreeCADGui.doCommand(
-                'p = Arch.makePanel('
-                + 'length=' + str(length) + ','
-                + 'width=' + str(height) + ','
-                + 'thickness=' + str(self.thickness)
-                + ')')
+                "p = Arch.makePanel("
+                + "length="
+                + str(length)
+                + ","
+                + "width="
+                + str(height)
+                + ","
+                + "thickness="
+                + str(self.thickness)
+                + ")"
+            )
 
-            FreeCADGui.doCommand('pl = FreeCAD.Placement()')
-            FreeCADGui.doCommand('pl.Rotation.Q = ' + qr)
-            FreeCADGui.doCommand('pl.Base = ' + DraftVecUtils.toString(base))
-            FreeCADGui.doCommand('p.Placement = pl')
+            FreeCADGui.doCommand("pl = FreeCAD.Placement()")
+            FreeCADGui.doCommand("pl.Rotation.Q = " + qr)
+            FreeCADGui.doCommand("pl.Base = " + DraftVecUtils.toString(base))
+            FreeCADGui.doCommand("p.Placement = pl")
 
             # Info Gespal
-            FreeCADGui.doCommand(
-                'p.Label = "'
-                + self.Profile[1]
-                + '"'
-                )
+            FreeCADGui.doCommand('p.Label = "' + self.Profile[1] + '"')
             FreeCADGui.doCommand('p.IfcType = u"Transport Element"')
             FreeCADGui.doCommand('p.PredefinedType = u"NOTDEFINED"')
             FreeCADGui.doCommand('p.Tag = u"Gespal"')
-            FreeCADGui.doCommand(
-                'p.Description = "'
-                + str(self.Profile[0])
-                +'"'
-            )
+            FreeCADGui.doCommand('p.Description = "' + str(self.Profile[0]) + '"')
 
-            color = self.Profile[-1].split(',')
+            color = self.Profile[-1].split(",")
             r = str(int(color[0]) / 255)
             g = str(int(color[1]) / 255)
             b = str(int(color[2]) / 255)
             FreeCADGui.doCommand(
-                'p.ViewObject.ShapeColor = ('
-                + r + ',' + g + ',' + b + ')'
-                )
+                "p.ViewObject.ShapeColor = (" + r + "," + g + "," + b + ")"
+            )
 
             FreeCAD.ActiveDocument.commitTransaction()
             FreeCAD.ActiveDocument.recompute()
@@ -415,4 +425,4 @@ class _CommandPanel:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand('PanelCreator', _CommandPanel())
+    FreeCADGui.addCommand("PanelCreator", _CommandPanel())

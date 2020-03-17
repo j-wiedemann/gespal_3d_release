@@ -24,6 +24,7 @@
 import FreeCAD
 import DraftVecUtils
 from FreeCAD import Vector
+
 # from freecad.workbench_gespal3d import profiles_parser
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
@@ -43,6 +44,7 @@ else:
 
     def QT_TRANSLATE_NOOP(ctxt, txt):
         return txt
+
     # \endcond
 
 
@@ -50,29 +52,30 @@ __title__ = "Copy Mirror Gespal3D"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
+
 def makeCopyMirror(objs, plane):
     support = plane.Support[0][0].Name
 
-    if support == 'XY_Plane':
+    if support == "XY_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(0.0, 0.0, offset, )
-        normal = FreeCAD.Vector(0.0, 0.0, 1.0, )
-        expression1 = '.Base.z'
-        expression2 = u'DPSymXY.AttachmentOffset.Base.z'
+        base = FreeCAD.Vector(0.0, 0.0, offset,)
+        normal = FreeCAD.Vector(0.0, 0.0, 1.0,)
+        expression1 = ".Base.z"
+        expression2 = u"DPSymXY.AttachmentOffset.Base.z"
 
-    elif support == 'XZ_Plane':
+    elif support == "XZ_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(0.0, offset, 0.0, )
-        normal = FreeCAD.Vector(0.0, 1.0, 0.0, )
-        expression1 = '.Base.y'
-        expression2 = u'DPSymXZ.AttachmentOffset.Base.z'
+        base = FreeCAD.Vector(0.0, offset, 0.0,)
+        normal = FreeCAD.Vector(0.0, 1.0, 0.0,)
+        expression1 = ".Base.y"
+        expression2 = u"DPSymXZ.AttachmentOffset.Base.z"
 
-    elif support == 'YZ_Plane':
+    elif support == "YZ_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(offset, 0.0, 0.0, )
-        normal = FreeCAD.Vector(1.0, 0.0, 0.0, )
-        expression1 = '.Base.x'
-        expression2 = u'DPSymYZ.AttachmentOffset.Base.z'
+        base = FreeCAD.Vector(offset, 0.0, 0.0,)
+        normal = FreeCAD.Vector(1.0, 0.0, 0.0,)
+        expression1 = ".Base.x"
+        expression2 = u"DPSymYZ.AttachmentOffset.Base.z"
     else:
         pass
 
@@ -89,6 +92,7 @@ def makeCopyMirror(objs, plane):
         mirror.ViewObject.ShapeColor = obj.ViewObject.ShapeColor
     doc.recompute()
     return
+
 
 class _CopyMirrorTaskPanel:
     def __init__(self):
@@ -113,12 +117,24 @@ class _CopyMirrorTaskPanel:
             doc.DPSymYZ.ViewObject.Visibility = False
 
     def accept(self):
+
         sel = FreeCADGui.Selection.getSelection()
         if len(sel) > 1:
             plane = sel[-1]
             objs = sel[:-1]
-            if plane.TypeId == 'PartDesign::Plane':
-                makeCopyMirror(objs, plane)
+            if plane.TypeId == "PartDesign::Plane":
+                # makeCopyMirror(objs, plane)
+                FreeCAD.ActiveDocument.openTransaction(
+                    translate("Gespal3D", "Create Mirror")
+                )
+                FreeCADGui.addModule("freecad.workbench_gespal3d.copy_mirror")
+                FreeCADGui.doCommand("sel = FreeCADGui.Selection.getSelection()")
+                FreeCADGui.doCommand("plane = sel[-1]")
+                FreeCADGui.doCommand("objs = sel[:-1]")
+                FreeCADGui.doCommand(
+                    "freecad.workbench_gespal3d.copy_mirror.makeCopyMirror(objs, plane)"
+                )
+                FreeCAD.ActiveDocument.commitTransaction()
             else:
                 print("La sélection ne contient pas de plan de référence")
         else:
@@ -132,11 +148,14 @@ class _CopyMirrorTaskPanel:
         return True
 
     def getStandardButtons(self):
-        return int(QtGui.QDialogButtonBox.Ok|QtGui.QDialogButtonBox.Cancel)
+        return int(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
 
     def retranslateUi(self, TaskPanel):
         TaskPanel.setWindowTitle("Plan de symétrie")
-        self.indication_label.setText("Sélectionner les objets à copier et le plan de symétrie puis cliquer sur Ok.")
+        self.indication_label.setText(
+            "Sélectionner les objets à copier et le plan de symétrie puis cliquer sur Ok."
+        )
+
 
 class _CommandCopyMirror:
     "commande pour faire une copie en mirroir d'un ou plusieurs obj selon un plan"
@@ -145,12 +164,15 @@ class _CommandCopyMirror:
         pass
 
     def GetResources(self):
-        return {'Pixmap': 'Draft_Mirror',
-                'MenuText': QT_TRANSLATE_NOOP("Gespal3D", "Mirroir"),
-                'Accel': "P, R",
-                'ToolTip': QT_TRANSLATE_NOOP(
-                    "Gespal3D",
-                    "Créer une copie mirroir d'un ou plusieur composant selon le plan sélectionné.")}
+        return {
+            "Pixmap": "Draft_Mirror",
+            "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Mirroir"),
+            "Accel": "P, R",
+            "ToolTip": QT_TRANSLATE_NOOP(
+                "Gespal3D",
+                "Créer une copie mirroir d'un ou plusieur composant selon le plan sélectionné.",
+            ),
+        }
 
     def IsActive(self):
         if FreeCAD.ActiveDocument:
@@ -163,9 +185,9 @@ class _CommandCopyMirror:
 
     def Activated(self):
         panel = _CopyMirrorTaskPanel()
-        #self.PlaneVisibility(True)
+        # self.PlaneVisibility(True)
         FreeCADGui.Control.showDialog(panel)
-        #self.PlaneVisibility(False)
+        # self.PlaneVisibility(False)
 
     def PlaneVisibility(self, show=True):
         doc = FreeCAD.ActiveDocument
@@ -180,4 +202,4 @@ class _CommandCopyMirror:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand('CopyMirror', _CommandCopyMirror())
+    FreeCADGui.addCommand("CopyMirror", _CommandCopyMirror())

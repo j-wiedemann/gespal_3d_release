@@ -83,6 +83,9 @@ class gespal3d_exports:
                     self.mySheet = obj
                 elif obj.Name == "Product":
                     self.objproduct = obj
+                    # For project created before v0.5.0
+                    if obj.TypeId == "Part::Box":
+                        self.boundbox = obj
                 elif obj.Name == "Box":
                     self.boundbox = obj
                 elif "Dimension" in obj.Name:
@@ -305,16 +308,28 @@ class gespal3d_exports:
         # Page
         page = doc.addObject("TechDraw::DrawPage", name)
         # Template
-        path = FreeCAD.ParamGet(str(PARAMPATH)).GetString("PathTemplate", "")
         template = doc.addObject("TechDraw::DrawSVGTemplate", "Template")
-        template.Template = path
-        page.Template = template
-        r = template.Width.Value / self.boundbox.Length.Value
+
+        # Portrait or Landscape
         max_length = max(
             self.boundbox.Length.Value,
             self.boundbox.Width.Value,
             self.boundbox.Height.Value,
         )
+        if max_length == self.boundbox.Height.Value:
+            orientation = "A4P"
+        else:
+            orientation = "A4L"
+        # Templae path
+        path = FreeCAD.ParamGet(str(PARAMPATH)).GetString("PathTemplate", "")
+        if orientation == "A4P":
+            path = os.path.join(path, "A4P.svg")
+        else:
+            path = os.path.join(path, "A4L.svg")
+        template.Template = path
+        page.Template = template
+
+        r = template.Width.Value / self.boundbox.Length.Value
         r = template.Height.Value / max_length
         r = r / 3
         scale = round(r, 2)
@@ -331,14 +346,24 @@ class gespal3d_exports:
         projgroup.ScaleType = u"Custom"
         projgroup.Scale = scale
         projgroup.addProjection("Front")
-        projgroup.Anchor.Direction = FreeCAD.Vector(0.000, 0.000, 1.000)
-        projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000, 0.000, 0.000)
-        projgroup.Anchor.XDirection = FreeCAD.Vector(1.000, 0.000, 0.000)
+        if orientation == "A4L":
+            projgroup.Anchor.Direction = FreeCAD.Vector(0.000, 0.000, 1.000)
+            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000, 0.000, 0.000)
+            y = (self.boundbox.Width.Value * projgroup.Scale) / 2 + 40.0
+        else:
+            projgroup.Anchor.Direction = FreeCAD.Vector(0.000, -1.000, 0.000)
+            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000, 0.000, 0.000)
+            y = 297 - 20 - ((self.boundbox.Height.Value * projgroup.Scale) / 2)
         projgroup.Anchor.recompute()
-        projgroup.addProjection("Bottom")
-        projgroup.addProjection("Left")
-        x = (self.boundbox.Length.Value * projgroup.Scale) / 2 + 20.0
-        y = (self.boundbox.Width.Value * projgroup.Scale) / 2 + 40.0
+        if orientation == "A4L":
+            projgroup.addProjection("Bottom")
+            projgroup.addProjection("Left")
+        else:
+            projgroup.addProjection("Top")
+            projgroup.addProjection("Left")
+        x = 20 + (self.boundbox.Length.Value * projgroup.Scale) / 2
         projgroup.X = x
         projgroup.Y = y
         projgroup.AutoDistribute = False
@@ -349,8 +374,13 @@ class gespal3d_exports:
         iso_view.Direction = FreeCAD.Vector(0.577, -0.577, 0.577)
         iso_view.XDirection = FreeCAD.Vector(0.707, 0.707, -0.000)
         iso_view.Scale = scale / 2
-        iso_view.X = 240.0
-        iso_view.Y = 170.0
+        if orientation == "A4L":
+            iso_view.X = 240.0
+            iso_view.Y = 170.0
+        else:
+            iso_view.X = 3 * 210.0 / 4
+            iso_view.Y = 100.0
+
         iso_view.recompute()
         # Recompute
         page.recompute(True)
@@ -410,14 +440,15 @@ class _ListCreator:
 
     def Activated(self):
         # Spreadsheet
-        gespal3d_exports().makeSpreadsheet()
+        export = gespal3d_exports()
+        export.makeSpreadsheet()
 
         # Image
-        gespal3d_exports().makeImage()
+        export.makeImage()
 
         # Plan
-        gespal3d_exports().makePlan(name="plan_commercial")
-        gespal3d_exports().makePlan(name="plan_fabrication")
+        export.makePlan(name="plan_commercial")
+        export.makePlan(name="plan_fabrication")
 
         return
 

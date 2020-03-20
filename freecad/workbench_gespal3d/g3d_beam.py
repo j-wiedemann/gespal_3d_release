@@ -26,7 +26,7 @@ import DraftVecUtils
 from FreeCAD import Vector
 
 # from freecad.workbench_gespal3d import g3d_profiles_parser
-from freecad.workbench_gespal3d import tracker
+from freecad.workbench_gespal3d import g3d_tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
 from freecad.workbench_gespal3d import PARAMPATH
@@ -141,7 +141,7 @@ class _CommandComposant:
         """if hasattr(FreeCAD,"DraftWorkingPlane"):
             FreeCAD.DraftWorkingPlane.setup()"""
         self.points = []
-        self.tracker = tracker.boxTracker(
+        self.tracker = g3d_tracker.boxTracker(
             width=self.Width,
             height=self.Height,
             length=self.Length,

@@ -1,6 +1,6 @@
 import FreeCAD
 import DraftVecUtils
-from freecad.workbench_gespal3d import tracker
+from freecad.workbench_gespal3d import g3d_tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import PARAMPATH
 from freecad.workbench_gespal3d import DEBUG
@@ -75,7 +75,7 @@ class _CommandPanel:
 
         self.wp = FreeCAD.DraftWorkingPlane
         self.basepoint = None
-        self.tracker = tracker.rectangleTracker()
+        self.tracker = g3d_tracker.rectangleTracker()
         self.tracker.setPlane(self.wp.axis)
         title = translate("Gespal3D", "Premier coin du panneau ") + ":"
         FreeCADGui.Snapper.getPoint(

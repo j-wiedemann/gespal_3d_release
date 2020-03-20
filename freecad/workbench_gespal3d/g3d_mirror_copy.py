@@ -25,9 +25,6 @@ import FreeCAD
 import DraftVecUtils
 from FreeCAD import Vector
 
-# from freecad.workbench_gespal3d import g3d_profiles_parser
-from freecad.workbench_gespal3d import tracker
-from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
 from freecad.workbench_gespal3d import PARAMPATH
 import math

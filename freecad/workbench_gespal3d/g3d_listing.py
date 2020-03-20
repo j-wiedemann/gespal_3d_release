@@ -540,7 +540,7 @@ class _ShowHelp:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("ListCreator", _ListCreator())
-    FreeCADGui.addCommand("PlanCommercial", _PlanCommercial())
-    FreeCADGui.addCommand("PlanFabrication", _PlanFabrication())
-    FreeCADGui.addCommand("Help", _ShowHelp())
+    FreeCADGui.addCommand("G3D_Listing", _ListCreator())
+    FreeCADGui.addCommand("G3D_CommercialDrawing", _PlanCommercial())
+    FreeCADGui.addCommand("G3D_FabricationDrawing", _PlanFabrication())
+    FreeCADGui.addCommand("G3D_Help", _ShowHelp())

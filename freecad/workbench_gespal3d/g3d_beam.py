@@ -25,7 +25,7 @@ import FreeCAD
 import DraftVecUtils
 from FreeCAD import Vector
 
-# from freecad.workbench_gespal3d import profiles_parser
+# from freecad.workbench_gespal3d import g3d_profiles_parser
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
@@ -949,7 +949,7 @@ class _CommandComposant:
     def makeTransaction(self, point=None):
         FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Beam"))
         if DEBUG:
-            FreeCAD.Console.PrintMessage("BeamCreator.makeTransaction : \n")
+            FreeCAD.Console.PrintMessage("G3D_BeamComposant.makeTransaction : \n")
             msg = "Current Mode is : %s \n" % self.mode
             FreeCAD.Console.PrintMessage(msg)
             msg = "self.bpoint = %s \n" % self.bpoint
@@ -958,7 +958,7 @@ class _CommandComposant:
             FreeCAD.Console.PrintMessage(msg)
         FreeCADGui.addModule("Draft")
         FreeCADGui.addModule("Arch")
-        FreeCADGui.addModule("freecad.workbench_gespal3d.profiles_parser")
+        FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_profiles_parser")
 
         if self.Profile is not None:
             delta = self.setDelta()
@@ -968,9 +968,9 @@ class _CommandComposant:
             g = str(int(color[1]) / 255)
             b = str(int(color[2]) / 255)
 
-            # Create profil with profiles_parser tools
+            # Create profil with g3d_profiles_parser tools
             FreeCADGui.doCommand(
-                "p = freecad.workbench_gespal3d.profiles_parser.makeProfile("
+                "p = freecad.workbench_gespal3d.g3d_profiles_parser.makeProfile("
                 # 'p = Arch.makeProfile('
                 + str(self.Profile)
                 + ")"
@@ -1153,4 +1153,4 @@ class _CommandComposant:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("BeamCreator", _CommandComposant())
+    FreeCADGui.addCommand("G3D_BeamComposant", _CommandComposant())

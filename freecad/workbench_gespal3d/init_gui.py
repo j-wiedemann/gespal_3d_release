@@ -3,14 +3,15 @@ import FreeCADGui as Gui
 import FreeCAD as App
 from freecad.workbench_gespal3d import ICONPATH
 from freecad.workbench_gespal3d import PARAMPATH
-from freecad.workbench_gespal3d import enveloppe_creator
-from freecad.workbench_gespal3d import beam_creator
-from freecad.workbench_gespal3d import panel_creator
-from freecad.workbench_gespal3d import list_creator
-from freecad.workbench_gespal3d import copy_mirror
+from freecad.workbench_gespal3d import g3d_product
+from freecad.workbench_gespal3d import g3d_beam
+from freecad.workbench_gespal3d import g3d_panel
+from freecad.workbench_gespal3d import g3d_listing
+from freecad.workbench_gespal3d import g3d_mirror_copy
+from freecad.workbench_gespal3d import g3d_delete
 from freecad.workbench_gespal3d import __version__ as wb_version
 
-__title__="Gespal 3D InitGui"
+__title__ = "Gespal 3D InitGui"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
@@ -24,26 +25,27 @@ class gespal3d_workbench(Gui.Workbench):
     ToolTip = "Fabrication de palettes"
     Icon = os.path.join(ICONPATH, "template_resource.svg")
     toolbox_gespal3d = [
-        "EnveloppeCreator",
-        "BeamCreator",
-        "PanelCreator",
-        "ListCreator",
-        "PlanCommercial",
-        "PlanFabrication",
-        "Help"
-        ]
+        "G3D_Product",
+        "G3D_BeamComposant",
+        "G3D_PanelComposant",
+        "G3D_Listing",
+        "G3D_CommercialDrawing",
+        "G3D_FabricationDrawing",
+        "G3D_Help",
+    ]
     toolbox_mod = [
+        "G3D_Delete",
         "Draft_Move",
         "Draft_Rotate",
-        "CopyMirror",
-        "Arch_CutPlane"
-        ]
+        "G3D_MirrorCopy",
+        "Arch_CutPlane",
+    ]
     toolbox_create = [
         "Draft_Line",
         "Draft_Circle",
         "Draft_Rectangle",
         "Draft_Dimension",
-        ]
+    ]
 
     def GetClassName(self):
         return "Gui::PythonWorkbench"
@@ -57,7 +59,7 @@ class gespal3d_workbench(Gui.Workbench):
 
         p = App.ParamGet(str(PARAMPATH))
         c = App.ParamGet("User parameter:BaseApp/Preferences/Document")
-        c.SetBool('DuplicateLabels', True)
+        c.SetBool("DuplicateLabels", True)
 
         self.appendToolbar("Gespal3D", self.toolbox_gespal3d)
         self.appendMenu("Gespal3D", self.toolbox_gespal3d)
@@ -69,9 +71,9 @@ class gespal3d_workbench(Gui.Workbench):
         self.appendMenu(u"Creation", self.toolbox_create)
 
     def Activated(self):
-        '''
+        """
         code which should be computed when a user switch to this workbench
-        '''
+        """
 
         App.Console.PrintMessage("Bienvenue sur l'atelier Gespal 3D \n")
         msg = "Version : " + str(wb_version) + "\n"
@@ -83,9 +85,9 @@ class gespal3d_workbench(Gui.Workbench):
             Gui.Snapper.show()
 
     def Deactivated(self):
-        '''
+        """
         code which should be computed when this workbench is deactivated
-        '''
+        """
         pass
 
 

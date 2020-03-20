@@ -25,7 +25,7 @@ import FreeCAD
 import DraftVecUtils
 from FreeCAD import Vector
 
-# from freecad.workbench_gespal3d import profiles_parser
+# from freecad.workbench_gespal3d import g3d_profiles_parser
 from freecad.workbench_gespal3d import tracker
 from freecad.workbench_gespal3d import connect_db
 from freecad.workbench_gespal3d import DEBUG
@@ -127,12 +127,12 @@ class _CopyMirrorTaskPanel:
                 FreeCAD.ActiveDocument.openTransaction(
                     translate("Gespal3D", "Create Mirror")
                 )
-                FreeCADGui.addModule("freecad.workbench_gespal3d.copy_mirror")
+                FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_mirror_copy")
                 FreeCADGui.doCommand("sel = FreeCADGui.Selection.getSelection()")
                 FreeCADGui.doCommand("plane = sel[-1]")
                 FreeCADGui.doCommand("objs = sel[:-1]")
                 FreeCADGui.doCommand(
-                    "freecad.workbench_gespal3d.copy_mirror.makeCopyMirror(objs, plane)"
+                    "freecad.workbench_gespal3d.g3d_mirror_copy.makeCopyMirror(objs, plane)"
                 )
                 FreeCAD.ActiveDocument.commitTransaction()
             else:
@@ -202,4 +202,4 @@ class _CommandCopyMirror:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("CopyMirror", _CommandCopyMirror())
+    FreeCADGui.addCommand("G3D_MirrorCopy", _CommandCopyMirror())

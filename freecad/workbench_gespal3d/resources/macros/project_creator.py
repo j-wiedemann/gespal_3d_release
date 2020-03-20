@@ -9,13 +9,13 @@ PROJECT_HAUTEUR = 1400
 FreeCADGui.activateWorkbench("gespal3d_workbench")
 
 # importer la fonction
-from freecad.workbench_gespal3d import enveloppe_creator
+from freecad.workbench_gespal3d import g3d_product
 
 # creation d'un nouveau document
 doc = App.newDocument(PROJECT_ID)
 
 # creation de la boite englobante du projet
-enveloppe_creator.makeEnveloppe(PROJECT_ID, PROJECT_LONGUEUR,PROJECT_LARGEUR,PROJECT_HAUTEUR)
+g3d_product.makeEnveloppe(PROJECT_ID, PROJECT_LONGUEUR,PROJECT_LARGEUR,PROJECT_HAUTEUR)
 
 # calcul du document
 doc.recompute()

@@ -141,4 +141,4 @@ class _CommandEnveloppe:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("EnveloppeCreator", _CommandEnveloppe())
+    FreeCADGui.addCommand("G3D_Product", _CommandEnveloppe())

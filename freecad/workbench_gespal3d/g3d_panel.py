@@ -425,4 +425,4 @@ class _CommandPanel:
 
 
 if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("PanelCreator", _CommandPanel())
+    FreeCADGui.addCommand("G3D_PanelComposant", _CommandPanel())

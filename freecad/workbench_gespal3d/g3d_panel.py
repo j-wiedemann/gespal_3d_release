@@ -1,7 +1,7 @@
 import FreeCAD
 import DraftVecUtils
 from freecad.workbench_gespal3d import g3d_tracker
-from freecad.workbench_gespal3d import connect_db
+from freecad.workbench_gespal3d import g3d_connect_db
 from freecad.workbench_gespal3d import PARAMPATH
 from freecad.workbench_gespal3d import DEBUG
 
@@ -71,7 +71,7 @@ class _CommandPanel:
         self.continueCmd = self.p.GetBool("PanelContinue", False)
 
         # fetch data from sqlite database
-        self.categories = connect_db.getCategories(include=["PX"])
+        self.categories = g3d_connect_db.getCategories(include=["PX"])
 
         self.wp = FreeCAD.DraftWorkingPlane
         self.basepoint = None
@@ -210,14 +210,14 @@ class _CommandPanel:
         if stored_composant:
             if DEBUG:
                 FreeCAD.Console.PrintMessage("restore composant \n")
-            comp = connect_db.getComposant(id=stored_composant)
+            comp = g3d_connect_db.getComposant(id=stored_composant)
             cat = comp[2]
             n = 0
             for x in self.categories:
                 if x[0] == cat:
                     self.categories_cb.setCurrentIndex(n)
                 n += 1
-            self.composant_items = connect_db.getComposants(categorie=cat)
+            self.composant_items = g3d_connect_db.getComposants(categorie=cat)
             self.composant_cb.clear()
             self.composant_cb.addItems([x[1] for x in self.composant_items])
             n = 0
@@ -233,13 +233,13 @@ class _CommandPanel:
     def setCategory(self, i):
         self.composant_cb.clear()
         fc_compteur = self.categories[i][0]
-        self.composant_items = connect_db.getComposants(categorie=fc_compteur)
+        self.composant_items = g3d_connect_db.getComposants(categorie=fc_compteur)
         self.composant_cb.addItems([x[1] for x in self.composant_items])
 
     def setComposant(self, i):
         self.Profile = None
         id = self.composant_items[i][0]
-        comp = connect_db.getComposant(id=id)
+        comp = g3d_connect_db.getComposant(id=id)
 
         if comp:
             self.Profile = comp

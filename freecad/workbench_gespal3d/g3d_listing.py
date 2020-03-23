@@ -338,7 +338,7 @@ class gespal3d_exports:
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)
-        # template.setEditFieldContent("FC-SC", str(scale))
+        template.setEditFieldContent("FC-SC", str(scale))
         # ProjGroup
         projgroup = doc.addObject("TechDraw::DrawProjGroup", projgrp_name)
         page.addView(projgroup)

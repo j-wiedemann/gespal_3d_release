@@ -52,6 +52,8 @@ __title__ = "Beam Gespal3D"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
+DEBUG_U = False
+
 
 class _CommandComposant:
 
@@ -218,11 +220,11 @@ class _CommandComposant:
 
     def update(self, point, info):
         "this function is called by the Snapper when the mouse is moved"
-        if DEBUG:
+        if (DEBUG == True) and (DEBUG_U == True):
             FreeCAD.Console.PrintMessage("_CommandComposant update \n")
 
         if FreeCADGui.Control.activeDialog():
-            if DEBUG:
+            if (DEBUG == True) and (DEBUG_U == True):
                 msg = "Current Mode is : %s \n" % self.mode
                 FreeCAD.Console.PrintMessage(msg)
             if self.mode == "point":
@@ -949,6 +951,7 @@ class _CommandComposant:
     def makeTransaction(self, point=None):
         FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Beam"))
         if DEBUG:
+            FreeCAD.Console.PrintMessage("\n")
             FreeCAD.Console.PrintMessage("G3D_BeamComposant.makeTransaction : \n")
             msg = "Current Mode is : %s \n" % self.mode
             FreeCAD.Console.PrintMessage(msg)
@@ -1031,7 +1034,7 @@ class _CommandComposant:
                 tracker_vec = FreeCAD.Vector(0.0, 0.0, 0.0)
             if DEBUG:
                 msg = "tracker_vec = %s \n" % tracker_vec
-                FreeCAD.Console.PrintWarning(msg)
+                FreeCAD.Console.PrintMessage(msg)
             axis = FreeCAD.DraftWorkingPlane.axis
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
@@ -1073,7 +1076,7 @@ class _CommandComposant:
                         vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
             if DEBUG:
                 msg = "vec_transaction = %s \n" % vec_transaction
-                FreeCAD.Console.PrintWarning(msg)
+                FreeCAD.Console.PrintMessage(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
                 FreeCADGui.doCommand(

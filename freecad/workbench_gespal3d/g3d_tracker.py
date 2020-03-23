@@ -6,10 +6,15 @@ __url__ = "http://www.freecadweb.org"
 import FreeCAD
 from DraftTrackers import Tracker
 import DraftVecUtils
+
 # import DraftGeomUtils
 # import WorkingPlane
 from pivy import coin
 from freecad.workbench_gespal3d import DEBUG
+
+DEBUG_T = True
+if (DEBUG == True) and (DEBUG_T == True):
+    DEBUG_T = False
 
 
 class boxTracker(Tracker):
@@ -28,32 +33,29 @@ class boxTracker(Tracker):
         self.deversement = dev
         self.snap_bp = FreeCAD.Vector(0.0, 0.0, 0.0)
 
-        Tracker.__init__(
-            self,
-            children=[self.trans, w, self.cube],
-            name="boxTracker")
+        Tracker.__init__(self, children=[self.trans, w, self.cube], name="boxTracker")
 
     def setRotation(self, rot):
-        if DEBUG:
-            msg = 'tracker setRotation : %s \n' % rot
+        if DEBUG_T:
+            msg = "tracker setRotation : %s \n" % rot
             FreeCAD.Console.PrintMessage(msg)
         self.trans.rotation.setValue(rot.Q)
 
     def setPosition(self, p):
-        if DEBUG:
-            msg = 'tracker setPosition : %s \n' % p
+        if DEBUG_T:
+            msg = "tracker setPosition : %s \n" % p
             FreeCAD.Console.PrintMessage(msg)
         p = p.add(self.delta)
         self.trans.translation.setValue(DraftVecUtils.tup(p))
 
     def setPlacement(self, snap_bp, bp_idx, dev):
-        if DEBUG:
+        if DEBUG_T:
             FreeCAD.Console.PrintMessage("tracker setPlacement \n")
-            msg = 'snap_bp : %s \n' % snap_bp
+            msg = "snap_bp : %s \n" % snap_bp
             FreeCAD.Console.PrintMessage(msg)
-            msg = 'bp_idx : %s \n' % bp_idx
+            msg = "bp_idx : %s \n" % bp_idx
             FreeCAD.Console.PrintMessage(msg)
-            msg = 'dev : %s \n' % dev
+            msg = "dev : %s \n" % dev
             FreeCAD.Console.PrintMessage(msg)
         w = self.width()
         h = self.height()
@@ -68,67 +70,74 @@ class boxTracker(Tracker):
         axis = FreeCAD.DraftWorkingPlane.axis
 
         # base point
-        delta_list = [[
-            FreeCAD.Vector(d/2, h/2, w/2),
-            FreeCAD.Vector(d/2, 0, w/2),
-            FreeCAD.Vector(d/2, -h/2, w/2),
-            FreeCAD.Vector(d/2, h/2, 0),
-            FreeCAD.Vector(d/2, 0, 0),
-            FreeCAD.Vector(d/2, -h/2, 0),
-            FreeCAD.Vector(d/2, h/2, -w/2),
-            FreeCAD.Vector(d/2, 0, -w/2),
-            FreeCAD.Vector(d/2, -h/2, -w/2),
-            ], [
-            FreeCAD.Vector(d/2, w/2, h/2),
-            FreeCAD.Vector(d/2, 0, h/2),
-            FreeCAD.Vector(d/2, -w/2, h/2),
-            FreeCAD.Vector(d/2, w/2, 0),
-            FreeCAD.Vector(d/2, 0, 0),
-            FreeCAD.Vector(d/2, -w/2, 0),
-            FreeCAD.Vector(d/2, w/2, -h/2),
-            FreeCAD.Vector(d/2, 0, -h/2),
-            FreeCAD.Vector(d/2, -w/2, -h/2),
-            ], [
-            FreeCAD.Vector(h/2, d/2, w/2),
-            FreeCAD.Vector(0, d/2, w/2),
-            FreeCAD.Vector(-h/2, d/2, w/2),
-            FreeCAD.Vector(h/2, d/2, 0),
-            FreeCAD.Vector(0, d/2, 0),
-            FreeCAD.Vector(-h/2, d/2, 0),
-            FreeCAD.Vector(h/2, d/2, -w/2),
-            FreeCAD.Vector(0, d/2, -w/2),
-            FreeCAD.Vector(-h/2, d/2, -w/2),
-            ], [
-            FreeCAD.Vector(w/2, d/2, h/2),
-            FreeCAD.Vector(0, d/2, h/2),
-            FreeCAD.Vector(-w/2, d/2, h/2),
-            FreeCAD.Vector(w/2, d/2, 0),
-            FreeCAD.Vector(0, d/2, 0),
-            FreeCAD.Vector(-w/2, d/2, 0),
-            FreeCAD.Vector(w/2, d/2, -h/2),
-            FreeCAD.Vector(0, d/2, -h/2),
-            FreeCAD.Vector(-w/2, d/2, -h/2),
-            ], [
-            FreeCAD.Vector(w/2, h/2, d/2),
-            FreeCAD.Vector(0, h/2, d/2),
-            FreeCAD.Vector(-w/2, h/2, d/2),
-            FreeCAD.Vector(w/2, 0, d/2),
-            FreeCAD.Vector(0, 0, d/2),
-            FreeCAD.Vector(-w/2, 0, d/2),
-            FreeCAD.Vector(w/2, -h/2, d/2),
-            FreeCAD.Vector(0, -h/2, d/2),
-            FreeCAD.Vector(-w/2, -h/2, d/2),
-            ], [
-            FreeCAD.Vector(h/2, w/2, d/2),
-            FreeCAD.Vector(0, w/2, d/2),
-            FreeCAD.Vector(-h/2, w/2, d/2),
-            FreeCAD.Vector(h/2, 0, d/2),
-            FreeCAD.Vector(0, 0, d/2),
-            FreeCAD.Vector(-h/2, 0, d/2),
-            FreeCAD.Vector(h/2, -w/2, d/2),
-            FreeCAD.Vector(0, -w/2, d/2),
-            FreeCAD.Vector(-h/2, -w/2, d/2),
-            ]]
+        delta_list = [
+            [
+                FreeCAD.Vector(d / 2, h / 2, w / 2),
+                FreeCAD.Vector(d / 2, 0, w / 2),
+                FreeCAD.Vector(d / 2, -h / 2, w / 2),
+                FreeCAD.Vector(d / 2, h / 2, 0),
+                FreeCAD.Vector(d / 2, 0, 0),
+                FreeCAD.Vector(d / 2, -h / 2, 0),
+                FreeCAD.Vector(d / 2, h / 2, -w / 2),
+                FreeCAD.Vector(d / 2, 0, -w / 2),
+                FreeCAD.Vector(d / 2, -h / 2, -w / 2),
+            ],
+            [
+                FreeCAD.Vector(d / 2, w / 2, h / 2),
+                FreeCAD.Vector(d / 2, 0, h / 2),
+                FreeCAD.Vector(d / 2, -w / 2, h / 2),
+                FreeCAD.Vector(d / 2, w / 2, 0),
+                FreeCAD.Vector(d / 2, 0, 0),
+                FreeCAD.Vector(d / 2, -w / 2, 0),
+                FreeCAD.Vector(d / 2, w / 2, -h / 2),
+                FreeCAD.Vector(d / 2, 0, -h / 2),
+                FreeCAD.Vector(d / 2, -w / 2, -h / 2),
+            ],
+            [
+                FreeCAD.Vector(h / 2, d / 2, w / 2),
+                FreeCAD.Vector(0, d / 2, w / 2),
+                FreeCAD.Vector(-h / 2, d / 2, w / 2),
+                FreeCAD.Vector(h / 2, d / 2, 0),
+                FreeCAD.Vector(0, d / 2, 0),
+                FreeCAD.Vector(-h / 2, d / 2, 0),
+                FreeCAD.Vector(h / 2, d / 2, -w / 2),
+                FreeCAD.Vector(0, d / 2, -w / 2),
+                FreeCAD.Vector(-h / 2, d / 2, -w / 2),
+            ],
+            [
+                FreeCAD.Vector(w / 2, d / 2, h / 2),
+                FreeCAD.Vector(0, d / 2, h / 2),
+                FreeCAD.Vector(-w / 2, d / 2, h / 2),
+                FreeCAD.Vector(w / 2, d / 2, 0),
+                FreeCAD.Vector(0, d / 2, 0),
+                FreeCAD.Vector(-w / 2, d / 2, 0),
+                FreeCAD.Vector(w / 2, d / 2, -h / 2),
+                FreeCAD.Vector(0, d / 2, -h / 2),
+                FreeCAD.Vector(-w / 2, d / 2, -h / 2),
+            ],
+            [
+                FreeCAD.Vector(w / 2, h / 2, d / 2),
+                FreeCAD.Vector(0, h / 2, d / 2),
+                FreeCAD.Vector(-w / 2, h / 2, d / 2),
+                FreeCAD.Vector(w / 2, 0, d / 2),
+                FreeCAD.Vector(0, 0, d / 2),
+                FreeCAD.Vector(-w / 2, 0, d / 2),
+                FreeCAD.Vector(w / 2, -h / 2, d / 2),
+                FreeCAD.Vector(0, -h / 2, d / 2),
+                FreeCAD.Vector(-w / 2, -h / 2, d / 2),
+            ],
+            [
+                FreeCAD.Vector(h / 2, w / 2, d / 2),
+                FreeCAD.Vector(0, w / 2, d / 2),
+                FreeCAD.Vector(-h / 2, w / 2, d / 2),
+                FreeCAD.Vector(h / 2, 0, d / 2),
+                FreeCAD.Vector(0, 0, d / 2),
+                FreeCAD.Vector(-h / 2, 0, d / 2),
+                FreeCAD.Vector(h / 2, -w / 2, d / 2),
+                FreeCAD.Vector(0, -w / 2, d / 2),
+                FreeCAD.Vector(-h / 2, -w / 2, d / 2),
+            ],
+        ]
 
         # manage direction
         if axis.x != 0.0:
@@ -136,7 +145,7 @@ class boxTracker(Tracker):
                 rot = FreeCAD.Placement()
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 1, 0), 90)
                 self.setRotation(rot.Rotation)
-                p = delta_list[0][bp_idx-1]
+                p = delta_list[0][bp_idx - 1]
                 if axis.x == -1.0:
                     p.x = p.x * -1
                 p = p.add(snap_bp)
@@ -145,7 +154,7 @@ class boxTracker(Tracker):
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(1, 0, 0), 90)
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 1, 0), 90)
                 self.setRotation(rot.Rotation)
-                p = delta_list[1][bp_idx-1]
+                p = delta_list[1][bp_idx - 1]
                 if axis.x == -1.0:
                     p.x = p.x * -1
                 p = p.add(snap_bp)
@@ -156,7 +165,7 @@ class boxTracker(Tracker):
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 0, 1), 90)
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 1, 0), 90)
                 self.setRotation(rot.Rotation)
-                p = delta_list[2][bp_idx-1]
+                p = delta_list[2][bp_idx - 1]
                 if axis.y == -1.0:
                     p.y = p.y * -1
                 p = p.add(snap_bp)
@@ -164,7 +173,7 @@ class boxTracker(Tracker):
                 rot = FreeCAD.Placement()
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(1, 0, 0), 90)
                 self.setRotation(rot.Rotation)
-                p = delta_list[3][bp_idx-1]
+                p = delta_list[3][bp_idx - 1]
                 if axis.y == -1.0:
                     p.y = p.y * -1
                 p = p.add(snap_bp)
@@ -174,7 +183,7 @@ class boxTracker(Tracker):
                 rot = FreeCAD.Placement()
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 0, 1), 0)
                 self.setRotation(rot.Rotation)
-                p = delta_list[4][bp_idx-1]
+                p = delta_list[4][bp_idx - 1]
                 if axis.z == -1.0:
                     p.z = p.z * -1
                 p = p.add(snap_bp)
@@ -182,7 +191,7 @@ class boxTracker(Tracker):
                 rot = FreeCAD.Placement()
                 rot.rotate(FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0, 0, 1), 90)
                 self.setRotation(rot.Rotation)
-                p = delta_list[5][bp_idx-1]
+                p = delta_list[5][bp_idx - 1]
                 if axis.z == -1.0:
                     p.z = p.z * -1
                 p = p.add(snap_bp)
@@ -197,9 +206,8 @@ class boxTracker(Tracker):
         if w:
             self.cube.width.setValue(w)
             self.setPlacement(
-                snap_bp=self.snap_bp,
-                bp_idx=self.bp_idx,
-                dev=self.deversement)
+                snap_bp=self.snap_bp, bp_idx=self.bp_idx, dev=self.deversement
+            )
         else:
             return self.cube.width.getValue()
 
@@ -207,9 +215,8 @@ class boxTracker(Tracker):
         if vlength:
             self.cube.depth.setValue(vlength)
             self.setPlacement(
-                snap_bp=self.snap_bp,
-                bp_idx=self.bp_idx,
-                dev=self.deversement)
+                snap_bp=self.snap_bp, bp_idx=self.bp_idx, dev=self.deversement
+            )
         else:
             return self.cube.depth.getValue()
 
@@ -217,9 +224,8 @@ class boxTracker(Tracker):
         if h:
             self.cube.height.setValue(h)
             self.setPlacement(
-                snap_bp=self.snap_bp,
-                bp_idx=self.bp_idx,
-                dev=self.deversement)
+                snap_bp=self.snap_bp, bp_idx=self.bp_idx, dev=self.deversement
+            )
         else:
             return self.cube.height.getValue()
 
@@ -235,9 +241,8 @@ class arrayBoxTracker(Tracker):
         self.array = coin.SoArray()
         self.array.addChild(cube)
         Tracker.__init__(
-            self,
-            children=[self.trans, w, self.array],
-            name="arrayBoxTracker")
+            self, children=[self.trans, w, self.array], name="arrayBoxTracker"
+        )
 
     def update(self, qte=1, line=None, start=False, end=False):
         if qte == 1:
@@ -253,14 +258,15 @@ class rectangleTracker(Tracker):
     """A Rectangle tracker, used by the rectangle tool"""
 
     def __init__(self, dotted=False, scolor=None, swidth=None, face=False):
-        if DEBUG:
+        if DEBUG_T:
             FreeCAD.Console.PrintMessage("rectangle tracker : __init__ \n")
         self.origin = FreeCAD.Vector(0.0, 0.0, 0.0)
         line = coin.SoLineSet()
         line.numVertices.setValue(5)
         self.coords = coin.SoCoordinate3()  # this is the coordinate
         self.coords.point.setValues(
-            0, 50, [[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+            0, 50, [[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]]
+        )
         if face:
             m1 = coin.SoMaterial()
             m1.transparency.setValue(0.5)
@@ -273,7 +279,8 @@ class rectangleTracker(Tracker):
                 scolor,
                 swidth,
                 [self.coords, line, m1, f],
-                name="rectangleTracker")
+                name="rectangleTracker",
+            )
         else:
             Tracker.__init__(
                 self,
@@ -281,13 +288,14 @@ class rectangleTracker(Tracker):
                 scolor,
                 swidth,
                 [self.coords, line],
-                name="rectangleTracker")
+                name="rectangleTracker",
+            )
         self.u = FreeCAD.DraftWorkingPlane.u
         self.v = FreeCAD.DraftWorkingPlane.v
 
     def setorigin(self, point):
         """sets the base point of the rectangle"""
-        if DEBUG:
+        if DEBUG_T:
             FreeCAD.Console.PrintMessage("rectangle tracker : set origin \n")
         self.coords.point.set1Value(0, point.x, point.y, point.z)
         self.coords.point.set1Value(4, point.x, point.y, point.z)
@@ -295,7 +303,7 @@ class rectangleTracker(Tracker):
 
     def update(self, point):
         """sets the opposite (diagonal) point of the rectangle"""
-        if DEBUG:
+        if DEBUG_T:
             FreeCAD.Console.PrintMessage("rectangle tracker : update \n")
         diagonal = point.sub(self.origin)
         inpoint1 = self.origin.add(DraftVecUtils.project(diagonal, self.v))
@@ -307,14 +315,13 @@ class rectangleTracker(Tracker):
     def setPlane(self, u, v=None):
         """sets given (u,v) vectors as working plane. You can give only u
         and v will be deduced automatically given current workplane"""
-        if DEBUG:
+        if DEBUG_T:
             FreeCAD.Console.PrintMessage("rectangle tracker : set plane \n")
         self.u = u
         if v:
             self.v = v
         else:
-            norm = FreeCAD.DraftWorkingPlane.u.cross(
-                FreeCAD.DraftWorkingPlane.v)
+            norm = FreeCAD.DraftWorkingPlane.u.cross(FreeCAD.DraftWorkingPlane.v)
             self.v = self.u.cross(norm)
 
     def p1(self, point=None):
@@ -346,7 +353,8 @@ class rectangleTracker(Tracker):
         diag = p2.sub(p1)
         return (
             (DraftVecUtils.project(diag, self.u)).Length,
-            (DraftVecUtils.project(diag, self.v)).Length)
+            (DraftVecUtils.project(diag, self.v)).Length,
+        )
 
     def getNormal(self):
         """returns the normal of the rectangle"""

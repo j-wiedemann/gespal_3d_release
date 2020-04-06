@@ -4,7 +4,7 @@ __url__ = "http://www.freecadweb.org"
 
 
 import FreeCAD
-from DraftTrackers import Tracker
+from draftguitools.gui_trackers import Tracker
 import DraftVecUtils
 
 # import DraftGeomUtils

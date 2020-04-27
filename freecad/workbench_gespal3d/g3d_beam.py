@@ -1030,63 +1030,87 @@ class _CommandComposant:
         else:
             if self.bpoint is not None:
                 tracker_vec = point.sub(self.bpoint)
+                if self.mode == "array" or self.mode == "fill":
+                    original_point = point
             else:
                 tracker_vec = FreeCAD.Vector(0.0, 0.0, 0.0)
+                self.bpoint = FreeCAD.Vector(0.0, 0.0, 0.0)
             if DEBUG:
-                msg = "tracker_vec = %s \n" % tracker_vec
+                msg = "tracker_vec = {} \n".format(tracker_vec)
                 FreeCAD.Console.PrintMessage(msg)
             axis = FreeCAD.DraftWorkingPlane.axis
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
-                    vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
+                    vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                 else:
-                    vec_transaction = "FreeCAD.Vector(0.0, -%s, 0.0)"
+                    vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
+                offset = point.x
+                bpoint1 = self.bpoint.y
+                bpoint2 = self.bpoint.z
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
-                    vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
+                    vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                 else:
-                    vec_transaction = "FreeCAD.Vector(-%s, 0.0, 0.0)"
+                    vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
+                offset = point.y
+                bpoint1 = self.bpoint.x
+                bpoint2 = self.bpoint.z
             elif axis.z != 0.0:
                 if (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        bpoint1 = self.bpoint.x
+                        bpoint2 = self.bpoint.y
                     else:
-                        vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        bpoint1 = self.bpoint.y
+                        bpoint2 = self.bpoint.x
                 elif (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector(0.0, -%s, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        bpoint1 = self.bpoint.y
+                        bpoint2 = self.bpoint.x
                     else:
-                        vec_transaction = "FreeCAD.Vector(-%s, 0.0, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        bpoint1 = self.bpoint.x
+                        bpoint2 = self.bpoint.y
                 else:
-                    vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
+                    vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                    bpoint1 = self.bpoint.x
+                    bpoint2 = self.bpoint.y
                     if DEBUG:
                         FreeCAD.Console.PrintWarning("Unexpected situation !\n")
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
                     if tracker_vec.x < tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector(%s, 0.0, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        bpoint1 = self.bpoint.x
+                        bpoint2 = self.bpoint.y
                     else:
-                        vec_transaction = "FreeCAD.Vector(0.0, %s, 0.0)"
+                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        bpoint1 = self.bpoint.y
+                        bpoint2 = self.bpoint.x
+                offset = point.z
             if DEBUG:
-                msg = "vec_transaction = %s \n" % vec_transaction
+                msg = "vec_transaction = {} \n".format(vec_transaction)
                 FreeCAD.Console.PrintMessage(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
-                FreeCADGui.doCommand(
-                    "s.Placement.Base = " + DraftVecUtils.toString(self.bpoint)
-                )
+                first_vec = vec_transaction.format(bpoint1, offset, bpoint2)
+
+                FreeCADGui.doCommand("s.Placement.Base = " + first_vec)
                 FreeCADGui.doCommand(
                     "s.Placement.Rotation = s.Placement.Rotation.multiply( \
                         FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
                 )
-                length = DraftVecUtils.dist(self.bpoint, point)
+                length = DraftVecUtils.dist(self.bpoint, original_point)
                 space = self.FillSpace
                 delta = self.Height + space
                 div = length / delta
@@ -1094,20 +1118,17 @@ class _CommandComposant:
                 for x in range(qte):
                     FreeCADGui.doCommand(
                         "Draft.move(s,"
-                        + vec_transaction % str(delta * (x + 1))
+                        + vec_transaction.format(str(delta * (x + 1)), 0.0, 0.0)
                         + ", copy=True)"
                     )
 
             elif self.mode == "array" and self.bpoint is not None:
-                length = DraftVecUtils.dist(self.bpoint, point)
+                length = DraftVecUtils.dist(self.bpoint, original_point)
                 space = length / (self.array_qty + 1)
                 spaces_list = []
                 for x in range(self.array_qty):
                     spaces_list.append(space * (x + 1))
-                vec_str = vec_transaction % str(spaces_list[0])
-                d = vec_str.split("(")[1].split(")")[0].split(",")
-                d_vec = FreeCAD.Vector(float(d[0]), float(d[1]), float(d[2]))
-                first_vec = self.bpoint.add(d_vec)
+                first_vec = vec_transaction.format(str(spaces_list[0]), offset, bpoint2)
 
                 if DEBUG:
                     FreeCAD.Console.PrintMessage("Array : \n")
@@ -1119,14 +1140,10 @@ class _CommandComposant:
                     FreeCAD.Console.PrintMessage(msg)
                     msg = "spaces_list : %s \n" % spaces_list
                     FreeCAD.Console.PrintMessage(msg)
-                    msg = "d_vec : %s \n" % d_vec
-                    FreeCAD.Console.PrintMessage(msg)
                     msg = "first_vec : %s \n" % first_vec
                     FreeCAD.Console.PrintMessage(msg)
 
-                FreeCADGui.doCommand(
-                    "s.Placement.Base = " + DraftVecUtils.toString(first_vec)
-                )
+                FreeCADGui.doCommand("s.Placement.Base = " + first_vec)
                 FreeCADGui.doCommand(
                     "s.Placement.Rotation = s.Placement.Rotation.multiply( \
                         FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
@@ -1135,7 +1152,7 @@ class _CommandComposant:
                 for x in spaces_list[1:]:
                     FreeCADGui.doCommand(
                         "Draft.move(s,"
-                        + vec_transaction % str(x - space)
+                        + vec_transaction.format(str(x - space), 0.0, 0.0)
                         + ", copy=True)"
                     )
             else:

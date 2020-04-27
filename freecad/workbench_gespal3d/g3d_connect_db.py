@@ -9,7 +9,7 @@ def sql_connection():
     p = App.ParamGet(str(PARAMPATH))
     no_database = "true"
     sqlite_db = p.GetString("sqlitedb", no_database)
-    if sqlite_db is "true":
+    if sqlite_db == "true":
         App.Console.PrintMessage(
             "define database path in BaseApp/Preferences/Mod/Gespal3D"
         )

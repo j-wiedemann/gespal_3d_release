@@ -11,10 +11,11 @@ import DraftVecUtils
 # import WorkingPlane
 from pivy import coin
 from freecad.workbench_gespal3d import DEBUG
+from freecad.workbench_gespal3d import DEBUG_T
 
-DEBUG_T = True
+
 if (DEBUG == True) and (DEBUG_T == True):
-    DEBUG_T = False
+    DEBUG_T = True
 
 
 class boxTracker(Tracker):

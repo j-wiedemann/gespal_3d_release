@@ -7,4 +7,5 @@ RESOURCESPATH = os.path.join(os.path.dirname(__file__), "resources")
 ICONPATH = os.path.join(RESOURCESPATH, "icons")
 PARAMPATH = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
 
-DEBUG = False
+DEBUG = False  # general
+DEBUG_T = False  # tracker

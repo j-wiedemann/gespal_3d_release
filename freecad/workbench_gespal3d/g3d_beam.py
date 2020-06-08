@@ -185,7 +185,9 @@ class _CommandComposant:
             return
         # mode line et pas de 1er clic
         if (self.mode == "line") and (self.bpoint is None):
-            self.bpoint = point
+            self.bpoint = FreeCAD.Vector(
+                round(point.x, 2), round(point.y, 2), round(point.z, 2)
+            )
             FreeCADGui.Snapper.getPoint(
                 last=point,
                 callback=self.getPoint,
@@ -197,7 +199,9 @@ class _CommandComposant:
             return
         # mode array
         if (self.mode == "array") and (self.bpoint is None):
-            self.bpoint = point
+            self.bpoint = FreeCAD.Vector(
+                round(point.x, 2), round(point.y, 2), round(point.z, 2)
+            )
             FreeCADGui.Snapper.getPoint(
                 last=point,
                 callback=self.getPoint,
@@ -209,7 +213,9 @@ class _CommandComposant:
             return
         # mode array
         if (self.mode == "fill") and (self.bpoint is None):
-            self.bpoint = point
+            self.bpoint = FreeCAD.Vector(
+                round(point.x, 2), round(point.y, 2), round(point.z, 2)
+            )
             FreeCADGui.Snapper.getPoint(
                 last=point,
                 callback=self.getPoint,
@@ -951,6 +957,10 @@ class _CommandComposant:
         self.p.SetBool("BeamContinue", bool(i))
 
     def makeTransaction(self, point=None):
+        x = round(point.x, 2)
+        y = round(point.y, 2)
+        z = round(point.z, 2)
+        point = FreeCAD.Vector(x, y, z)
         FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Beam"))
         if DEBUG:
             messages = ["G3D_BeamComposant.makeTransaction :"]
@@ -1028,7 +1038,7 @@ class _CommandComposant:
             )
 
         else:
-            if self.bpoint is not None:
+            if self.bpoint is not None and point is not None:
                 tracker_vec = point.sub(self.bpoint)
                 if self.mode == "array" or self.mode == "fill":
                     original_point = point
@@ -1036,67 +1046,107 @@ class _CommandComposant:
                 tracker_vec = FreeCAD.Vector(0.0, 0.0, 0.0)
                 self.bpoint = FreeCAD.Vector(0.0, 0.0, 0.0)
             if DEBUG:
-                msg = "tracker_vec = {} \n".format(tracker_vec)
-                FreeCAD.Console.PrintMessage(msg)
+                print_debug(["tracker_vec = {}".format(tracker_vec)])
             axis = FreeCAD.DraftWorkingPlane.axis
+
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
+                    bpoint1 = self.bpoint.y
+                    situation = "Situation 1"
                 else:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
+                    bpoint1 = point.y
+                    situation = "Situation 2"
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
                 offset = point.x
-                bpoint1 = self.bpoint.y
                 bpoint2 = self.bpoint.z
+
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
+                    bpoint1 = self.bpoint.x
+                    situation = "Situation 3"
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
+                    bpoint1 = point.x
+                    situation = "Situation 4"
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
                 offset = point.y
-                bpoint1 = self.bpoint.x
                 bpoint2 = self.bpoint.z
+
             elif axis.z != 0.0:
-                if (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
+
+                if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
+                    if tracker_vec.x > tracker_vec.y:
+                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        bpoint1 = point.y
+                        bpoint2 = self.bpoint.x
+                        situation = "Situation 7"
+                    else:
+                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        bpoint1 = point.x
+                        bpoint2 = self.bpoint.y
+                        situation = "Situation 8"
+
+                elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = self.bpoint.x
                         bpoint2 = self.bpoint.y
+                        situation = "Situation 5"
                     else:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                         bpoint1 = self.bpoint.y
                         bpoint2 = self.bpoint.x
-                elif (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
-                    if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                        bpoint1 = self.bpoint.y
-                        bpoint2 = self.bpoint.x
-                    else:
-                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                        bpoint1 = self.bpoint.x
-                        bpoint2 = self.bpoint.y
+                        situation = "Situation 6"
+
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                     bpoint1 = self.bpoint.x
                     bpoint2 = self.bpoint.y
+                    situation = "Situation 9"
                     if DEBUG:
-                        FreeCAD.Console.PrintWarning("Unexpected situation !\n")
+                        print_debug(["Unexpected situation !"])
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
-                    if tracker_vec.x < tracker_vec.y:
+
+                    if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
+                        if tracker_vec.x > tracker_vec.y:
+                            vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                            bpoint1 = point.y
+                            bpoint2 = self.bpoint.x
+                            situation = "Situation 12"
+                        else:
+                            vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                            bpoint1 = point.x
+                            bpoint2 = self.bpoint.y
+                            situation = "Situation 13"
+
+                    elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
+                        if tracker_vec.x > tracker_vec.y:
+                            vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                            bpoint1 = self.bpoint.x
+                            bpoint2 = self.bpoint.y
+                            situation = "Situation 10"
+                        else:
+                            vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                            bpoint1 = self.bpoint.y
+                            bpoint2 = self.bpoint.x
+                            situation = "Situation 11"
+
+                    else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = self.bpoint.x
                         bpoint2 = self.bpoint.y
-                    else:
-                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                        bpoint1 = self.bpoint.y
-                        bpoint2 = self.bpoint.x
+                        situation = "Situation 14"
+                        if DEBUG:
+                            print_debug(["Unexpected situation !"])
                 offset = point.z
             if DEBUG:
                 msg = ["vec_transaction = {}".format(vec_transaction)]
@@ -1129,7 +1179,8 @@ class _CommandComposant:
                 spaces_list = []
                 for x in range(self.array_qty):
                     spaces_list.append(space * (x + 1))
-                first_vec = vec_transaction.format(str(spaces_list[0]), offset, bpoint2)
+                startpoint = spaces_list[0] + bpoint1
+                first_vec = vec_transaction.format(str(startpoint), offset, bpoint2)
 
                 if DEBUG:
                     messages = ["Array :"]

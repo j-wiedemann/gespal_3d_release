@@ -1,7 +1,8 @@
 import FreeCAD as App
 import sqlite3
 from sqlite3 import Error
-from freecad.workbench_gespal3d import DEBUG
+from freecad.workbench_gespal3d import print_debug
+from freecad.workbench_gespal3d import DEBUG_DB
 from freecad.workbench_gespal3d import PARAMPATH
 
 
@@ -10,20 +11,17 @@ def sql_connection():
     no_database = "true"
     sqlite_db = p.GetString("sqlitedb", no_database)
     if sqlite_db == "true":
-        App.Console.PrintMessage(
-            "define database path in BaseApp/Preferences/Mod/Gespal3D"
-        )
+        print_debug(["define database path in BaseApp/Preferences/Mod/Gespal3D"])
         return
     try:
 
         con = sqlite3.connect(sqlite_db)
 
-        if DEBUG:
-            App.Console.PrintMessage("Connection is established.")
+        if DEBUG_DB:
+            print_debug(["DB Connection is established."])
 
     except Error:
-        App.Console.PrintMessage("sql_connection got an error")
-        App.Console.PrintMessage(Error)
+        print_debug(["sql_connection got an error", Error])
 
     return con
 
@@ -42,9 +40,11 @@ def getCategories(include=[], exclude=[]):
         for row in rows:
             if not row[2] in exclude:
                 categories_list.append(row)
-    if DEBUG:
-        print("getCategories :")
-        print(categories_list)
+    if DEBUG_DB:
+        messages = ["getCategories :"]
+        messages.append(categories_list)
+        print_debug(messages)
+
     return categories_list
 
 
@@ -58,9 +58,10 @@ def getComposants(categorie=None):
             + " ORDER BY CO_NOM"
         )
         rows = cursorObj.fetchall()
-        if DEBUG:
-            print("getComposants :")
-            print(rows)
+        if DEBUG_DB:
+            messages = ["getComposants :"]
+            messages.append(rows)
+            print_debug(messages)
         return rows
 
 
@@ -69,7 +70,8 @@ def getComposant(id=1):
     cursorObj = con.cursor()
     cursorObj.execute("SELECT * FROM Composant WHERE CO_COMPTEUR = " + str(id))
     rows = cursorObj.fetchall()
-    if DEBUG:
-        App.Console.PrintMessage("getComposant :")
-        App.Console.PrintMessage(rows)
+    if DEBUG_DB:
+        messages = ["getComposant :"]
+        messages.append(rows)
+        print_debug(messages)
     return rows[0]

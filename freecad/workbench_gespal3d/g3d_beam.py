@@ -29,6 +29,8 @@ from FreeCAD import Vector
 from freecad.workbench_gespal3d import g3d_tracker
 from freecad.workbench_gespal3d import g3d_connect_db
 from freecad.workbench_gespal3d import DEBUG
+from freecad.workbench_gespal3d import DEBUG_U
+from freecad.workbench_gespal3d import print_debug
 from freecad.workbench_gespal3d import PARAMPATH
 import math
 
@@ -51,8 +53,6 @@ else:
 __title__ = "Beam Gespal3D"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
-
-DEBUG_U = False
 
 
 class _CommandComposant:
@@ -92,6 +92,9 @@ class _CommandComposant:
 
     def Activated(self):
 
+        if DEBUG:
+            print_debug(["Beam Creator Activated"])
+
         # Reads preset profiles and categorizes them
         self.categories = g3d_connect_db.getCategories(include=["BO"])
 
@@ -125,16 +128,18 @@ class _CommandComposant:
         self.array_qty = self.p.GetInt("BeamArrayQty", 1)
 
         if DEBUG:
-            msg = "TODO: Debug Beam Creator Activated"
-            FreeCAD.Console.PrintMessage(msg)
-            # TODO
-            # msg = 'Beam Creator Activated : '
-            # + 'Params : '
-            # + 'width = %s, height = %s, length = %s, profile = %s,'
-            # + 'insert_point = %s, deversement = %s, continue = %s '
-            # + '\n' % (self.Width, self.Height, self.Length, self.Profile,
-            # self.InsertPoint, self.Deversement, self.continueCmd)
-            # FreeCAD.Console.PrintMessage(msg)
+            messages = ["Params :"]
+            messages.append("Mode = {}".format(self.mode))
+            messages.append("Profile = {}".format(self.Profile))
+            messages.append("Width = {}".format(self.Width))
+            messages.append("Height = {}".format(self.Height))
+            messages.append("Length = {}".format(self.Length))
+            messages.append("Insert_point = {}".format(self.InsertPoint))
+            messages.append("Deversement = {}".format(self.Deversement))
+            messages.append("FillSpace = {}".format(self.FillSpace))
+            messages.append("array_qty = {}".format(self.array_qty))
+            messages.append("continueCmd = {}".format(self.continueCmd))
+            print_debug(messages)
 
         # interactive mode
         self.initTracker()
@@ -536,7 +541,7 @@ class _CommandComposant:
 
     def restoreParams(self):
         if DEBUG:
-            FreeCAD.Console.PrintMessage("restoreParams \n")
+            print_debug("restoreParams")
         stored_composant = self.p.GetInt("BeamPreset", 1)
         stored_direction = self.p.GetInt("BeamDirection", 0)
         stored_deversement = self.p.GetFloat("BeamDev", 0)
@@ -549,7 +554,7 @@ class _CommandComposant:
 
         if stored_composant:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore composant \n")
+                print_debug("restore composant")
             comp = g3d_connect_db.getComposant(id=stored_composant)
             cat = comp[2]
             n = 0
@@ -568,13 +573,13 @@ class _CommandComposant:
 
         if stored_direction:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore direction \n")
+                print_debug("restore direction")
             self.direction_cb.setCurrentIndex(int(stored_direction))
             self.setDirection()
 
         if stored_deversement:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore deversement \n")
+                print_debug("restore deversement")
             if stored_deversement == 0.0:
                 self.deversement_input.setCurrentIndex(0)
             else:
@@ -582,7 +587,7 @@ class _CommandComposant:
 
         if stored_mode:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore mode \n")
+                print_debug("restore mode")
             if self.bpoint:
                 if stored_mode == "fill":
                     self.remplissage_cb.setChecked(True)
@@ -591,7 +596,7 @@ class _CommandComposant:
 
         if stored_fillspace:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore fillspace \n")
+                print_debug("restore fillspace")
             self.remplissage_input.setText(
                 FreeCAD.Units.Quantity(
                     stored_fillspace, FreeCAD.Units.Length
@@ -600,12 +605,12 @@ class _CommandComposant:
 
         if stored_array_qty:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore array_qty \n")
+                print_debug("restore array_qty")
             self.repartition_input.setValue(stored_array_qty)
 
         if stored_fixlength:
             if DEBUG:
-                FreeCAD.Console.PrintMessage("restore fixlength \n")
+                print_debug("restore fixlength")
             self.fixlength_checkbox.setChecked(bool(stored_fixlength))
 
         self.continue_cb.setChecked(self.continueCmd)
@@ -662,8 +667,7 @@ class _CommandComposant:
     def setDirection(self):
         idx = self.direction_cb.currentIndex()
         if DEBUG:
-            msg = "idx setDirection : %s \n" % idx
-            FreeCAD.Console.PrintMessage(msg)
+            print_debug("idx setDirection : {}".format(idx))
         self.p.SetInt("BeamDirection", idx)
         self.setWorkingPlane(idx)
         self.setMode()
@@ -751,10 +755,9 @@ class _CommandComposant:
 
     def setMode(self):
         if DEBUG:
-            msg = "Set Mode \n"
-            FreeCAD.Console.PrintMessage(msg)
-            msg = "Current Mode is : %s \n" % self.mode
-            FreeCAD.Console.PrintMessage(msg)
+            messages = ["Set Mode :"]
+            messages.append("Current Mode is : {}".format(self.mode))
+            print_debug(messages)
         idx = self.direction_cb.currentIndex()
         if idx > 2:
             idx -= 3
@@ -795,8 +798,7 @@ class _CommandComposant:
                 )
 
         if DEBUG:
-            msg = "New Mode is : %s \n" % self.mode
-            FreeCAD.Console.PrintMessage(msg)
+            print_debug("New Mode is : {}".format(self.mode))
 
         self.tracker.setPlacement(
             snap_bp=None, bp_idx=self.InsertPoint, dev=self.Deversement
@@ -951,14 +953,12 @@ class _CommandComposant:
     def makeTransaction(self, point=None):
         FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Beam"))
         if DEBUG:
-            FreeCAD.Console.PrintMessage("\n")
-            FreeCAD.Console.PrintMessage("G3D_BeamComposant.makeTransaction : \n")
-            msg = "Current Mode is : %s \n" % self.mode
-            FreeCAD.Console.PrintMessage(msg)
-            msg = "self.bpoint = %s \n" % self.bpoint
-            FreeCAD.Console.PrintMessage(msg)
-            msg = "point = %s \n" % point
-            FreeCAD.Console.PrintMessage(msg)
+            messages = ["G3D_BeamComposant.makeTransaction :"]
+            messages.append("Current Mode is : {}".format(self.mode))
+            messages.append("self.bpoint = {}".format(self.bpoint))
+            messages.append("point = {}".format(point))
+            print_debug(messages)
+
         FreeCADGui.addModule("Draft")
         FreeCADGui.addModule("Arch")
         FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_profiles_parser")
@@ -974,12 +974,11 @@ class _CommandComposant:
             # Create profil with g3d_profiles_parser tools
             FreeCADGui.doCommand(
                 "p = freecad.workbench_gespal3d.g3d_profiles_parser.makeProfile("
-                # 'p = Arch.makeProfile('
                 + str(self.Profile)
                 + ")"
             )
 
-            # Then rotate it for deversement
+            # Rotate profile according to deversement
             v1 = "FreeCAD.Vector(0.0, 0.0, 0.0)"
             v2 = "FreeCAD.Vector(0.0, 0.0, 1.0)"
             angle = self.Deversement
@@ -987,9 +986,10 @@ class _CommandComposant:
                 "p.Placement.rotate(" + str(v1) + "," + str(v2) + "," + str(angle) + ")"
             )
 
-            # Move it according BPoint
+            # Move profil according to BPoint
             FreeCADGui.doCommand("p.Placement.move(" + "FreeCAD." + str(delta) + ")")
 
+            # Make a structure (extrusion) from this profil
             FreeCADGui.doCommand(
                 "s = Arch.makeStructure(p, length=" + str(self.Length) + ")"
             )
@@ -1099,8 +1099,9 @@ class _CommandComposant:
                         bpoint2 = self.bpoint.x
                 offset = point.z
             if DEBUG:
-                msg = "vec_transaction = {} \n".format(vec_transaction)
-                FreeCAD.Console.PrintMessage(msg)
+                msg = ["vec_transaction = {}".format(vec_transaction)]
+                msg.append(situation)
+                print_debug(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
                 first_vec = vec_transaction.format(bpoint1, offset, bpoint2)
@@ -1131,17 +1132,13 @@ class _CommandComposant:
                 first_vec = vec_transaction.format(str(spaces_list[0]), offset, bpoint2)
 
                 if DEBUG:
-                    FreeCAD.Console.PrintMessage("Array : \n")
-                    msg = "length : %s \n" % length
-                    FreeCAD.Console.PrintMessage(msg)
-                    msg = "qte : %s \n" % self.array_qty
-                    FreeCAD.Console.PrintMessage(msg)
-                    msg = "space : %s \n" % space
-                    FreeCAD.Console.PrintMessage(msg)
-                    msg = "spaces_list : %s \n" % spaces_list
-                    FreeCAD.Console.PrintMessage(msg)
-                    msg = "first_vec : %s \n" % first_vec
-                    FreeCAD.Console.PrintMessage(msg)
+                    messages = ["Array :"]
+                    messages.append("length : {}".format(length))
+                    messages.append("qte : {}".format(self.array_qty))
+                    messages.append("space : {}".format(space))
+                    messages.append("spaces_list : {}".format(spaces_list))
+                    messages.append("first_vec : {}".format(first_vec))
+                    print_debug(messages)
 
                 FreeCADGui.doCommand("s.Placement.Base = " + first_vec)
                 FreeCADGui.doCommand(

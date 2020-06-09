@@ -1054,30 +1054,40 @@ class _CommandComposant:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     bpoint1 = self.bpoint.y
                     situation = "Situation 1"
+                    reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     bpoint1 = point.y
                     situation = "Situation 2"
+                    reverse = True
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
                     self.setWorkingPlane(0)
                 offset = point.x
                 bpoint2 = self.bpoint.z
+                # for filling mode
+                cpoint1 = self.bpoint.y
+                cpoint2 = self.bpoint.z
 
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                     bpoint1 = self.bpoint.x
                     situation = "Situation 3"
+                    reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                     bpoint1 = point.x
                     situation = "Situation 4"
+                    reverse = True
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
                     self.setWorkingPlane(1)
                 offset = point.y
                 bpoint2 = self.bpoint.z
+                # for filling mode
+                cpoint1 = self.bpoint.x
+                cpoint2 = self.bpoint.z
 
             elif axis.z != 0.0:
 
@@ -1093,6 +1103,8 @@ class _CommandComposant:
                         bpoint2 = self.bpoint.y
                         situation = "Situation 8"
 
+                    reverse = True
+
                 elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
@@ -1105,13 +1117,17 @@ class _CommandComposant:
                         bpoint2 = self.bpoint.x
                         situation = "Situation 6"
 
+                    reverse = False
+
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                     bpoint1 = self.bpoint.x
                     bpoint2 = self.bpoint.y
                     situation = "Situation 9"
+                    reverse = False
                     if DEBUG:
                         print_debug(["Unexpected situation !"])
+
                 if axis.z == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
                     self.setWorkingPlane(2)
@@ -1128,6 +1144,8 @@ class _CommandComposant:
                             bpoint2 = self.bpoint.y
                             situation = "Situation 13"
 
+                        reverse = True
+
                     elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                         if tracker_vec.x > tracker_vec.y:
                             vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
@@ -1140,33 +1158,49 @@ class _CommandComposant:
                             bpoint2 = self.bpoint.x
                             situation = "Situation 11"
 
+                        reverse = False
+
                     else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = self.bpoint.x
                         bpoint2 = self.bpoint.y
                         situation = "Situation 14"
+                        reverse = False
                         if DEBUG:
                             print_debug(["Unexpected situation !"])
                 offset = point.z
+                # for filling mode
+                cpoint1 = self.bpoint.x
+                cpoint2 = self.bpoint.z
+
             if DEBUG:
                 msg = ["vec_transaction = {}".format(vec_transaction)]
                 msg.append(situation)
                 print_debug(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
-                first_vec = vec_transaction.format(bpoint1, offset, bpoint2)
+                length = DraftVecUtils.dist(self.bpoint, original_point)
+                space = self.FillSpace
+                if self.Deversement == 0.0:
+                    delta = self.Height
+                else:
+                    delta = self.Width
+                delta += space
+                div = length / delta
+                qte = math.ceil(div) - 1
+                leftspace = length - qte * delta
+
+                first_vec = vec_transaction.format(cpoint1, offset, cpoint2)
+                if reverse == True:
+                    delta = delta * -1
 
                 FreeCADGui.doCommand("s.Placement.Base = " + first_vec)
                 FreeCADGui.doCommand(
                     "s.Placement.Rotation = s.Placement.Rotation.multiply( \
                         FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
                 )
-                length = DraftVecUtils.dist(self.bpoint, original_point)
-                space = self.FillSpace
-                delta = self.Height + space
-                div = length / delta
-                qte = math.ceil(div) - 1
-                for x in range(qte):
+
+                for x in range(qte - 1):
                     FreeCADGui.doCommand(
                         "Draft.move(s,"
                         + vec_transaction.format(str(delta * (x + 1)), 0.0, 0.0)

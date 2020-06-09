@@ -1172,6 +1172,16 @@ class _CommandComposant:
                         + vec_transaction.format(str(delta * (x + 1)), 0.0, 0.0)
                         + ", copy=True)"
                     )
+                if DEBUG:
+                    messages = ["Filling :"]
+                    messages.append("length : {}".format(length))
+                    messages.append("div : {}".format(div))
+                    messages.append("qte : {}".format(qte))
+                    messages.append("space : {}".format(space))
+                    messages.append("delta : {}".format(delta))
+                    messages.append("leftspace : {}".format(leftspace))
+                    messages.append("first_vec : {}".format(first_vec))
+                    print_debug(messages)
 
             elif self.mode == "array" and self.bpoint is not None:
                 length = DraftVecUtils.dist(self.bpoint, original_point)

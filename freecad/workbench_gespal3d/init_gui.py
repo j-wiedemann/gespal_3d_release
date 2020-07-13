@@ -34,16 +34,20 @@ class gespal3d_workbench(Gui.Workbench):
         "G3D_Help",
     ]
     toolbox_mod = [
-        "G3D_Delete",
         "Draft_Move",
         "Draft_Rotate",
         "G3D_MirrorCopy",
+        "Draft_Trimex",
         "Arch_CutPlane",
+        "Arch_CutLine",
+        "Arch_Remove",
+        "G3D_Delete",
     ]
     toolbox_create = [
         "Draft_Line",
         "Draft_Circle",
         "Draft_Rectangle",
+        "Draft_Wire",
         "Draft_Dimension",
     ]
 

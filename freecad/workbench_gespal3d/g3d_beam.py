@@ -1053,12 +1053,12 @@ class _CommandComposant:
                 if tracker_vec.y > 0.0:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     bpoint1 = self.bpoint.y
-                    situation = "Situation 1"
+                    situation = 1
                     reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     bpoint1 = point.y
-                    situation = "Situation 2"
+                    situation = 2
                     reverse = True
                 if axis.x == -1.0:
                     point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
@@ -1073,12 +1073,12 @@ class _CommandComposant:
                 if tracker_vec.x > 0.0:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                     bpoint1 = self.bpoint.x
-                    situation = "Situation 3"
+                    situation = 3
                     reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
                     bpoint1 = point.x
-                    situation = "Situation 4"
+                    situation = 4
                     reverse = True
                 if axis.y == -1.0:
                     point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
@@ -1096,12 +1096,18 @@ class _CommandComposant:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                         bpoint1 = point.y
                         bpoint2 = self.bpoint.x
-                        situation = "Situation 7"
+                        situation = 7
+                        # for filling mode
+                        cpoint1 = self.bpoint.y
+                        cpoint2 = self.bpoint.x
                     else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = point.x
                         bpoint2 = self.bpoint.y
-                        situation = "Situation 8"
+                        situation = 8
+                        # for filling mode
+                        cpoint1 = self.bpoint.x
+                        cpoint2 = self.bpoint.y
 
                     reverse = True
 
@@ -1110,12 +1116,18 @@ class _CommandComposant:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = self.bpoint.x
                         bpoint2 = self.bpoint.y
-                        situation = "Situation 5"
+                        situation = 5
+                        # for filling mode
+                        cpoint1 = self.bpoint.x
+                        cpoint2 = self.bpoint.y
                     else:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                         bpoint1 = self.bpoint.y
                         bpoint2 = self.bpoint.x
-                        situation = "Situation 6"
+                        situation = 6
+                        # for filling mode
+                        cpoint1 = self.bpoint.y
+                        cpoint2 = self.bpoint.x
 
                     reverse = False
 
@@ -1123,7 +1135,10 @@ class _CommandComposant:
                     vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                     bpoint1 = self.bpoint.x
                     bpoint2 = self.bpoint.y
-                    situation = "Situation 9"
+                    situation = 9
+                    # for filling mode
+                    cpoint1 = self.bpoint.x
+                    cpoint2 = self.bpoint.y
                     reverse = False
                     if DEBUG:
                         print_debug(["Unexpected situation !"])
@@ -1137,12 +1152,18 @@ class _CommandComposant:
                             vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                             bpoint1 = point.y
                             bpoint2 = self.bpoint.x
-                            situation = "Situation 12"
+                            situation = 12
+                            # for filling mode
+                            cpoint1 = self.bpoint.y
+                            cpoint2 = self.bpoint.x
                         else:
                             vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                             bpoint1 = point.x
                             bpoint2 = self.bpoint.y
-                            situation = "Situation 13"
+                            situation = 13
+                            # for filling mode
+                            cpoint1 = self.bpoint.x
+                            cpoint2 = self.bpoint.y
 
                         reverse = True
 
@@ -1151,12 +1172,18 @@ class _CommandComposant:
                             vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                             bpoint1 = self.bpoint.x
                             bpoint2 = self.bpoint.y
-                            situation = "Situation 10"
+                            situation = 10
+                            # for filling mode
+                            cpoint1 = self.bpoint.x
+                            cpoint2 = self.bpoint.y
                         else:
                             vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                             bpoint1 = self.bpoint.y
                             bpoint2 = self.bpoint.x
-                            situation = "Situation 11"
+                            situation = 11
+                            # for filling mode
+                            cpoint1 = self.bpoint.y
+                            cpoint2 = self.bpoint.x
 
                         reverse = False
 
@@ -1164,31 +1191,41 @@ class _CommandComposant:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         bpoint1 = self.bpoint.x
                         bpoint2 = self.bpoint.y
-                        situation = "Situation 14"
+                        situation = 14
+                        # for filling mode
+                        cpoint1 = self.bpoint.x
+                        cpoint2 = self.bpoint.y
                         reverse = False
                         if DEBUG:
                             print_debug(["Unexpected situation !"])
+
                 offset = point.z
-                # for filling mode
-                cpoint1 = self.bpoint.x
-                cpoint2 = self.bpoint.z
 
             if DEBUG:
                 msg = ["vec_transaction = {}".format(vec_transaction)]
-                msg.append(situation)
+                msg.append("Situation " + str(situation))
                 print_debug(msg)
 
             if self.mode == "fill" and self.bpoint is not None:
                 length = DraftVecUtils.dist(self.bpoint, original_point)
                 space = self.FillSpace
                 if self.Deversement == 0.0:
-                    delta = self.Height
+                    if situation in [5, 8, 10, 13]:
+                        delta = self.Width
+                    else:
+                        delta = self.Height
                 else:
-                    delta = self.Width
+                    if situation in [5, 8, 10, 13]:
+                        delta = self.Height
+                    else:
+                        delta = self.Width
+
                 delta += space
                 div = length / delta
                 qte = math.ceil(div) - 1
                 leftspace = length - qte * delta
+                if leftspace >= delta:
+                    qte += 1
 
                 first_vec = vec_transaction.format(cpoint1, offset, cpoint2)
                 if reverse == True:

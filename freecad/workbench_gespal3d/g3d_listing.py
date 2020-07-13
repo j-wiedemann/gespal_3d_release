@@ -363,6 +363,9 @@ class gespal3d_exports:
         else:
             projgroup.addProjection("Top")
             projgroup.addProjection("Left")
+        for view in projgroup.Views:
+            view.Perspective = True
+            view.Focus = "100 m"
         x = 20 + (self.boundbox.Length.Value * projgroup.Scale) / 2
         projgroup.X = x
         projgroup.Y = y

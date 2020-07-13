@@ -19,8 +19,10 @@ def print_debug(messages):
     if DEBUG:
         if type(messages) is list:
             for msg in messages:
-                FreeCAD.Console.PrintMessage("\n")
+                msg = msg + "\n"
+                # FreeCAD.Console.PrintMessage("\n")
                 FreeCAD.Console.PrintMessage(msg)
         else:
-            FreeCAD.Console.PrintMessage("\n")
+            messages = messages + "\n"
+            # FreeCAD.Console.PrintMessage("\n")
             FreeCAD.Console.PrintMessage(messages)

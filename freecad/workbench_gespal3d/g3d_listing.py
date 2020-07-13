@@ -294,8 +294,8 @@ class gespal3d_exports:
 
     def makePlan(self, name):
         doc = FreeCAD.activeDocument()
-        projgrp_name = "ProjGroup" + str(name)
-        isoview_name = "View" + str(name)
+        projgrp_name = "ProjGroup_" + str(name)
+        isoview_name = "View_" + str(name)
         # check if page exist
         page = doc.getObject(name)
         if doc.getObject(name):

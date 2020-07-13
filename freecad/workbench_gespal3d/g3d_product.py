@@ -73,21 +73,21 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
 
     # Dimensions
     dimensions = []
-    dim = Draft.makeDimension(
+    dim = Draft.make_linear_dimension(
         FreeCAD.Vector(0.0, 0.0, 0.0),
         FreeCAD.Vector(length, 0.0, 0.0),
         FreeCAD.Vector(0.0, -200, 0.0),
     )
     dim.setExpression(".End.x", u"Box.Length")
     dimensions.append(dim)
-    dim = Draft.makeDimension(
+    dim = Draft.make_linear_dimension(
         FreeCAD.Vector(0.0, 0.0, 0.0),
         FreeCAD.Vector(0.0, width, 0.0),
         FreeCAD.Vector(-200.0, 0.0, 0.0),
     )
     dim.setExpression(".End.y", u"Box.Width")
     dimensions.append(dim)
-    dim = Draft.makeDimension(
+    dim = Draft.make_linear_dimension(
         FreeCAD.Vector(0.0, 0.0, 0.0),
         FreeCAD.Vector(0.0, 0.0, height),
         FreeCAD.Vector(-200.0, -200.0, 0.0),

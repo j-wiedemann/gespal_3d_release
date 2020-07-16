@@ -231,13 +231,14 @@ class _CommandComposant:
 
     def update(self, point, info):
         "this function is called by the Snapper when the mouse is moved"
-        if (DEBUG == True) and (DEBUG_U == True):
-            FreeCAD.Console.PrintMessage("_CommandComposant update \n")
+        if DEBUG and DEBUG_U:
+            msg = "_CommandComposant update"
+            print_debug(msg)
 
         if FreeCADGui.Control.activeDialog():
-            if (DEBUG == True) and (DEBUG_U == True):
+            if DEBUG and DEBUG_U:
                 msg = "Current Mode is : %s \n" % self.mode
-                FreeCAD.Console.PrintMessage(msg)
+                print_debug(msg)
             if self.mode == "point":
                 self.tracker.setPosition(point)
                 self.tracker.on()

@@ -47,6 +47,7 @@ class gespal3d_workbench(Gui.Workbench):
     ]
     toolbox_create = [
         "Draft_Line",
+        "Draft_ArcTools",
         "Draft_Circle",
         "Draft_Rectangle",
         "Draft_Wire",

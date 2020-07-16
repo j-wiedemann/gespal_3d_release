@@ -37,6 +37,7 @@ class gespal3d_workbench(Gui.Workbench):
         "Draft_Move",
         "Draft_Rotate",
         "G3D_MirrorCopy",
+        "Draft_Offset",
         "Draft_Trimex",
         "Arch_CutPlane",
         "Arch_CutLine",

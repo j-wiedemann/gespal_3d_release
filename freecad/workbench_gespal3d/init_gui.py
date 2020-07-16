@@ -41,6 +41,7 @@ class gespal3d_workbench(Gui.Workbench):
         "Draft_Trimex",
         "Arch_CutPlane",
         "Arch_CutLine",
+        "Draft_Upgrade",
         "Arch_Remove",
         "G3D_Delete",
     ]

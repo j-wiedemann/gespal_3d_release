@@ -118,7 +118,11 @@ class _CommandEnveloppe:
             "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Produit"),
             "Accel": "P, R",
             "ToolTip": QT_TRANSLATE_NOOP(
-                "Gespal3D", "Créer un composant de type bois ou dès."
+                "Gespal3D",
+                "<html><head/><body><p><b>Créer un produit.</b> \
+                        <br><br> \
+                        Un produit est une enveloppe de la palette ou la caisse \
+                        à réaliser.</p></body></html>",
             ),
         }
 

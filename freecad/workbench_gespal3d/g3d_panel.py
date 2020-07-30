@@ -51,7 +51,11 @@ class _CommandPanel:
             "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Panneaux"),
             "Accel": "P, N",
             "ToolTip": QT_TRANSLATE_NOOP(
-                "Paneaux", "Créer un panneau en cliquant sur deux points."
+                "Paneaux",
+                "<html><head/><body><p><b>Ajouter un panneau.</b> \
+                        <br><br> \
+                        ajouter un panneau en cliquant sur 2 point définissant \
+                        la diagonale de l'élément.</p></body></html>",
             ),
         }
 

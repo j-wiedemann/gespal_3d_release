@@ -74,7 +74,7 @@ class _CommandComposant:
             "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Composant"),
             "Accel": "C, O",
             "ToolTip": "<html><head/><body><p><b>Ajouter un composant</b> \
-                    (hors panneaux) . \
+                    (hors panneaux). \
                     <br><br> \
                     Possibilité d'ajouter le composant par répartition ou \
                     par remplissage. \

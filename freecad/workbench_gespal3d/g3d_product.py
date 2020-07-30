@@ -4,8 +4,7 @@ import Part
 
 if FreeCAD.GuiUp:
     import FreeCADGui
-
-    # from PySide import QtCore, QtGui
+    from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
 else:
@@ -96,6 +95,7 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
     dimensions.append(dim)
     for dim in dimensions:
         dim.ViewObject.DisplayMode = u"3D"
+        dim.ViewObject.FontSize = "2.5 mm"
         dim.ViewObject.ExtLines = "-50 mm"
         dim.ViewObject.ArrowType = u"Tick-2"
         dim.ViewObject.ArrowSize = "10 mm"
@@ -107,10 +107,10 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
 
 class _CommandEnveloppe:
 
-    "the Arch Structure command definition"
+    "the G3D Product command definition"
 
     def __init__(self):
-        self.beammode = True
+        pass
 
     def GetResources(self):
         return {
@@ -134,10 +134,128 @@ class _CommandEnveloppe:
         return active
 
     def Activated(self):
-        makeEnveloppe(None, "Test", 1200.0, 900.0, 560.0)
+        panel = _EnveloppeTaskPanel()
+        FreeCADGui.Control.showDialog(panel)
+
+
+class _EnveloppeTaskPanel:
+
+    "the G3D Product taskpanel class"
+
+    def __init__(self):
+        # form widget
+        self.form = QtGui.QWidget()
+        self.form.setObjectName("TaskPanel")
+        # freecad specific input field
+        ui = FreeCADGui.UiLoader()
+        # grid layout
+        self.grid = QtGui.QGridLayout(self.form)
+        self.grid.setObjectName("grid")
+        # ID row
+        self.id = QtGui.QLabel(self.form)
+        self.grid.addWidget(
+            self.id, 0, 0,
+        )
+        self.id_input = QtGui.QLineEdit(self.form)
+        self.grid.addWidget(
+            self.id_input, 0, 1,
+        )
+        # Name row
+        self.name = QtGui.QLabel(self.form)
+        self.grid.addWidget(
+            self.name, 1, 0,
+        )
+        self.name_input = QtGui.QLineEdit(self.form)
+        self.grid.addWidget(
+            self.name_input, 1, 1,
+        )
+        # Length row
+        self.length_label = QtGui.QLabel(self.form)
+        self.grid.addWidget(
+            self.length_label, 2, 0,
+        )
+        self.length_input = ui.createWidget("Gui::InputField")
+        self.length_input.setText(
+            FreeCAD.Units.Quantity(1200.00, FreeCAD.Units.Length).UserString
+        )
+        self.grid.addWidget(
+            self.length_input, 2, 1,
+        )
+        # Width row
+        self.width_label = QtGui.QLabel(self.form)
+        self.grid.addWidget(
+            self.width_label, 3, 0,
+        )
+        self.width_input = ui.createWidget("Gui::InputField")
+        self.width_input.setText(
+            FreeCAD.Units.Quantity(900.00, FreeCAD.Units.Length).UserString
+        )
+        self.grid.addWidget(
+            self.width_input, 3, 1,
+        )
+        # Height row
+        self.height_label = QtGui.QLabel(self.form)
+        self.grid.addWidget(
+            self.height_label, 4, 0,
+        )
+        self.height_input = ui.createWidget("Gui::InputField")
+        self.height_input.setText(
+            FreeCAD.Units.Quantity(560.00, FreeCAD.Units.Length).UserString
+        )
+        self.grid.addWidget(
+            self.height_input, 4, 1,
+        )
+        self.retranslateUi(self.form)
+
+    def accept(self):
+        id = self.id_input.text()
+        if id == "":
+            id = "None"
+        name = self.name_input.text()
+        if name == "":
+            name = "None"
+        length = self.length_input.property("rawValue")
+        width = self.width_input.property("rawValue")
+        height = self.height_input.property("rawValue")
+        FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Product"))
+        FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_product")
+        FreeCADGui.doCommand(
+            "freecad.workbench_gespal3d.g3d_product.makeEnveloppe("
+            + "'"
+            + str(id)
+            + "'"
+            + ","
+            + "'"
+            + str(name)
+            + "'"
+            + ","
+            + str(length)
+            + ","
+            + str(width)
+            + ","
+            + str(height)
+            + ")"
+        )
+        FreeCAD.ActiveDocument.commitTransaction()
         # Set view
         FreeCADGui.activeDocument().activeView().viewIsometric()
         FreeCADGui.SendMsgToActiveView("ViewFit")
+        return True
+
+    def reject(self):
+        FreeCAD.Console.PrintMessage("Création de produit annulée.\n")
+        return True
+
+    def getStandardButtons(self):
+        return int(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+
+    def retranslateUi(self, TaskPanel):
+        TaskPanel.setWindowTitle("Création de produit")
+        self.id.setText("ID")
+        self.name.setText("Nom")
+        self.length_label.setText("Longueur (X)")
+        self.width_label.setText("Largeur (Y)")
+        self.height_label.setText("Hauteur (Z)")
 
 
 if FreeCAD.GuiUp:

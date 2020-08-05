@@ -33,97 +33,94 @@ class gespal3d_exports:
     def __init__(self):
         doc = FreeCAD.ActiveDocument
         path_doc = doc.FileName
-        if len(path_doc) > 0:
-            id = doc.Name.split("_")[1]
-            path_project = os.path.split(path_doc)
-            name_image = "3D_" + id + ".png"
-            name_csv = "CP_" + id + ".csv"
-            pc_pdf = "PC_" + id + ".pdf"
-            pf_pdf = "PF_" + id + ".pdf"
-            self.path_image = os.path.join(path_project[0], name_image)
-            self.path_csv = os.path.join(path_project[0], name_csv)
-            self.path_pc = os.path.join(path_project[0], pc_pdf)
-            self.path_pf = os.path.join(path_project[0], pf_pdf)
-            self.p = FreeCAD.ParamGet(str(PARAMPATH))
-            self.path_template = self.p.GetString("PathTemplate", "")
-
-            objs = doc.Objects
-            self.objlist = []
-            self.projgroup_list = []
-            objother = []
-            self.objproduct = None
-            self.boundbox = None
-            self.grp_dimension = []
-            self.mySheet = None
-            if DEBUG:
-                msg = "There is %s object in document.\n" % len(objs)
-                FreeCAD.Console.PrintMessage(msg)
-            for obj in objs:
-                if DEBUG:
-                    msg = "Current object is %s \n" % obj.Name
-                    FreeCAD.Console.PrintMessage(msg)
-                if hasattr(obj, "Tag"):
-                    if obj.Tag == "Gespal":
-                        if hasattr(obj, "Description"):
-                            if obj.Description is not None:
-                                self.objlist.append(obj)
-                                self.projgroup_list.append(obj)
-                                if DEBUG:
-                                    msg = "%s is added to the objlist.\n" % obj.Name
-                                    FreeCAD.Console.PrintMessage(msg)
-                elif obj.TypeId == "Part::Mirroring":
-                    src = self.getSource(obj)
-                    if src.Tag == "Gespal":
-                        if hasattr(src, "Description"):
-                            if src.Description is not None:
-                                self.objlist.append(src)
-                                if DEBUG:
-                                    msg = "%s is added to the objlist.\n" % src.Name
-                                    FreeCAD.Console.PrintMessage(msg)
-                    self.projgroup_list.append(obj)
-                elif obj.Name == "Gespal3DListe":
-                    self.mySheet = obj
-                elif obj.Name == "Product":
-                    self.objproduct = obj
-                    # For project created before v0.5.0
-                    if obj.TypeId == "Part::Box":
-                        self.boundbox = obj
-                elif obj.Name == "Box":
-                    self.boundbox = obj
-                elif "Dimension" in obj.Name:
-                    self.grp_dimension.append(obj)
-                else:
-                    objother.append(obj)
-            if len(self.objlist) < 0:
-                FreeCAD.Console.PrintMessage(
-                    "La liste des composants Gespal est vide.\n"
-                )
-            else:
-                if DEBUG:
-                    msg = "There is %s object objlist.\n" % len(self.objlist)
-                    FreeCAD.Console.PrintMessage(msg)
-                    msg = [obj.Name for obj in self.objlist]
-                    FreeCAD.Console.PrintMessage(msg)
-
+        if len(doc.Name.split("PL_")) > 1:
+            id = doc.Name.split("PL_")[1]
         else:
-            FreeCAD.Console.PrintMessage("Sauvegardez d'abord votre document.\n")
+            id = doc.Name
+        path_project = os.path.split(path_doc)
+        name_image = "3D_" + id + ".png"
+        name_csv = "CP_" + id + ".csv"
+        pc_pdf = "PC_" + id + ".pdf"
+        pf_pdf = "PF_" + id + ".pdf"
+        self.path_image = os.path.join(path_project[0], name_image)
+        self.path_csv = os.path.join(path_project[0], name_csv)
+        self.path_pc = os.path.join(path_project[0], pc_pdf)
+        self.path_pf = os.path.join(path_project[0], pf_pdf)
+        self.p = FreeCAD.ParamGet(str(PARAMPATH))
+        self.path_template = self.p.GetString("PathTemplate", "")
+
+        objs = doc.Objects
+        self.objlist = []
+        self.projgroup_list = []
+        objother = []
+        self.objproduct = None
+        self.boundbox = None
+        self.grp_dimension = []
+        self.mySheet = None
+        if DEBUG:
+            msg = "There is %s object in document." % len(objs)
+            print_debug([msg])
+        for obj in objs:
+            if DEBUG:
+                msg = "Current object is %s." % obj.Name
+                print_debug([msg])
+            if hasattr(obj, "Tag"):
+                if obj.Tag == "Gespal":
+                    if hasattr(obj, "Description"):
+                        if obj.Description is not None:
+                            self.objlist.append(obj)
+                            self.projgroup_list.append(obj)
+                            if DEBUG:
+                                msg = "%s is added to the objlist." % obj.Name
+                                print_debug([msg])
+            elif obj.TypeId == "Part::Mirroring":
+                src = self.getSource(obj)
+                if src.Tag == "Gespal":
+                    if hasattr(src, "Description"):
+                        if src.Description is not None:
+                            self.objlist.append(src)
+                            if DEBUG:
+                                msg = "%s is added to the objlist." % src.Name
+                                print_debug([msg])
+                self.projgroup_list.append(obj)
+            elif obj.Name == "Gespal3DListe":
+                self.mySheet = obj
+            elif obj.Name == "Product":
+                self.objproduct = obj
+                # For project created before v0.5.0
+                if obj.TypeId == "Part::Box":
+                    self.boundbox = obj
+            elif obj.Name == "Box":
+                self.boundbox = obj
+            elif "Dimension" in obj.Name:
+                self.grp_dimension.append(obj)
+            else:
+                objother.append(obj)
+        if len(self.objlist) < 0:
+            FreeCAD.Console.PrintMessage("La liste des composants Gespal est vide.\n")
+        else:
+            if DEBUG:
+                msg = "There is %s object in objlist :" % len(self.objlist)
+                print_debug([msg])
+                msg2 = [obj.Name for obj in self.objlist]
+                print_debug(msg2)
 
     def getSource(self, obj):
         if DEBUG:
-            msg = "Looking for source of %s \n" % obj.Name
-            FreeCAD.Console.PrintWarning(msg)
+            msg = "Looking for source of %s." % obj.Name
+            print_debug([msg])
         src = obj.Source
         if DEBUG:
-            msg = "Current source is %s \n" % src.Name
-            FreeCAD.Console.PrintWarning(msg)
+            msg = "Current source is %s." % src.Name
+            print_debug([msg])
         while src.TypeId == "Part::Mirroring":
             if DEBUG:
-                msg = "Source is a Part::Mirror object \n"
-                FreeCAD.Console.PrintWarning(msg)
+                msg = "Source is a Part::Mirror object."
+                print_debug([msg])
             src = src.Source
         if DEBUG:
-            msg = "Source is : %s \n" % src.Name
-            FreeCAD.Console.PrintWarning(msg)
+            msg = "Source is : %s." % src.Name
+            print_debug([msg])
         return src
 
     def getArea(self, face):
@@ -206,8 +203,8 @@ class gespal3d_exports:
 
     def makeSpreadsheet(self):
         if DEBUG:
-            msg = "Start making Spreadsheet...\n"
-            FreeCAD.Console.PrintMessage(msg)
+            msg = "Start making Spreadsheet..."
+            print_debug([msg])
         if self.mySheet:
             self.mySheet.clearAll()
             FreeCAD.ActiveDocument.recompute()
@@ -216,21 +213,30 @@ class gespal3d_exports:
             self.mySheet = FreeCAD.ActiveDocument.getObject("Gespal3DListe")
             FreeCAD.ActiveDocument.recompute()
         mySheet = self.mySheet
-        mySheet.set("A1", "ID")
-        mySheet.set("B1", "Largeur")
-        mySheet.set("C1", "Hauteur")
-        mySheet.set("D1", "Longueur")
-        mySheet.set("E1", "Usinage")
+        headers = [
+            "ID",
+            "Désignation",
+            "Largeur",
+            "Hauteur",
+            "Longueur",
+            "Usinage",
+        ]
+        columns = list(string.ascii_uppercase)
+        count = 0
+        for header in headers:
+            index = str(columns[count]) + "1"
+            mySheet.set(index, headers[count])
+            count += 1
         n = 1
         for obj in self.objlist:
             shape = obj.Shape
+            label = obj.Label
             analyse = self.shapeAnalyse(shape)
             if DEBUG:
-                msg = "row %s : object %s.\n" % (n, obj.Name)
-                FreeCAD.Console.PrintMessage(msg)
-                msg = analyse
-                FreeCAD.Console.PrintMessage(msg)
-                FreeCAD.Console.PrintMessage("\n")
+                msg = "row %s : object's name is %s." % (n, obj.Name)
+                print_debug([msg])
+                msg2 = analyse
+                print_debug(msg2)
             if hasattr(obj, "Height"):
                 width = obj.Width
                 height = obj.Height
@@ -254,18 +260,18 @@ class gespal3d_exports:
                 usinage = None
             desc = "'" + str(obj.Description)
             mySheet.set("A" + str(n + 1), str(desc))
-            mySheet.set("B" + str(n + 1), str(width))
-            mySheet.set("C" + str(n + 1), str(height))
-            # mySheet.set('D'+str(n+1), str(obj.Length))
-            mySheet.set("D" + str(n + 1), str(length))
+            mySheet.set("B" + str(n + 1), str(label))
+            mySheet.set("C" + str(n + 1), str(width))
+            mySheet.set("D" + str(n + 1), str(height))
+            mySheet.set("E" + str(n + 1), str(length))
             if usinage is not None:
-                mySheet.set("E" + str(n + 1), str(usinage))
+                mySheet.set("F" + str(n + 1), str(usinage))
             n += 1
         FreeCAD.ActiveDocument.recompute()
         mySheet.exportFile(self.path_csv)
         if DEBUG:
-            msg = "End making Spreadsheet...\n"
-            FreeCAD.Console.PrintMessage(msg)
+            msg = "End making Spreadsheet..."
+            print_debug([msg])
         return
 
     def makeImage(self):
@@ -336,7 +342,7 @@ class gespal3d_exports:
         r = r / 3
         scale = round(r, 2)
         template.setEditFieldContent("NOM", doc.Comment)
-        template.setEditFieldContent("FC-SH", doc.Name)
+        template.setEditFieldContent("FC-SH", self.objproduct.Label)
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)

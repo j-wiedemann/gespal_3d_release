@@ -1,18 +1,20 @@
 import FreeCAD
+import string
+import Arch, Draft, Part
+import os
+from datetime import datetime
 
 if FreeCAD.GuiUp:
     import FreeCADGui
-    import Arch, Draft, Part
     from PySide import QtCore, QtGui
-    from DraftTools import translate
     from FreeCAD import Base, Console, Vector, Rotation
     import TechDraw, TechDrawGui
     import math, DraftGeomUtils, DraftVecUtils
-    import os
-    from datetime import datetime
+    from DraftTools import translate
     from freecad.workbench_gespal3d import __version__ as wb_version
     from freecad.workbench_gespal3d import PARAMPATH
     from freecad.workbench_gespal3d import DEBUG
+    from freecad.workbench_gespal3d import print_debug
 else:
 
     def translate(ctxt, txt):

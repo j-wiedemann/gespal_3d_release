@@ -145,8 +145,6 @@ class _CommandComposant:
         self.initTracker()
 
     def initTracker(self):
-        """if hasattr(FreeCAD,"DraftWorkingPlane"):
-            FreeCAD.DraftWorkingPlane.setup()"""
         self.points = []
         self.tracker = g3d_tracker.boxTracker(
             width=self.Width,
@@ -705,14 +703,14 @@ class _CommandComposant:
         ]
 
         if hasattr(FreeCAD, "DraftWorkingPlane"):
-            FreeCAD.DraftWorkingPlane.setup(
-                direction=axis_list[idx],
+            FreeCAD.DraftWorkingPlane.alignToPointAndAxis(
                 point=FreeCAD.Vector(0.0, 0.0, 0.0),
+                axis=axis_list[idx],
                 upvec=upvec_list[idx],
-                force=True,
             )
 
-        FreeCADGui.Snapper.setGrid()
+        FreeCADGui.Snapper.toggleGrid()
+        FreeCADGui.Snapper.toggleGrid()
 
     def setFillMode(self, state):
         if state == 2:
@@ -1296,7 +1294,6 @@ class _CommandComposant:
 
         FreeCADGui.doCommand("Draft.autogroup(s)")
         FreeCAD.ActiveDocument.commitTransaction()
-        FreeCADGui.Snapper.toggleGrid()
         FreeCAD.ActiveDocument.recompute()
         if self.continueCmd:
             self.Activated()

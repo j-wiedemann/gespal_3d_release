@@ -79,8 +79,8 @@ class _CommandPanel:
 
         self.wp = FreeCAD.DraftWorkingPlane
         self.basepoint = None
-        self.tracker = g3d_tracker.rectangleTracker()
-        self.tracker.setPlane(self.wp.axis)
+        self.TrackerRect = g3d_tracker.rectangleTracker()
+        self.TrackerRect.setPlane(self.wp.axis)
         title = translate("Gespal3D", "Premier coin du panneau ") + ":"
         FreeCADGui.Snapper.getPoint(
             callback=self.getpoint,
@@ -94,13 +94,13 @@ class _CommandPanel:
         # no point
         if point is None:
             print("no point : finalize panel tracker")
-            self.tracker.finalize()
+            self.TrackerRect.finalize()
             return
         # first clic : pick rectangle origin
         if self.basepoint is None:
             print("first point : set origin panel tracker")
             self.setWorkingPlane(point=point)
-            self.tracker.setorigin(point)
+            self.TrackerRect.setorigin(point)
             self.basepoint = point
             FreeCADGui.Snapper.getPoint(
                 last=point,
@@ -113,7 +113,7 @@ class _CommandPanel:
             return
         # second clic : make panel
         print("second point : finalize panel tracker")
-        self.tracker.finalize()
+        self.TrackerRect.finalize()
         print("second point : make panel transaction")
         self.makeTransaction(point)
 
@@ -121,7 +121,7 @@ class _CommandPanel:
         "this function is called by the Snapper when the mouse is moved"
         if FreeCADGui.Control.activeDialog():
             if self.basepoint:
-                self.tracker.update(point)
+                self.TrackerRect.update(point)
 
     def taskbox(self):
         "sets up a taskbox widget"
@@ -305,19 +305,21 @@ class _CommandPanel:
         ]
 
         if point is None:
-            self.wp.setup(
-                direction=axis_list[idx],
+            self.wp.alignToPointAndAxis(
                 point=FreeCAD.Vector(0.0, 0.0, 0.0),
+                axis=axis_list[idx],
                 upvec=upvec_list[idx],
-                force=True,
             )
         else:
-            self.wp.setup(
-                direction=axis_list[idx], point=point, upvec=upvec_list[idx], force=True
+            self.wp.alignToPointAndAxis(
+                point=point,
+                axis=axis_list[idx],
+                upvec=upvec_list[idx],
             )
 
-        FreeCADGui.Snapper.setGrid()
-        self.tracker.setPlane(axis_list[idx])
+        FreeCADGui.Snapper.toggleGrid()
+        FreeCADGui.Snapper.toggleGrid()
+        self.TrackerRect.setPlane(axis_list[idx])
 
     def setThickness(self, d):
         self.thickness = d

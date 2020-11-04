@@ -6,6 +6,7 @@ from freecad.workbench_gespal3d import PARAMPATH
 from freecad.workbench_gespal3d import g3d_product
 from freecad.workbench_gespal3d import g3d_beam
 from freecad.workbench_gespal3d import g3d_panel
+from freecad.workbench_gespal3d import g3d_machining
 from freecad.workbench_gespal3d import g3d_listing
 from freecad.workbench_gespal3d import g3d_mirror_copy
 from freecad.workbench_gespal3d import g3d_delete
@@ -28,6 +29,7 @@ class gespal3d_workbench(Gui.Workbench):
         "G3D_Product",
         "G3D_BeamComposant",
         "G3D_PanelComposant",
+        "G3D_Machining",
         "G3D_Listing",
         "G3D_CommercialDrawing",
         "G3D_FabricationDrawing",

@@ -235,7 +235,9 @@ class _CommandMachining:
             self.state = self.states[4]
             #print("trimex command in OVER!!!")
             self.parent_obj.ViewObject.Transparency = 0
-            Arch.removeComponents([self.profil.InList[0]],self.parent_obj)
+            machining = Arch.makeStructure(self.profil.InList[0])
+            machining.MoveWithHost = True
+            Arch.removeComponents([machining],self.parent_obj)
             FreeCAD.ActiveDocument.recompute()
 
 if FreeCAD.GuiUp:

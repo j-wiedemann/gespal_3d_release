@@ -71,7 +71,7 @@ class boxTracker(Tracker):
         elif normal == vec_z.negative():
             rot.rotate(rot_center, vec_y, 180.0)
         else:
-            reeCAD.Console.PrintWarning(
+            FreeCAD.Console.PrintWarning(
                 "Can't determine the DraftWorkingPlane's normal !"
             )
             rot.rotate(rot_center, vec_z, 0.0)

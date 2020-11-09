@@ -81,9 +81,8 @@ class _CommandComposant:
     "Gespal 3D - Beam Creator tool"
 
     def __init__(self):
-        # input mode are:
+        # possible input mode are:
         #       "point"
-        #       "line"
         #       "array"
         #       "fill"
         self.mode = "point"
@@ -315,7 +314,6 @@ class _CommandComposant:
 
         vlay = QtGui.QHBoxLayout()
         self.fixlength_checkbox = QtGui.QCheckBox("Fixer")
-        # self.setLengthInput(self.Length)
         vlay.addWidget(self.length_input)
         vlay.addWidget(self.fixlength_checkbox)
 
@@ -826,7 +824,6 @@ class _CommandComposant:
 
     def setFillSpace(self, d):
         self.fill_space = d
-        # self.tracker.height(d)
         self.p.SetFloat("BeamFillSpace", d)
 
     def setContinue(self, i):
@@ -848,20 +845,14 @@ class _CommandComposant:
             print_debug(messages)
 
         if self.mode == "point":
-            # Open transaction
-            # FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create G3DBeam"))
             base_vertex = point
             transaction_name = "Create G3DBeam"
         elif self.mode == "fill":
-            # Open transaction
             base_vertex = self.base_snap_vertex
             transaction_name = "Create G3DBeam filling"
-            # FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create G3DBeam filling"))
         elif self.mode == "array":
-            # Open transaction
             base_vertex = self.base_snap_vertex
             transaction_name = "Create G3DBeam array"
-            # FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create G3DBeam array"))
         else:
             FreeCAD.Console.PrintWarning("This mode is not implemented")
             return
@@ -967,21 +958,15 @@ class _CommandComposant:
 
         # Make the G3D Beam component
         # Get the name of the profile object
-        FreeCADGui.doCommand("pname = p.Name")
-
         FreeCADGui.doCommand(
             "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
-            + "pname"
-            + ", '"
+            + "p.Name, '"
             + str(self.Length)
-            + "'"
-            + ", '"
+            + "', '"
             + str(self.Profile[1])
-            + "'"
-            + ", '"
+            + "', '"
             + str(self.Profile[-1])
-            + "'"
-            + ", '"
+            + "', '"
             + str(self.Profile[0])
             + "')"
         )
@@ -999,154 +984,73 @@ class _CommandComposant:
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
-                    bpoint1 = self.base_snap_vertex.y
                     situation = 1
                     reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
-                    bpoint1 = point.y
                     situation = 2
                     reverse = True
                 if axis.x == -1.0:
-                    point = point.add(FreeCAD.Vector(-self.Length, 0.0, 0.0))
-                    self.setWorkingPlane(0)
-                offset = point.x
-                bpoint2 = self.base_snap_vertex.z
-                # for filling mode
-                cpoint1 = self.base_snap_vertex.y
-                cpoint2 = self.base_snap_vertex.z
+                    pass
 
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
-                    bpoint1 = self.base_snap_vertex.x
                     situation = 3
-                    reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
-                    bpoint1 = point.x
                     situation = 4
                     reverse = True
                 if axis.y == -1.0:
-                    point = point.add(FreeCAD.Vector(0.0, -self.Length, 0.0))
-                    self.setWorkingPlane(1)
-                offset = point.y
-                bpoint2 = self.base_snap_vertex.z
-                # for filling mode
-                cpoint1 = self.base_snap_vertex.x
-                cpoint2 = self.base_snap_vertex.z
+                    pass
 
             elif axis.z != 0.0:
-
                 if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                     if tracker_vec.x > tracker_vec.y:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                        bpoint1 = point.y
-                        bpoint2 = self.base_snap_vertex.x
                         situation = 7
-                        # for filling mode
-                        cpoint1 = self.base_snap_vertex.y
-                        cpoint2 = self.base_snap_vertex.x
                     else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                        bpoint1 = point.x
-                        bpoint2 = self.base_snap_vertex.y
                         situation = 8
-                        # for filling mode
-                        cpoint1 = self.base_snap_vertex.x
-                        cpoint2 = self.base_snap_vertex.y
-
                     reverse = True
-
                 elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                        bpoint1 = self.base_snap_vertex.x
-                        bpoint2 = self.base_snap_vertex.y
                         situation = 5
-                        # for filling mode
-                        cpoint1 = self.base_snap_vertex.x
-                        cpoint2 = self.base_snap_vertex.y
                     else:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                        bpoint1 = self.base_snap_vertex.y
-                        bpoint2 = self.base_snap_vertex.x
                         situation = 6
-                        # for filling mode
-                        cpoint1 = self.base_snap_vertex.y
-                        cpoint2 = self.base_snap_vertex.x
-
                     reverse = False
-
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                    bpoint1 = self.base_snap_vertex.x
-                    bpoint2 = self.base_snap_vertex.y
                     situation = 9
-                    # for filling mode
-                    cpoint1 = self.base_snap_vertex.x
-                    cpoint2 = self.base_snap_vertex.y
                     reverse = False
                     if DEBUG:
                         print_debug(["Unexpected situation !"])
 
                 if axis.z == -1.0:
-                    point = point.add(FreeCAD.Vector(0.0, 0.0, -self.Length))
-                    self.setWorkingPlane(2)
-
                     if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                         if tracker_vec.x > tracker_vec.y:
                             vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                            bpoint1 = point.y
-                            bpoint2 = self.base_snap_vertex.x
                             situation = 12
-                            # for filling mode
-                            cpoint1 = self.base_snap_vertex.y
-                            cpoint2 = self.base_snap_vertex.x
                         else:
                             vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                            bpoint1 = point.x
-                            bpoint2 = self.base_snap_vertex.y
                             situation = 13
-                            # for filling mode
-                            cpoint1 = self.base_snap_vertex.x
-                            cpoint2 = self.base_snap_vertex.y
-
                         reverse = True
-
                     elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                         if tracker_vec.x > tracker_vec.y:
                             vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                            bpoint1 = self.base_snap_vertex.x
-                            bpoint2 = self.base_snap_vertex.y
                             situation = 10
-                            # for filling mode
-                            cpoint1 = self.base_snap_vertex.x
-                            cpoint2 = self.base_snap_vertex.y
                         else:
                             vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
-                            bpoint1 = self.base_snap_vertex.y
-                            bpoint2 = self.base_snap_vertex.x
                             situation = 11
-                            # for filling mode
-                            cpoint1 = self.base_snap_vertex.y
-                            cpoint2 = self.base_snap_vertex.x
-
                         reverse = False
-
                     else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
-                        bpoint1 = self.base_snap_vertex.x
-                        bpoint2 = self.base_snap_vertex.y
                         situation = 14
-                        # for filling mode
-                        cpoint1 = self.base_snap_vertex.x
-                        cpoint2 = self.base_snap_vertex.y
                         reverse = False
                         if DEBUG:
                             print_debug(["Unexpected situation !"])
-
-                offset = point.z
 
             if DEBUG:
                 msg = ["vec_transaction = {}".format(vec_transaction)]
@@ -1160,12 +1064,12 @@ class _CommandComposant:
                 space = self.fill_space
                 # set delta from inclination
                 if self.inclination == 90.0:
-                    if situation in [5, 8, 10, 13]:
+                    if situation in [1, 2, 3, 4, 5, 8, 10, 13]:
                         delta = self.Width
                     else:
                         delta = self.Height
                 else:
-                    if situation in [5, 8, 10, 13]:
+                    if situation in [1, 2, 3, 4, 5, 8, 10, 13]:
                         delta = self.Height
                     else:
                         delta = self.Width
@@ -1178,16 +1082,8 @@ class _CommandComposant:
                 if leftspace >= delta:
                     qte += 1
 
-                first_vec = vec_transaction.format(cpoint1, offset, cpoint2)
                 if reverse == True:
                     delta = delta * -1
-
-                # FreeCADGui.doCommand("p.Placement.Base = " + first_vec)
-                # FreeCADGui.doCommand("Draft.move(p, " + first_vec + ")")
-                # FreeCADGui.doCommand(
-                #    "s.Placement.Rotation = s.Placement.Rotation.multiply( \
-                #        FreeCAD.DraftWorkingPlane.getRotation().Rotation)"
-                # )
 
                 for x in range(qte - 1):
                     FreeCADGui.doCommand(
@@ -1197,21 +1093,15 @@ class _CommandComposant:
                     )
                     # Make the G3D Beam component
                     # Get the name of the profile object
-                    FreeCADGui.doCommand("pname = p2.Name")
-
                     FreeCADGui.doCommand(
                         "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
-                        + "pname"
-                        + ", '"
+                        + "p2.Name, '"
                         + str(self.Length)
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[1])
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[-1])
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[0])
                         + "')"
                     )
@@ -1223,17 +1113,18 @@ class _CommandComposant:
                     messages.append("space : {}".format(space))
                     messages.append("delta : {}".format(delta))
                     messages.append("leftspace : {}".format(leftspace))
-                    messages.append("first_vec : {}".format(first_vec))
                     print_debug(messages)
 
             elif self.mode == "array" and self.base_snap_vertex is not None:
                 length = DraftVecUtils.dist(self.base_snap_vertex, original_point)
                 space = length / (self.array_qty + 1)
                 spaces_list = []
-                for x in range(self.array_qty):
-                    spaces_list.append(space * (x + 1))
-                startpoint = spaces_list[0] + bpoint1
-                first_vec = vec_transaction.format(str(startpoint), offset, bpoint2)
+                for qty in range(self.array_qty):
+                    spaces_list.append(space * (qty + 1))
+
+                if reverse == True:
+                    spaces_list = [x * -1 for x in spaces_list]
+                    space = space * -1
 
                 if DEBUG:
                     messages = ["Array :"]
@@ -1241,10 +1132,13 @@ class _CommandComposant:
                     messages.append("qte : {}".format(self.array_qty))
                     messages.append("space : {}".format(space))
                     messages.append("spaces_list : {}".format(spaces_list))
-                    messages.append("first_vec : {}".format(first_vec))
                     print_debug(messages)
 
-                FreeCADGui.doCommand("p.Placement.Base = " + first_vec)
+                FreeCADGui.doCommand(
+                    "Draft.move(p, "
+                    + vec_transaction.format(spaces_list[0], 0.0, 0.0)
+                    + ")"
+                )
 
                 for x in spaces_list[1:]:
                     FreeCADGui.doCommand(
@@ -1252,27 +1146,21 @@ class _CommandComposant:
                         + vec_transaction.format(str(x - space), 0.0, 0.0)
                         + ", copy=True)"
                     )
+
                     # Make the G3D Beam component
                     # Get the name of the profile object
-                    FreeCADGui.doCommand("pname = p2.Name")
-
                     FreeCADGui.doCommand(
                         "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
-                        + "pname"
-                        + ", '"
+                        + "p2.Name, '"
                         + str(self.Length)
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[1])
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[-1])
-                        + "'"
-                        + ", '"
+                        + "', '"
                         + str(self.Profile[0])
                         + "')"
                     )
-
             else:
                 pass
 

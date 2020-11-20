@@ -980,12 +980,11 @@ class _CommandComposant:
             if DEBUG:
                 print_debug(["tracker_vec = {}".format(tracker_vec)])
             axis = FreeCAD.DraftWorkingPlane.getNormal()
-
+            reverse = False
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     situation = 1
-                    reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
                     situation = 2
@@ -1020,11 +1019,9 @@ class _CommandComposant:
                     else:
                         vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                         situation = 6
-                    reverse = False
                 else:
                     vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                     situation = 9
-                    reverse = False
                     if DEBUG:
                         print_debug(["Unexpected situation !"])
 
@@ -1044,11 +1041,9 @@ class _CommandComposant:
                         else:
                             vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
                             situation = 11
-                        reverse = False
                     else:
                         vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
                         situation = 14
-                        reverse = False
                         if DEBUG:
                             print_debug(["Unexpected situation !"])
 

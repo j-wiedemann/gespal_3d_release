@@ -21,25 +21,25 @@
 ###########################################################################
 
 
-import FreeCAD
-import Arch
-import DraftVecUtils
-from FreeCAD import Vector
+import FreeCAD as App
 
-# from freecad.workbench_gespal3d import g3d_profiles_parser
-from freecad.workbench_gespal3d import g3d_tracker
-from freecad.workbench_gespal3d import g3d_connect_db
-from freecad.workbench_gespal3d import DEBUG
-from freecad.workbench_gespal3d import DEBUG_U
-from freecad.workbench_gespal3d import print_debug
-from freecad.workbench_gespal3d import PARAMPATH
-import math
+if App.GuiUp:
+    import FreeCADGui as Gui
+    import Arch
+    import DraftVecUtils
 
-if FreeCAD.GuiUp:
-    import FreeCADGui
+    import math
+
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
+
+    from freecad.workbench_gespal3d import g3d_tracker
+    from freecad.workbench_gespal3d import g3d_connect_db
+    from freecad.workbench_gespal3d import DEBUG
+    from freecad.workbench_gespal3d import DEBUG_U
+    from freecad.workbench_gespal3d import print_debug
+    from freecad.workbench_gespal3d import PARAMPATH
 else:
     # \cond
     def translate(ctxt, txt):
@@ -57,7 +57,13 @@ __url__ = "https://freecad-france.com"
 
 
 def makeG3DBeam(pname, length, profile, color, description):
-    p = FreeCAD.ActiveDocument.getObject(pname)
+    print_debug(["makeG3DBeam called with :",
+        "pname:", pname, type(pname),
+        "length:", length,  type(length),
+        "profile:", profile, type(profile),
+        "color:", color, type(color),
+        "description:", description, type(description)])
+    p = App.ActiveDocument.getObject(pname)
     s = Arch.makeStructure(p, length=length)
     s.Profile = profile
     # Set color
@@ -103,8 +109,8 @@ class _CommandComposant:
 
     def IsActive(self):
         active = False
-        if FreeCAD.ActiveDocument:
-            for obj in FreeCAD.ActiveDocument.Objects:
+        if App.ActiveDocument:
+            for obj in App.ActiveDocument.Objects:
                 if obj.Name == "Product":
                     active = True
 
@@ -118,9 +124,9 @@ class _CommandComposant:
         # Reads preset profiles and categorizes them
         self.categories = g3d_connect_db.getCategories(include=["BO"])
 
-        self.p = FreeCAD.ParamGet(str(PARAMPATH))
+        self.p = App.ParamGet(str(PARAMPATH))
 
-        product = FreeCAD.ActiveDocument.getObject("Product")
+        product = App.ActiveDocument.getObject("Product")
         if hasattr(product, "Length"):
             self.product = [
                 product.Length.Value,
@@ -128,7 +134,7 @@ class _CommandComposant:
                 product.Height.Value,
             ]
         else:
-            product = FreeCAD.ActiveDocument.getObject("Box")
+            product = App.ActiveDocument.getObject("Box")
             self.product = [
                 product.Length.Value,
                 product.Width.Value,
@@ -181,7 +187,7 @@ class _CommandComposant:
             title = translate("Gespal3D", "Point de départ du remplissage") + ":"
         else:
             title = translate("Gespal3D", "Point de départ du composant") + ":"
-        FreeCADGui.Snapper.getPoint(
+        Gui.Snapper.getPoint(
             callback=self.getPoint,
             movecallback=self.update,
             extradlg=[self.taskbox()],
@@ -197,10 +203,10 @@ class _CommandComposant:
             return
         # mode array
         if (self.mode == "array") and (self.base_snap_vertex is None):
-            self.base_snap_vertex = FreeCAD.Vector(
+            self.base_snap_vertex = App.Vector(
                 round(point.x, 2), round(point.y, 2), round(point.z, 2)
             )
-            FreeCADGui.Snapper.getPoint(
+            Gui.Snapper.getPoint(
                 last=point,
                 callback=self.getPoint,
                 movecallback=self.update,
@@ -211,10 +217,10 @@ class _CommandComposant:
             return
         # mode array
         if (self.mode == "fill") and (self.base_snap_vertex is None):
-            self.base_snap_vertex = FreeCAD.Vector(
+            self.base_snap_vertex = App.Vector(
                 round(point.x, 2), round(point.y, 2), round(point.z, 2)
             )
-            FreeCADGui.Snapper.getPoint(
+            Gui.Snapper.getPoint(
                 last=point,
                 callback=self.getPoint,
                 movecallback=self.update,
@@ -233,7 +239,7 @@ class _CommandComposant:
             msg = "_CommandComposant update"
             print_debug(msg)
 
-        if FreeCADGui.Control.activeDialog():
+        if Gui.Control.activeDialog():
             if DEBUG and DEBUG_U:
                 msg = "Current Mode is : %s \n" % self.mode
                 print_debug(msg)
@@ -261,13 +267,13 @@ class _CommandComposant:
             else:
                 self.tracker.off()
         else:
-            FreeCADGui.Snapper.toggleGrid()
+            Gui.Snapper.toggleGrid()
 
     def taskbox(self):
         "sets up a taskbox widget"
 
         taskwidget = QtGui.QWidget()
-        ui = FreeCADGui.UiLoader()
+        ui = Gui.UiLoader()
         taskwidget.setWindowTitle(translate("Gespal3D", "Options de l'éléments"))
         layout_widget = QtGui.QVBoxLayout(taskwidget)
         grid = QtGui.QGridLayout()
@@ -403,9 +409,9 @@ class _CommandComposant:
         # with angle
         self.deversement_input = ui.createWidget("Gui::InputField")
         self.deversement_input.setText(
-            FreeCAD.Units.Quantity(
+            App.Units.Quantity(
                 self.inclination,
-                FreeCAD.Units.Angle).UserString)
+                App.Units.Angle).UserString)
         """
         grid.addWidget(deversement_label, 8, 0, 1, 1)
         grid.addWidget(self.deversement_input, 8, 1, 1, 1)
@@ -414,7 +420,7 @@ class _CommandComposant:
         width_label = QtGui.QLabel(translate("Arch", "Width"))
         self.width_input = ui.createWidget("Gui::InputField")
         self.width_input.setText(
-            FreeCAD.Units.Quantity(self.Width, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(self.Width, App.Units.Length).UserString
         )
         grid.addWidget(width_label, 12, 0, 1, 1)
         grid.addWidget(self.width_input, 12, 1, 1, 1)
@@ -423,7 +429,7 @@ class _CommandComposant:
         height_label = QtGui.QLabel(translate("Arch", "Height"))
         self.height_input = ui.createWidget("Gui::InputField")
         self.height_input.setText(
-            FreeCAD.Units.Quantity(self.Height, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(self.Height, App.Units.Length).UserString
         )
         grid.addWidget(height_label, 13, 0, 1, 1)
         grid.addWidget(self.height_input, 13, 1, 1, 1)
@@ -464,7 +470,7 @@ class _CommandComposant:
         self.remplissage_input = ui.createWidget("Gui::InputField")
         self.remplissage_input.setDisabled(True)
         self.remplissage_input.setText(
-            FreeCAD.Units.Quantity(0.0, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(0.0, App.Units.Length).UserString
         )
         layout_remplissage.addWidget(self.remplissage_cb, 0, 0, 1, 1)
         layout_remplissage.addWidget(remplissage_label, 1, 0, 1, 1)
@@ -602,8 +608,8 @@ class _CommandComposant:
             if DEBUG:
                 print_debug("restore fillspace")
             self.remplissage_input.setText(
-                FreeCAD.Units.Quantity(
-                    stored_fillspace, FreeCAD.Units.Length
+                App.Units.Quantity(
+                    stored_fillspace, App.Units.Length
                 ).UserString
             )
 
@@ -635,8 +641,8 @@ class _CommandComposant:
             # width
             if float(comp[5]) > 0.0:
                 self.width_input.setText(
-                    FreeCAD.Units.Quantity(
-                        float(comp[5]), FreeCAD.Units.Length
+                    App.Units.Quantity(
+                        float(comp[5]), App.Units.Length
                     ).UserString
                 )
                 self.width_input.setDisabled(True)
@@ -646,8 +652,8 @@ class _CommandComposant:
             # height
             if float(comp[4]) > 0.0:
                 self.height_input.setText(
-                    FreeCAD.Units.Quantity(
-                        float(comp[4]), FreeCAD.Units.Length
+                    App.Units.Quantity(
+                        float(comp[4]), App.Units.Length
                     ).UserString
                 )
                 self.height_input.setDisabled(True)
@@ -657,8 +663,8 @@ class _CommandComposant:
             # length
             if float(comp[3]) > 0.0:
                 self.length_input.setText(
-                    FreeCAD.Units.Quantity(
-                        float(comp[3]), FreeCAD.Units.Length
+                    App.Units.Quantity(
+                        float(comp[3]), App.Units.Length
                     ).UserString
                 )
                 self.length_input.setDisabled(True)
@@ -681,32 +687,32 @@ class _CommandComposant:
         if idx == 6:
             idx = 0
         axis_list = [
-            FreeCAD.Vector(1, 0, 0),
-            FreeCAD.Vector(0, 1, 0),
-            FreeCAD.Vector(0, 0, 1),
-            FreeCAD.Vector(-1, 0, 0),
-            FreeCAD.Vector(0, -1, 0),
-            FreeCAD.Vector(0, 0, -1),
+            App.Vector(1, 0, 0),
+            App.Vector(0, 1, 0),
+            App.Vector(0, 0, 1),
+            App.Vector(-1, 0, 0),
+            App.Vector(0, -1, 0),
+            App.Vector(0, 0, -1),
         ]
 
         upvec_list = [
-            FreeCAD.Vector(0.0, 1.0, 0.0),
-            FreeCAD.Vector(0.0, 0.0, 1.0),
-            FreeCAD.Vector(1.0, 0.0, 0.0),
-            FreeCAD.Vector(0.0, -1.0, 0.0),
-            FreeCAD.Vector(0.0, 0.0, -1.0),
-            FreeCAD.Vector(-1.0, 0.0, 0.0),
+            App.Vector(0.0, 1.0, 0.0),
+            App.Vector(0.0, 0.0, 1.0),
+            App.Vector(1.0, 0.0, 0.0),
+            App.Vector(0.0, -1.0, 0.0),
+            App.Vector(0.0, 0.0, -1.0),
+            App.Vector(-1.0, 0.0, 0.0),
         ]
 
-        if hasattr(FreeCAD, "DraftWorkingPlane"):
-            FreeCAD.DraftWorkingPlane.alignToPointAndAxis(
-                point=FreeCAD.Vector(0.0, 0.0, 0.0),
+        if hasattr(App, "DraftWorkingPlane"):
+            App.DraftWorkingPlane.alignToPointAndAxis(
+                point=App.Vector(0.0, 0.0, 0.0),
                 axis=axis_list[idx],
                 upvec=upvec_list[idx],
             )
 
-        FreeCADGui.Snapper.toggleGrid()
-        FreeCADGui.Snapper.toggleGrid()
+        Gui.Snapper.toggleGrid()
+        Gui.Snapper.toggleGrid()
 
     def setFillMode(self, state):
         if state == 2:
@@ -761,20 +767,20 @@ class _CommandComposant:
         if float(self.Profile[3]) > 0.0:
             self.setLength(self.Profile[3])
             self.length_input.setText(
-                FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                App.Units.Quantity(self.Length, App.Units.Length).UserString
             )
         elif (self.mode == "array") or (self.mode == "fill"):
             self.length_input.setText(
-                FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                App.Units.Quantity(self.Length, App.Units.Length).UserString
             )
         elif self.p.GetBool("BeamFixLength", 0) is False:
             self.setLength(self.product[idx])
             self.length_input.setText(
-                FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                App.Units.Quantity(self.Length, App.Units.Length).UserString
             )
         else:
             self.length_input.setText(
-                FreeCAD.Units.Quantity(self.Length, FreeCAD.Units.Length).UserString
+                App.Units.Quantity(self.Length, App.Units.Length).UserString
             )
 
         if DEBUG:
@@ -836,7 +842,7 @@ class _CommandComposant:
         x = round(point.x, 2)
         y = round(point.y, 2)
         z = round(point.z, 2)
-        point = FreeCAD.Vector(x, y, z)
+        point = App.Vector(x, y, z)
         if DEBUG:
             messages = ["G3D_BeamComposant.makeTransaction :"]
             messages.append("Current Mode is : {}".format(self.mode))
@@ -854,19 +860,19 @@ class _CommandComposant:
             base_vertex = self.base_snap_vertex
             transaction_name = "Create G3DBeam array"
         else:
-            FreeCAD.Console.PrintWarning("This mode is not implemented")
+            App.Console.PrintWarning("This mode is not implemented")
             return
 
         # Open transaction
-        FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", transaction_name))
+        App.ActiveDocument.openTransaction(translate("Gespal3D", transaction_name))
 
-        FreeCADGui.addModule("Draft")
-        FreeCADGui.addModule("Arch")
-        FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_profiles_parser")
-        FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_beam")
+        Gui.addModule("Draft")
+        Gui.addModule("Arch")
+        Gui.addModule("freecad.workbench_gespal3d.g3d_profiles_parser")
+        Gui.addModule("freecad.workbench_gespal3d.g3d_beam")
 
         # Create profil with g3d_profiles_parser tools
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "p = freecad.workbench_gespal3d.g3d_profiles_parser.makeProfile("
             + str(self.Profile)
             + ")"
@@ -888,9 +894,9 @@ class _CommandComposant:
             y = 0.0
 
         # Move profile to anchor point
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "Draft.move(p, "
-            + "FreeCAD.Vector("
+            + "App.Vector("
             + str(x)
             + ", "
             + str(y)
@@ -900,19 +906,19 @@ class _CommandComposant:
         )
 
         # Rotate profil around Z axis by inclination value
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "Draft.rotate(p, "
             + str(self.inclination)
             + ","
-            + "FreeCAD.Vector(0.0, 0.0, 0.0), FreeCAD.Vector(0.0, 0.0, 1.0)"
+            + "App.Vector(0.0, 0.0, 0.0), App.Vector(0.0, 0.0, 1.0)"
             + ")"
         )
 
-        normalWP = FreeCAD.DraftWorkingPlane.getNormal()
-        vec_0 = FreeCAD.Vector(0.0, 0.0, 0.0)
-        vec_z = FreeCAD.Vector(0.0, 0.0, 1.0)
-        vec_y = FreeCAD.Vector(0.0, 1.0, 0.0)
-        vec_x = FreeCAD.Vector(1.0, 0.0, 0.0)
+        normalWP = App.DraftWorkingPlane.getNormal()
+        vec_0 = App.Vector(0.0, 0.0, 0.0)
+        vec_z = App.Vector(0.0, 0.0, 1.0)
+        vec_y = App.Vector(0.0, 1.0, 0.0)
+        vec_x = App.Vector(1.0, 0.0, 0.0)
         if normalWP == vec_x:
             params = [-90.0, vec_0, vec_x, -90.0, vec_0, vec_z]  # check : todo
         elif normalWP == vec_y:
@@ -931,7 +937,7 @@ class _CommandComposant:
         # We need zero, one or two rotations to get the good orientation
         # rotation param are given just behind
         # Let's make the first rotation
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "Draft.rotate(p, "
             + str(params[0])
             + ", "
@@ -941,7 +947,7 @@ class _CommandComposant:
             + ")"
         )
         # Then the second rotation
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "Draft.rotate(p, "
             + str(params[3])
             + ", "
@@ -952,20 +958,20 @@ class _CommandComposant:
         )
 
         # Move profil to base_snap_vertex
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "Draft.move(p, " + DraftVecUtils.toString(base_vertex) + ")"
         )
 
         # Make the G3D Beam component
         # Get the name of the profile object
-        FreeCADGui.doCommand(
+        Gui.doCommand(
             "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
             + "p.Name, '"
             + str(self.Length)
-            + "', '"
+            + "', " + '"'
             + str(self.Profile[1])
-            + "', '"
-            + str(self.Profile[-1])
+            + '"'+ ", '"
+            + str(self.Profile[-2])
             + "', '"
             + str(self.Profile[0])
             + "')"
@@ -979,14 +985,14 @@ class _CommandComposant:
 
             if DEBUG:
                 print_debug(["tracker_vec = {}".format(tracker_vec)])
-            axis = FreeCAD.DraftWorkingPlane.getNormal()
+            axis = App.DraftWorkingPlane.getNormal()
             reverse = False
             if axis.x != 0.0:
                 if tracker_vec.y > 0.0:
-                    vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
+                    vec_transaction = "App.Vector({1}, {0}, {2})"
                     situation = 1
                 else:
-                    vec_transaction = "FreeCAD.Vector({1}, {0}, {2})"
+                    vec_transaction = "App.Vector({1}, {0}, {2})"
                     situation = 2
                     reverse = True
                 if axis.x == -1.0:
@@ -994,10 +1000,10 @@ class _CommandComposant:
 
             elif axis.y != 0.0:
                 if tracker_vec.x > 0.0:
-                    vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
+                    vec_transaction = "App.Vector({0}, {1}, {2})"
                     situation = 3
                 else:
-                    vec_transaction = "FreeCAD.Vector({0}, {1}, {2})"
+                    vec_transaction = "App.Vector({0}, {1}, {2})"
                     situation = 4
                     reverse = True
                 if axis.y == -1.0:
@@ -1006,21 +1012,21 @@ class _CommandComposant:
             elif axis.z != 0.0:
                 if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        vec_transaction = "App.Vector({2}, {0}, {1})"
                         situation = 7
                     else:
-                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        vec_transaction = "App.Vector({0}, {2}, {1})"
                         situation = 8
                     reverse = True
                 elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                     if tracker_vec.x > tracker_vec.y:
-                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        vec_transaction = "App.Vector({0}, {2}, {1})"
                         situation = 5
                     else:
-                        vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                        vec_transaction = "App.Vector({2}, {0}, {1})"
                         situation = 6
                 else:
-                    vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                    vec_transaction = "App.Vector({0}, {2}, {1})"
                     situation = 9
                     if DEBUG:
                         print_debug(["Unexpected situation !"])
@@ -1028,21 +1034,21 @@ class _CommandComposant:
                 if axis.z == -1.0:
                     if (tracker_vec.x < 0.0) or (tracker_vec.y < 0.0):
                         if tracker_vec.x > tracker_vec.y:
-                            vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                            vec_transaction = "App.Vector({2}, {0}, {1})"
                             situation = 12
                         else:
-                            vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                            vec_transaction = "App.Vector({0}, {2}, {1})"
                             situation = 13
                         reverse = True
                     elif (tracker_vec.x > 0.0) or (tracker_vec.y > 0.0):
                         if tracker_vec.x > tracker_vec.y:
-                            vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                            vec_transaction = "App.Vector({0}, {2}, {1})"
                             situation = 10
                         else:
-                            vec_transaction = "FreeCAD.Vector({2}, {0}, {1})"
+                            vec_transaction = "App.Vector({2}, {0}, {1})"
                             situation = 11
                     else:
-                        vec_transaction = "FreeCAD.Vector({0}, {2}, {1})"
+                        vec_transaction = "App.Vector({0}, {2}, {1})"
                         situation = 14
                         if DEBUG:
                             print_debug(["Unexpected situation !"])
@@ -1081,21 +1087,21 @@ class _CommandComposant:
                     delta = delta * -1
 
                 for x in range(qte - 1):
-                    FreeCADGui.doCommand(
+                    Gui.doCommand(
                         "p2 = Draft.move(p, "
                         + vec_transaction.format(str(delta * (x + 1)), 0.0, 0.0)
                         + ", copy=True)"
                     )
                     # Make the G3D Beam component
                     # Get the name of the profile object
-                    FreeCADGui.doCommand(
+                    Gui.doCommand(
                         "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
                         + "p2.Name, '"
                         + str(self.Length)
-                        + "', '"
+                        + "', " + '"'
                         + str(self.Profile[1])
-                        + "', '"
-                        + str(self.Profile[-1])
+                        + '"'+ ", '"
+                        + str(self.Profile[-2])
                         + "', '"
                         + str(self.Profile[0])
                         + "')"
@@ -1129,14 +1135,14 @@ class _CommandComposant:
                     messages.append("spaces_list : {}".format(spaces_list))
                     print_debug(messages)
 
-                FreeCADGui.doCommand(
+                Gui.doCommand(
                     "Draft.move(p, "
                     + vec_transaction.format(spaces_list[0], 0.0, 0.0)
                     + ")"
                 )
 
                 for x in spaces_list[1:]:
-                    FreeCADGui.doCommand(
+                    Gui.doCommand(
                         "p2 = Draft.move(p,"
                         + vec_transaction.format(str(x - space), 0.0, 0.0)
                         + ", copy=True)"
@@ -1144,14 +1150,14 @@ class _CommandComposant:
 
                     # Make the G3D Beam component
                     # Get the name of the profile object
-                    FreeCADGui.doCommand(
+                    Gui.doCommand(
                         "s = freecad.workbench_gespal3d.g3d_beam.makeG3DBeam("
                         + "p2.Name, '"
                         + str(self.Length)
-                        + "', '"
+                        + "', " + '"'
                         + str(self.Profile[1])
-                        + "', '"
-                        + str(self.Profile[-1])
+                        + '"'+ ", '"
+                        + str(self.Profile[-2])
                         + "', '"
                         + str(self.Profile[0])
                         + "')"
@@ -1159,12 +1165,14 @@ class _CommandComposant:
             else:
                 pass
 
-        FreeCADGui.doCommand("Draft.autogroup(s)")
-        FreeCAD.ActiveDocument.commitTransaction()
-        FreeCAD.ActiveDocument.recompute()
+        Gui.doCommand("Draft.autogroup(s)")
+        App.ActiveDocument.commitTransaction()
+        App.ActiveDocument.recompute()
         if self.continueCmd:
             self.Activated()
 
 
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_BeamComposant", _CommandComposant())
+if App.GuiUp:
+    Gui.addCommand("G3D_BeamComposant", _CommandComposant())
+
+App.Console.PrintLog("Loading G3D Beam... done\n")

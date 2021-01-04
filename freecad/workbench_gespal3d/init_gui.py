@@ -10,6 +10,7 @@ from freecad.workbench_gespal3d import g3d_machining
 from freecad.workbench_gespal3d import g3d_listing
 from freecad.workbench_gespal3d import g3d_mirror_copy
 from freecad.workbench_gespal3d import g3d_delete
+from freecad.workbench_gespal3d import g3d_component_manager
 from freecad.workbench_gespal3d import __version__ as wb_version
 
 __title__ = "Gespal 3D InitGui"
@@ -30,10 +31,13 @@ class gespal3d_workbench(Gui.Workbench):
         "G3D_BeamComposant",
         "G3D_PanelComposant",
         "G3D_Machining",
+        "Separator",
         "G3D_Listing",
         "G3D_CommercialDrawing",
         "G3D_FabricationDrawing",
+        "Separator",
         "G3D_Help",
+        "G3D_ComponentsManager",
     ]
     toolbox_mod = [
         "Draft_Move",
@@ -66,7 +70,7 @@ class gespal3d_workbench(Gui.Workbench):
         """
         App.Console.PrintMessage("Initialisation de l'atelier Gespal3D \n")
 
-        p = App.ParamGet(str(PARAMPATH))
+        App.ParamGet(str(PARAMPATH))
         c = App.ParamGet("User parameter:BaseApp/Preferences/Document")
         c.SetBool("DuplicateLabels", True)
 

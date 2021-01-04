@@ -70,8 +70,9 @@ def getComposant(id=1):
     cursorObj = con.cursor()
     cursorObj.execute("SELECT * FROM Composant WHERE CO_COMPTEUR = " + str(id))
     rows = cursorObj.fetchall()
-    if DEBUG_DB:
-        messages = ["getComposant :"]
-        messages.append(rows)
-        print_debug(messages)
-    return rows[0]
+    if rows:
+        component = rows[0]
+    else:
+        component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
+    print_debug(["getComposant :", component])
+    return component

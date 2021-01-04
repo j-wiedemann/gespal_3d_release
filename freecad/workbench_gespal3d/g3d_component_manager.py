@@ -401,9 +401,9 @@ class G3D_ComponentsManager:
             "Pixmap": os.path.join(ICONPATH, "preferences-general.svg"),
             "MenuText": QtCore.QT_TRANSLATE_NOOP("Gespal3D", "Gestionnaire de composants"),
             "Accel": "G, C",
-            "ToolTip": "<html><head/><body><p><b>Supprimer le(s) composant(s) sélectionné(s).</b> \
+            "ToolTip": "<html><head/><body><p><b>Gestionnaire de composants.</b> \
                     <br><br> \
-                    Sélectionner un ou plusieurs composants pour les supprimer. \
+                    Permet d'ajouter et supprimer des composants (barres, panneaux, dés, etc). \
                     </p></body></html>",
         }
 

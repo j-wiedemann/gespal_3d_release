@@ -1,7 +1,7 @@
-import FreeCAD
+import FreeCAD as App
 
-if FreeCAD.GuiUp:
-    import FreeCADGui
+if App.GuiUp:
+    import FreeCADGui as Gui
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
@@ -21,13 +21,13 @@ import math
 import os
 
 
-__title__ = "Delete Gespal3D"
+__title__ = "Gespal 3D Delete tool"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
 def delete_G3Dcomposant(obj):
-    FreeCAD.ActiveDocument.removeObject(obj.Name)
+    App.ActiveDocument.removeObject(obj.Name)
 
 
 class _Command_Delete:
@@ -54,13 +54,13 @@ class _Command_Delete:
         are met or not. This function is optional."""
 
         active = False
-        if len(FreeCADGui.Selection.getSelection()) > 0:
+        if len(Gui.Selection.getSelection()) > 0:
             active = True
         return active
 
     def Activated(self):
         delete_list = []
-        selection = FreeCADGui.Selection.getSelection()
+        selection = Gui.Selection.getSelection()
         for sel in selection:
             if hasattr(sel, "Tag"):
                 if sel.Tag == "Gespal":
@@ -84,15 +84,15 @@ class _Command_Delete:
             if "Part__Mirroring" in sel.Name:
                 delete_list.append(sel)
         if len(delete_list) > 0:
-            FreeCAD.ActiveDocument.openTransaction(
+            App.ActiveDocument.openTransaction(
                 translate("Gespal3D", "Delete composants")
             )
             for obj in delete_list:
-                FreeCADGui.doCommand(
-                    "FreeCAD.ActiveDocument.removeObject('%s')" % obj.Name
+                Gui.doCommand(
+                    "App.ActiveDocument.removeObject('%s')" % obj.Name
                 )
-            FreeCAD.ActiveDocument.commitTransaction()
+            App.ActiveDocument.commitTransaction()
 
 
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_Delete", _Command_Delete())
+if App.GuiUp:
+    Gui.addCommand("G3D_Delete", _Command_Delete())

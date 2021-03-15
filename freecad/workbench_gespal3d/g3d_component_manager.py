@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import sys, os
 import sqlite3
 from sqlite3 import Error
@@ -14,10 +16,16 @@ if App.GuiUp:
     from freecad.workbench_gespal3d import UIPATH
     from freecad.workbench_gespal3d import g3d_connect_db
 
+
+__title__ = "Gespal 3D Components Manager"
+__license__ = "LGPLv2.1"
+__author__ = "Jonathan Wiedemann"
+__url__ = "https://freecad-france.com"
+
+
 # Qt translation handling
 def translate(context, text, disambig=None):
     return QtCore.QCoreApplication.translate(context, text, disambig)
-
 
 
 class ComponentManager(QtGui.QDialog):

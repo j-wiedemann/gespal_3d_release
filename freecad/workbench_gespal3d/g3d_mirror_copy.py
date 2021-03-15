@@ -1,39 +1,15 @@
-###########################################################################
-#                                                                         *
-#   Copyright (c) 2019                                                    *
-#   Jonathan Wiedemann <contact@freecad-france.com>                       *
-#                                                                         *
-#   This program is free software; you can redistribute it and/or modify  *
-#   it under the terms of the GNU Lesser General Public License (LGPL)    *
-#   as published by the Free Software Foundation; either version 2 of     *
-#   the License, or (at your option) any later version.                   *
-#   for detail see the LICENCE text file.                                 *
-#                                                                         *
-#   This program is distributed in the hope that it will be useful,       *
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-#   GNU Library General Public License for more details.                  *
-#                                                                         *
-#   You should have received a copy of the GNU Library General Public     *
-#   License along with this program; if not, write to the Free Software   *
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
-#   USA                                                                   *
-###########################################################################
+# coding: utf-8
 
+import FreeCAD as App
 
-import FreeCAD
-import DraftVecUtils
-from FreeCAD import Vector
-
-from freecad.workbench_gespal3d import DEBUG
-from freecad.workbench_gespal3d import PARAMPATH
-import math
-
-if FreeCAD.GuiUp:
-    import FreeCADGui
+if App.GuiUp:
+    import FreeCADGui as Gui
+    import DraftVecUtils
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
+    from freecad.workbench_gespal3d import DEBUG
+    from freecad.workbench_gespal3d import PARAMPATH
 else:
     # \cond
     def translate(ctxt, txt):
@@ -46,6 +22,7 @@ else:
 
 
 __title__ = "Copy Mirror Gespal3D"
+__license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
@@ -55,28 +32,28 @@ def makeCopyMirror(objs, plane):
 
     if support == "XY_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(0.0, 0.0, offset,)
-        normal = FreeCAD.Vector(0.0, 0.0, 1.0,)
+        base = App.Vector(0.0, 0.0, offset,)
+        normal = App.Vector(0.0, 0.0, 1.0,)
         expression1 = ".Base.z"
         expression2 = u"DPSymXY.AttachmentOffset.Base.z"
 
     elif support == "XZ_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(0.0, offset, 0.0,)
-        normal = FreeCAD.Vector(0.0, 1.0, 0.0,)
+        base = App.Vector(0.0, offset, 0.0,)
+        normal = App.Vector(0.0, 1.0, 0.0,)
         expression1 = ".Base.y"
         expression2 = u"DPSymXZ.AttachmentOffset.Base.z"
 
     elif support == "YZ_Plane":
         offset = plane.AttachmentOffset.Base.z
-        base = FreeCAD.Vector(offset, 0.0, 0.0,)
-        normal = FreeCAD.Vector(1.0, 0.0, 0.0,)
+        base = App.Vector(offset, 0.0, 0.0,)
+        normal = App.Vector(1.0, 0.0, 0.0,)
         expression1 = ".Base.x"
         expression2 = u"DPSymYZ.AttachmentOffset.Base.z"
     else:
         pass
 
-    doc = FreeCAD.ActiveDocument
+    doc = App.ActiveDocument
 
     for obj in objs:
         mirror = doc.addObject("Part::Mirroring")
@@ -103,7 +80,7 @@ class _CopyMirrorTaskPanel:
         self.PlaneVisibility(True)
 
     def PlaneVisibility(self, show=True):
-        doc = FreeCAD.ActiveDocument
+        doc = App.ActiveDocument
         if show == True:
             doc.DPSymXY.ViewObject.Visibility = True
             doc.DPSymXZ.ViewObject.Visibility = True
@@ -115,23 +92,23 @@ class _CopyMirrorTaskPanel:
 
     def accept(self):
 
-        sel = FreeCADGui.Selection.getSelection()
+        sel = Gui.Selection.getSelection()
         if len(sel) > 1:
             plane = sel[-1]
             objs = sel[:-1]
             if plane.TypeId == "PartDesign::Plane":
                 # makeCopyMirror(objs, plane)
-                FreeCAD.ActiveDocument.openTransaction(
+                App.ActiveDocument.openTransaction(
                     translate("Gespal3D", "Create Mirror")
                 )
-                FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_mirror_copy")
-                FreeCADGui.doCommand("sel = FreeCADGui.Selection.getSelection()")
-                FreeCADGui.doCommand("plane = sel[-1]")
-                FreeCADGui.doCommand("objs = sel[:-1]")
-                FreeCADGui.doCommand(
+                Gui.addModule("freecad.workbench_gespal3d.g3d_mirror_copy")
+                Gui.doCommand("sel = Gui.Selection.getSelection()")
+                Gui.doCommand("plane = sel[-1]")
+                Gui.doCommand("objs = sel[:-1]")
+                Gui.doCommand(
                     "freecad.workbench_gespal3d.g3d_mirror_copy.makeCopyMirror(objs, plane)"
                 )
-                FreeCAD.ActiveDocument.commitTransaction()
+                App.ActiveDocument.commitTransaction()
             else:
                 print("La sélection ne contient pas de plan de référence")
         else:
@@ -141,7 +118,7 @@ class _CopyMirrorTaskPanel:
 
     def reject(self):
         self.PlaneVisibility(False)
-        FreeCAD.Console.PrintMessage("Annulation de la copie par symétrie.\n")
+        App.Console.PrintMessage("Annulation de la copie par symétrie.\n")
         return True
 
     def getStandardButtons(self):
@@ -172,8 +149,8 @@ class _CommandCopyMirror:
         }
 
     def IsActive(self):
-        if FreeCAD.ActiveDocument:
-            for obj in FreeCAD.ActiveDocument.Objects:
+        if App.ActiveDocument:
+            for obj in App.ActiveDocument.Objects:
                 if obj.Name == "Product":
                     active = True
         else:
@@ -183,11 +160,11 @@ class _CommandCopyMirror:
     def Activated(self):
         panel = _CopyMirrorTaskPanel()
         # self.PlaneVisibility(True)
-        FreeCADGui.Control.showDialog(panel)
+        Gui.Control.showDialog(panel)
         # self.PlaneVisibility(False)
 
     def PlaneVisibility(self, show=True):
-        doc = FreeCAD.ActiveDocument
+        doc = App.ActiveDocument
         if show == True:
             doc.DPSymXY.ViewObject.Visibility = True
             doc.DPSymXZ.ViewObject.Visibility = True
@@ -198,5 +175,5 @@ class _CommandCopyMirror:
             doc.DPSymYZ.ViewObject.Visibility = False
 
 
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_MirrorCopy", _CommandCopyMirror())
+if App.GuiUp:
+    Gui.addCommand("G3D_MirrorCopy", _CommandCopyMirror())

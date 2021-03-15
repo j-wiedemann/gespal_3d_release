@@ -14,12 +14,9 @@ def sql_connection():
         print_debug(["define database path in BaseApp/Preferences/Mod/Gespal3D"])
         return
     try:
-
         con = sqlite3.connect(sqlite_db)
-
         if DEBUG_DB:
             print_debug(["DB Connection is established."])
-
     except Error:
         print_debug(["sql_connection got an error", Error])
 
@@ -62,6 +59,7 @@ def getComposants(categorie=None):
             messages = ["getComposants :"]
             messages.append(rows)
             print_debug(messages)
+        
         return rows
 
 
@@ -75,4 +73,5 @@ def getComposant(id=1):
     else:
         component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
     print_debug(["getComposant :", component])
+    
     return component

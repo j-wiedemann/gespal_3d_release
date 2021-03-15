@@ -1,9 +1,11 @@
-import FreeCAD
-import Draft
-import Part
+# coding: utf-8
 
-if FreeCAD.GuiUp:
-    import FreeCADGui
+import FreeCAD as App
+
+if App.GuiUp:
+    import FreeCADGui as Gui
+    import Draft
+    import Part
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
@@ -16,8 +18,14 @@ else:
         return txt
 
 
+__title__ = "Gespal3D Product"
+__license__ = "LGPLv2.1"
+__author__ = "Jonathan Wiedemann"
+__url__ = "https://freecad-france.com"
+
+
 def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
-    doc = FreeCAD.ActiveDocument
+    doc = App.ActiveDocument
     if not id:
         id = "Produit"
     if name:
@@ -52,9 +60,9 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
     c = 0
     for name in dp_names:
         dp = body.newObject("PartDesign::Plane", name)
-        dp.AttachmentOffset = FreeCAD.Placement(
-            FreeCAD.Vector(0.0000000000, 0.0000000000, dp_offset[c]),
-            FreeCAD.Rotation(0.0000000000, 0.0000000000, 0.0000000000),
+        dp.AttachmentOffset = App.Placement(
+            App.Vector(0.0000000000, 0.0000000000, dp_offset[c]),
+            App.Rotation(0.0000000000, 0.0000000000, 0.0000000000),
         )
         if c != 1:
             dp.MapReversed = False
@@ -73,23 +81,23 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
     # Dimensions
     dimensions = []
     dim = Draft.make_linear_dimension(
-        FreeCAD.Vector(0.0, 0.0, 0.0),
-        FreeCAD.Vector(length, 0.0, 0.0),
-        FreeCAD.Vector(0.0, -200, 0.0),
+        App.Vector(0.0, 0.0, 0.0),
+        App.Vector(length, 0.0, 0.0),
+        App.Vector(0.0, -200, 0.0),
     )
     dim.setExpression(".End.x", u"Box.Length")
     dimensions.append(dim)
     dim = Draft.make_linear_dimension(
-        FreeCAD.Vector(0.0, 0.0, 0.0),
-        FreeCAD.Vector(0.0, width, 0.0),
-        FreeCAD.Vector(-200.0, 0.0, 0.0),
+        App.Vector(0.0, 0.0, 0.0),
+        App.Vector(0.0, width, 0.0),
+        App.Vector(-200.0, 0.0, 0.0),
     )
     dim.setExpression(".End.y", u"Box.Width")
     dimensions.append(dim)
     dim = Draft.make_linear_dimension(
-        FreeCAD.Vector(0.0, 0.0, 0.0),
-        FreeCAD.Vector(0.0, 0.0, height),
-        FreeCAD.Vector(-200.0, -200.0, 0.0),
+        App.Vector(0.0, 0.0, 0.0),
+        App.Vector(0.0, 0.0, height),
+        App.Vector(-200.0, -200.0, 0.0),
     )
     dim.setExpression(".End.z", u"Box.Height")
     dimensions.append(dim)
@@ -102,7 +110,7 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
         dim.ViewObject.DimOvershoot = "15 mm"
         dim.ViewObject.Decimals = 0
 
-    FreeCADGui.Selection.clearSelection()
+    Gui.Selection.clearSelection()
 
 
 class _CommandEnveloppe:
@@ -128,8 +136,8 @@ class _CommandEnveloppe:
 
     def IsActive(self):
         active = True
-        if FreeCAD.ActiveDocument:
-            for obj in FreeCAD.ActiveDocument.Objects:
+        if App.ActiveDocument:
+            for obj in App.ActiveDocument.Objects:
                 if obj.Name == "Product":
                     active = False
         else:
@@ -139,7 +147,7 @@ class _CommandEnveloppe:
 
     def Activated(self):
         panel = _EnveloppeTaskPanel()
-        FreeCADGui.Control.showDialog(panel)
+        Gui.Control.showDialog(panel)
 
 
 class _EnveloppeTaskPanel:
@@ -151,7 +159,7 @@ class _EnveloppeTaskPanel:
         self.form = QtGui.QWidget()
         self.form.setObjectName("TaskPanel")
         # freecad specific input field
-        ui = FreeCADGui.UiLoader()
+        ui = Gui.UiLoader()
         # grid layout
         self.grid = QtGui.QGridLayout(self.form)
         self.grid.setObjectName("grid")
@@ -180,7 +188,7 @@ class _EnveloppeTaskPanel:
         )
         self.length_input = ui.createWidget("Gui::InputField")
         self.length_input.setText(
-            FreeCAD.Units.Quantity(1200.00, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(1200.00, App.Units.Length).UserString
         )
         self.grid.addWidget(
             self.length_input, 2, 1,
@@ -192,7 +200,7 @@ class _EnveloppeTaskPanel:
         )
         self.width_input = ui.createWidget("Gui::InputField")
         self.width_input.setText(
-            FreeCAD.Units.Quantity(900.00, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(900.00, App.Units.Length).UserString
         )
         self.grid.addWidget(
             self.width_input, 3, 1,
@@ -204,7 +212,7 @@ class _EnveloppeTaskPanel:
         )
         self.height_input = ui.createWidget("Gui::InputField")
         self.height_input.setText(
-            FreeCAD.Units.Quantity(560.00, FreeCAD.Units.Length).UserString
+            App.Units.Quantity(560.00, App.Units.Length).UserString
         )
         self.grid.addWidget(
             self.height_input, 4, 1,
@@ -221,9 +229,9 @@ class _EnveloppeTaskPanel:
         length = self.length_input.property("rawValue")
         width = self.width_input.property("rawValue")
         height = self.height_input.property("rawValue")
-        FreeCAD.ActiveDocument.openTransaction(translate("Gespal3D", "Create Product"))
-        FreeCADGui.addModule("freecad.workbench_gespal3d.g3d_product")
-        FreeCADGui.doCommand(
+        App.ActiveDocument.openTransaction(translate("Gespal3D", "Create Product"))
+        Gui.addModule("freecad.workbench_gespal3d.g3d_product")
+        Gui.doCommand(
             "freecad.workbench_gespal3d.g3d_product.makeEnveloppe("
             + "'"
             + str(id)
@@ -240,14 +248,14 @@ class _EnveloppeTaskPanel:
             + str(height)
             + ")"
         )
-        FreeCAD.ActiveDocument.commitTransaction()
+        App.ActiveDocument.commitTransaction()
         # Set view
-        FreeCADGui.activeDocument().activeView().viewIsometric()
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        Gui.activeDocument().activeView().viewIsometric()
+        Gui.SendMsgToActiveView("ViewFit")
         return True
 
     def reject(self):
-        FreeCAD.Console.PrintMessage("Création de produit annulée.\n")
+        App.Console.PrintMessage("Création de produit annulée.\n")
         return True
 
     def getStandardButtons(self):
@@ -262,5 +270,5 @@ class _EnveloppeTaskPanel:
         self.height_label.setText("Hauteur (Z)")
 
 
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_Product", _CommandEnveloppe())
+if App.GuiUp:
+    Gui.addCommand("G3D_Product", _CommandEnveloppe())

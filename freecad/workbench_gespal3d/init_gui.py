@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import os
 import FreeCADGui as Gui
 import FreeCAD as App
@@ -11,9 +13,11 @@ from freecad.workbench_gespal3d import g3d_listing
 from freecad.workbench_gespal3d import g3d_mirror_copy
 from freecad.workbench_gespal3d import g3d_delete
 from freecad.workbench_gespal3d import g3d_component_manager
+from freecad.workbench_gespal3d import g3d_help
 from freecad.workbench_gespal3d import __version__ as wb_version
 
 __title__ = "Gespal 3D InitGui"
+__license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 

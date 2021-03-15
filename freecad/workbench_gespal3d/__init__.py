@@ -1,6 +1,14 @@
+# coding: utf-8
+
 import os
 from .version import __version__
 import FreeCAD
+
+
+__title__ = "Gespal 3D init"
+__author__ = "Jonathan Wiedemann"
+__license__ = "LGPLv2.1"
+__url__ = "https://freecad-france.com"
 
 
 print("Gespal3D version", __version__)

@@ -1,22 +1,12 @@
-__title__ = "FreeCAD Profile"
-__author__ = "Yorik van Havre"
-__url__ = "http://www.freecadweb.org"
+# codig: utf-8
 
-## @package ArchProfile
-#  \ingroup ARCH
-#  \brief Profile tools for ArchStructure
-#
-#  This module provides tools to build base profiles
-#  for Arch Structure elements
-
-
-import FreeCAD
-import Draft
+import FreeCAD as App
 import os
-from FreeCAD import Vector
 
-if FreeCAD.GuiUp:
+if App.GuiUp:
     import FreeCADGui
+    import Draft
+    import Part
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
@@ -30,18 +20,24 @@ else:
     # \endcond
 
 
+__title__ = "Gespal3D Profils parser"
+__license__ = "LGPLv2.1"
+__author__ = "Jonathan Wiedemann"
+__url__ = "https://freecad-france.com"
+
+
 # Compteur, Nom, Famille, Longueur, Largeur, Epaisseur, Forme
 # def makeProfile(profile=[0, 'REC', 'REC100x100', 'R', 100, 100]):
 def makeProfile(profile=[0, 'REC100x100', 1, 100, 100, 100, 'R']):
     '''makeProfile(profile): returns a shape with the face defined by the \
     profile data'''
 
-    if not FreeCAD.ActiveDocument:
-        FreeCAD.Console.PrintError("No active document. Aborting\n")
+    if not App.ActiveDocument:
+        App.Console.PrintError("No active document. Aborting\n")
         return
     name = profile[1]
     name = "Profile"
-    obj = FreeCAD.ActiveDocument.addObject(
+    obj = App.ActiveDocument.addObject(
         "Part::Part2DObjectPython", name)
     obj.Label = profile[1]
     if profile[6] == "C":
@@ -56,7 +52,7 @@ def makeProfile(profile=[0, 'REC100x100', 1, 100, 100, 100, 'R']):
         _ProfileU(obj, profile)
     else:
         print("Profile not supported")
-    if FreeCAD.GuiUp:
+    if App.GuiUp:
         ViewProviderProfile(obj.ViewObject)
     return obj
 
@@ -92,11 +88,10 @@ class _ProfileC(_Profile):
         _Profile.__init__(self, obj, profile)
 
     def execute(self, obj):
-        import Part
         pl = obj.Placement
         c = Part.Circle(
-            FreeCAD.Vector(0.0, 0.0, 0.0),
-            FreeCAD.Vector(0.0, 0.0, 1.0),
+            App.Vector(0.0, 0.0, 0.0),
+            App.Vector(0.0, 0.0, 1.0),
             obj.Diameter.Value/2)
         obj.Shape = c.toShape()
         obj.Placement = pl
@@ -114,20 +109,19 @@ class _ProfileH(_Profile):
         _Profile.__init__(self,obj,profile)
 
     def execute(self,obj):
-        import Part
         pl = obj.Placement
-        p1 = Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
-        p2 = Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
-        p3 = Vector(obj.Width.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
-        p4 = Vector(obj.WebThickness.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
-        p5 = Vector(obj.WebThickness.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
-        p6 = Vector(obj.Width.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
-        p7 = Vector(obj.Width.Value/2,obj.Height.Value/2,0)
-        p8 = Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
-        p9 = Vector(-obj.Width.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
-        p10 = Vector(-obj.WebThickness.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
-        p11 = Vector(-obj.WebThickness.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
-        p12 = Vector(-obj.Width.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
+        p1 = App.Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
+        p2 = App.Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
+        p3 = App.Vector(obj.Width.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
+        p4 = App.Vector(obj.WebThickness.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
+        p5 = App.Vector(obj.WebThickness.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
+        p6 = App.Vector(obj.Width.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
+        p7 = App.Vector(obj.Width.Value/2,obj.Height.Value/2,0)
+        p8 = App.Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
+        p9 = App.Vector(-obj.Width.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
+        p10 = App.Vector(-obj.WebThickness.Value/2,obj.Height.Value/2-obj.FlangeThickness.Value,0)
+        p11 = App.Vector(-obj.WebThickness.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
+        p12 = App.Vector(-obj.Width.Value/2,(-obj.Height.Value/2)+obj.FlangeThickness.Value,0)
         p = Part.makePolygon([p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p1])
         p = Part.Face(p)
         #p.reverse()
@@ -155,12 +149,11 @@ class _ProfileR(_Profile):
         _Profile.__init__(self, obj, profile)
 
     def execute(self, obj):
-        import Part
         pl = obj.Placement
-        p1 = Vector(-obj.Height.Value/2, -obj.Width.Value/2, 0)
-        p2 = Vector(-obj.Height.Value/2, obj.Width.Value/2, 0)
-        p3 = Vector(obj.Height.Value/2, obj.Width.Value/2, 0)
-        p4 = Vector(obj.Height.Value/2, -obj.Width.Value/2, 0)
+        p1 = App.Vector(-obj.Height.Value/2, -obj.Width.Value/2, 0)
+        p2 = App.Vector(-obj.Height.Value/2, obj.Width.Value/2, 0)
+        p3 = App.Vector(obj.Height.Value/2, obj.Width.Value/2, 0)
+        p4 = App.Vector(obj.Height.Value/2, -obj.Width.Value/2, 0)
         p = Part.makePolygon([p1, p2, p3, p4, p1])
         p = Part.Face(p)
         p.reverse()
@@ -179,16 +172,15 @@ class _ProfileRH(_Profile):
         _Profile.__init__(self,obj,profile)
 
     def execute(self,obj):
-        import Part
         pl = obj.Placement
-        p1 = Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
-        p2 = Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
-        p3 = Vector(obj.Width.Value/2,obj.Height.Value/2,0)
-        p4 = Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
-        q1 = Vector(-obj.Width.Value/2+obj.Thickness.Value,-obj.Height.Value/2+obj.Thickness.Value,0)
-        q2 = Vector(obj.Width.Value/2-obj.Thickness.Value,-obj.Height.Value/2+obj.Thickness.Value,0)
-        q3 = Vector(obj.Width.Value/2-obj.Thickness.Value,obj.Height.Value/2-obj.Thickness.Value,0)
-        q4 = Vector(-obj.Width.Value/2+obj.Thickness.Value,obj.Height.Value/2-obj.Thickness.Value,0)
+        p1 = App.Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
+        p2 = App.Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
+        p3 = App.Vector(obj.Width.Value/2,obj.Height.Value/2,0)
+        p4 = App.Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
+        q1 = App.Vector(-obj.Width.Value/2+obj.Thickness.Value,-obj.Height.Value/2+obj.Thickness.Value,0)
+        q2 = App.Vector(obj.Width.Value/2-obj.Thickness.Value,-obj.Height.Value/2+obj.Thickness.Value,0)
+        q3 = App.Vector(obj.Width.Value/2-obj.Thickness.Value,obj.Height.Value/2-obj.Thickness.Value,0)
+        q4 = App.Vector(-obj.Width.Value/2+obj.Thickness.Value,obj.Height.Value/2-obj.Thickness.Value,0)
         p = Part.makePolygon([p1,p2,p3,p4,p1])
         q = Part.makePolygon([q1,q2,q3,q4,q1])
         #r = Part.Face([p,q])
@@ -212,16 +204,15 @@ class _ProfileU(_Profile):
         _Profile.__init__(self,obj,profile)
 
     def execute(self,obj):
-        import Part
         pl = obj.Placement
-        p1 = Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
-        p2 = Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
-        p3 = Vector(obj.Width.Value/2,obj.Height.Value/2,0)
-        p4 = Vector(obj.Width.Value/2-obj.FlangeThickness.Value,obj.Height.Value/2,0)
-        p5 = Vector(obj.Width.Value/2-obj.FlangeThickness.Value,obj.WebThickness.Value-obj.Height.Value/2,0)
-        p6 = Vector(-obj.Width.Value/2+obj.FlangeThickness.Value,obj.WebThickness.Value-obj.Height.Value/2,0)
-        p7 = Vector(-obj.Width.Value/2+obj.FlangeThickness.Value,obj.Height.Value/2,0)
-        p8 = Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
+        p1 = App.Vector(-obj.Width.Value/2,-obj.Height.Value/2,0)
+        p2 = App.Vector(obj.Width.Value/2,-obj.Height.Value/2,0)
+        p3 = App.Vector(obj.Width.Value/2,obj.Height.Value/2,0)
+        p4 = App.Vector(obj.Width.Value/2-obj.FlangeThickness.Value,obj.Height.Value/2,0)
+        p5 = App.Vector(obj.Width.Value/2-obj.FlangeThickness.Value,obj.WebThickness.Value-obj.Height.Value/2,0)
+        p6 = App.Vector(-obj.Width.Value/2+obj.FlangeThickness.Value,obj.WebThickness.Value-obj.Height.Value/2,0)
+        p7 = App.Vector(-obj.Width.Value/2+obj.FlangeThickness.Value,obj.Height.Value/2,0)
+        p8 = App.Vector(-obj.Width.Value/2,obj.Height.Value/2,0)
         p = Part.makePolygon([p1,p2,p3,p4,p5,p6,p7,p8,p1])
         p = Part.Face(p)
         #p.reverse()
@@ -251,7 +242,7 @@ class ViewProviderProfile(Draft._ViewProviderDraft):
     def unsetEdit(self, vobj, mode):
 
         FreeCADGui.Control.closeDialog()
-        FreeCAD.ActiveDocument.recompute()
+        App.ActiveDocument.recompute()
         return
 
 
@@ -329,9 +320,9 @@ class ProfileTaskPanel:
         for pre in self.presets:
             if pre[1] == text:
                 self.currentpresets.append(pre)
-                f = FreeCAD.Units.Quantity(
-                    pre[4], FreeCAD.Units.Length).getUserPreferred()
-                d = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
+                f = App.Units.Quantity(
+                    pre[4], App.Units.Length).getUserPreferred()
+                d = App.ParamGet("User parameter:BaseApp/Preferences/Units")
                 d = d.GetInt("Decimals", 2)
                 s1 = str(round(pre[4]/f[1], d))
                 s2 = str(round(pre[5]/f[1], d))
@@ -357,7 +348,7 @@ class ProfileTaskPanel:
             elif self.type == "C":
                 self.obj.OutDiameter = self.profile[5]
                 self.obj.Thickness = self.profile[5]
-            FreeCAD.ActiveDocument.recompute()
+            App.ActiveDocument.recompute()
             FreeCADGui.ActiveDocument.resetEdit()
         return True
 

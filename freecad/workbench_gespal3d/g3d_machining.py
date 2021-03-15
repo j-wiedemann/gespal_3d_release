@@ -1,38 +1,16 @@
-###########################################################################
-#                                                                         *
-#   Copyright (c) 2020                                                   *
-#   Jonathan Wiedemann <contact@freecad-france.com>                       *
-#                                                                         *
-#   This program is free software; you can redistribute it and/or modify  *
-#   it under the terms of the GNU Lesser General Public License (LGPL)    *
-#   as published by the Free Software Foundation; either version 2 of     *
-#   the License, or (at your option) any later version.                   *
-#   for detail see the LICENCE text file.                                 *
-#                                                                         *
-#   This program is distributed in the hope that it will be useful,       *
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-#   GNU Library General Public License for more details.                  *
-#                                                                         *
-#   You should have received a copy of the GNU Library General Public     *
-#   License along with this program; if not, write to the Free Software   *
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
-#   USA                                                                   *
-###########################################################################
+# coding: utf-8
 
-
-import FreeCAD
-
+import FreeCAD as App
 import os
-from freecad.workbench_gespal3d import ICONPATH
 
-if FreeCAD.GuiUp:
-    import FreeCADGui
-    from pivy import coin
+if App.GuiUp:
+    import FreeCADGui as Gui
     import Arch
+    from pivy import coin
     from PySide import QtCore, QtGui
     from DraftTools import translate
     from PySide.QtCore import QT_TRANSLATE_NOOP
+    from freecad.workbench_gespal3d import ICONPATH
 else:
     # \cond
     def translate(ctxt, txt):
@@ -44,7 +22,8 @@ else:
     # \endcond
 
 
-__title__ = "Beam Gespal3D"
+__title__ = "Gespal 3D Machining tool"
+__license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
@@ -121,7 +100,7 @@ class _CommandMachining:
         textSep.addChild(myFont)
         textSep.addChild(self.SoText2)
 
-        activeDoc = FreeCADGui.ActiveDocument
+        activeDoc = Gui.ActiveDocument
         view = activeDoc.ActiveView
         self.sg = view.getSceneGraph()
         viewer = view.getViewer()
@@ -189,47 +168,47 @@ class _CommandMachining:
 
     def get_face(self):
         """Get the selected face to start the command"""
-        sel = FreeCADGui.Selection.getSelection()
+        sel = Gui.Selection.getSelection()
         if len(sel)>0:
             self.state = self.states[1]
             #print("face is selected")
-            workplane = FreeCAD.DraftWorkingPlane
+            workplane = App.DraftWorkingPlane
             workplane.alignToSelection()
-            FreeCADGui.Snapper.toggleGrid()
-            FreeCADGui.Snapper.toggleGrid()
+            Gui.Snapper.toggleGrid()
+            Gui.Snapper.toggleGrid()
             self.parent_obj = sel[0]
         #else:
             #print('select face from solid')
 
     def wait_drafting_tool(self):
-        #if not FreeCADGui.Control.activeDialog():
-        if FreeCADGui.Control.activeDialog():
+        #if not Gui.Control.activeDialog():
+        if Gui.Control.activeDialog():
             #print('user is choosing a draft command')
         #else:
             self.state = self.states[2]
             #print('draft command started')
             #self.parent_obj.ViewObject.Selectable = False
             self.parent_obj.ViewObject.DisplayMode = u"Wireframe"
-            FreeCADGui.Snapper.toggle_snap('WorkingPlane',True)
+            Gui.Snapper.toggle_snap('WorkingPlane',True)
 
     def wait_drafting(self):
-        #if FreeCADGui.Control.activeDialog():
-        if not FreeCADGui.Control.activeDialog():
+        #if Gui.Control.activeDialog():
+        if not Gui.Control.activeDialog():
             #print("draft command in use")
         #else :
             #print("draft command is over")
-            self.profil = FreeCADGui.Selection.getSelection()[0]
+            self.profil = Gui.Selection.getSelection()[0]
             #print("trimex command started")
             self.state = self.states[3]
-            FreeCADGui.runCommand('Draft_Trimex',0)
+            Gui.runCommand('Draft_Trimex',0)
             self.parent_obj.ViewObject.DisplayMode = u"Flat Lines"
             self.parent_obj.ViewObject.Transparency = 90
             #self.parent_obj.ViewObject.Selectable = True
-            FreeCADGui.Snapper.toggle_snap('WorkingPlane',False)
+            Gui.Snapper.toggle_snap('WorkingPlane',False)
 
     def wait_trimex(self):
-        #if FreeCADGui.Control.activeDialog():
-        if not FreeCADGui.Control.activeDialog():
+        #if Gui.Control.activeDialog():
+        if not Gui.Control.activeDialog():
             #print("trimex command in use")
         #else :
             self.state = self.states[4]
@@ -238,7 +217,7 @@ class _CommandMachining:
             machining = Arch.makeStructure(self.profil.InList[0])
             machining.MoveWithHost = True
             Arch.removeComponents([machining],self.parent_obj)
-            FreeCAD.ActiveDocument.recompute()
+            App.ActiveDocument.recompute()
 
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_Machining", _CommandMachining())
+if App.GuiUp:
+    Gui.addCommand("G3D_Machining", _CommandMachining())

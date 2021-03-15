@@ -1,37 +1,32 @@
-import FreeCAD
-import string
-import Arch, Draft, Part
+# coding: utf-8
+
 import os
+import string
+import math
 from datetime import datetime
 
-if FreeCAD.GuiUp:
-    import FreeCADGui
-    from PySide import QtCore, QtGui
-    from FreeCAD import Base, Console, Vector, Rotation
+import FreeCAD as App
+
+if App.GuiUp:
+    import FreeCADGui as Gui
+    import Draft, Part
     import TechDraw, TechDrawGui
-    import math, DraftGeomUtils, DraftVecUtils
-    from DraftTools import translate
+    import DraftGeomUtils, DraftVecUtils
+    from PySide import QtCore, QtGui
     from freecad.workbench_gespal3d import __version__ as wb_version
     from freecad.workbench_gespal3d import PARAMPATH
-    from freecad.workbench_gespal3d import DEBUG
     from freecad.workbench_gespal3d import print_debug
-else:
-
-    def translate(ctxt, txt):
-        return txt
 
 
-# waiting for Gespal3D_rc and eventual FreeCAD integration
-__dir__ = os.path.dirname(__file__)
-
-__title__ = "Gespal 3D List"
+__title__ = "Gespal 3D Listing"
+__license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
 class gespal3d_exports:
     def __init__(self):
-        doc = FreeCAD.ActiveDocument
+        doc = App.ActiveDocument
         path_doc = doc.FileName
         if len(doc.Name.split("PL_")) > 1:
             id = doc.Name.split("PL_")[1]
@@ -46,7 +41,7 @@ class gespal3d_exports:
         self.path_csv = os.path.join(path_project[0], name_csv)
         self.path_pc = os.path.join(path_project[0], pc_pdf)
         self.path_pf = os.path.join(path_project[0], pf_pdf)
-        self.p = FreeCAD.ParamGet(str(PARAMPATH))
+        self.p = App.ParamGet(str(PARAMPATH))
         self.path_template = self.p.GetString("PathTemplate", "")
 
         objs = doc.Objects
@@ -57,31 +52,23 @@ class gespal3d_exports:
         self.boundbox = None
         self.grp_dimension = []
         self.mySheet = None
-        if DEBUG:
-            msg = "There is %s object in document." % len(objs)
-            print_debug([msg])
+        print_debug("There is %s object in document." % len(objs))
         for obj in objs:
-            if DEBUG:
-                msg = "Current object is %s." % obj.Name
-                print_debug([msg])
+            print_debug("Checking object : %s." % obj.Name)
             if hasattr(obj, "Tag"):
                 if obj.Tag == "Gespal":
                     if hasattr(obj, "Description"):
                         if obj.Description is not None:
                             self.objlist.append(obj)
                             self.projgroup_list.append(obj)
-                            if DEBUG:
-                                msg = "%s is added to the objlist." % obj.Name
-                                print_debug([msg])
+                            print_debug("%s added to the objlist." % obj.Name)
             elif obj.TypeId == "Part::Mirroring":
                 src = self.getSource(obj)
                 if src.Tag == "Gespal":
                     if hasattr(src, "Description"):
                         if src.Description is not None:
                             self.objlist.append(src)
-                            if DEBUG:
-                                msg = "%s is added to the objlist." % src.Name
-                                print_debug([msg])
+                            print_debug("%s is added to the objlist." % src.Name)
                 self.projgroup_list.append(obj)
             elif obj.Name == "Gespal3DListe":
                 self.mySheet = obj
@@ -97,30 +84,19 @@ class gespal3d_exports:
             else:
                 objother.append(obj)
         if len(self.objlist) < 0:
-            FreeCAD.Console.PrintMessage("La liste des composants Gespal est vide.\n")
+            App.Console.PrintMessage("La liste des composants Gespal est vide.\n")
         else:
-            if DEBUG:
-                msg = "There is %s object in objlist :" % len(self.objlist)
-                print_debug([msg])
-                msg2 = [obj.Name for obj in self.objlist]
-                print_debug(msg2)
+            print_debug("There is %s object in objlist :" % len(self.objlist))
+            print_debug([obj.Name for obj in self.objlist])
 
     def getSource(self, obj):
-        if DEBUG:
-            msg = "Looking for source of %s." % obj.Name
-            print_debug([msg])
+        print_debug("Looking for source of %s." % obj.Name)
         src = obj.Source
-        if DEBUG:
-            msg = "Current source is %s." % src.Name
-            print_debug([msg])
+        print_debug("Current source is %s." % src.Name)
         while src.TypeId == "Part::Mirroring":
-            if DEBUG:
-                msg = "Source is a Part::Mirror object."
-                print_debug([msg])
+            print_debug("Source is a Part::Mirror object.")
             src = src.Source
-        if DEBUG:
-            msg = "Source is : %s." % src.Name
-            print_debug([msg])
+        print_debug("Source is : %s." % src.Name)
         return src
 
     def getArea(self, face):
@@ -148,11 +124,11 @@ class gespal3d_exports:
     def shapeAnalyse(self, shape):
         ## Create a new object with the shape of the current arch object
         ## His placment is set to 0,0,0
-        obj = FreeCAD.ActiveDocument.addObject("Part::Feature", "shapeAnalyse")
+        obj = App.ActiveDocument.addObject("Part::Feature", "shapeAnalyse")
         obj.Shape = shape
-        obj.Placement.Base = FreeCAD.Vector(0.0, 0.0, 0.0)
-        obj.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(0.0, 0.0, 1.0), 0.0)
-        FreeCAD.ActiveDocument.recompute()
+        obj.Placement.Base = App.Vector(0.0, 0.0, 0.0)
+        obj.Placement.Rotation = App.Rotation(App.Vector(0.0, 0.0, 1.0), 0.0)
+        App.ActiveDocument.recompute()
         ## Get the face to align with XY plane
         faces = obj.Shape.Faces
         facesMax = self.getFacesMax(faces)
@@ -160,11 +136,11 @@ class gespal3d_exports:
         ## Get the normal of this face
         nv1 = coupleEquerre[0][0].normalAt(0, 0)
         ## Get the goal normal vector
-        zv = Vector(0, 0, 1)
+        zv = App.Vector(0, 0, 1)
         ## Find and apply a rotation to the object to align face
         pla = obj.Placement
         rot = pla.Rotation
-        rot1 = Rotation(nv1, zv)
+        rot1 = App.Rotation(nv1, zv)
         newrot = rot.multiply(rot1)
         pla.Rotation = newrot
         ## Get the face to align with XY plane
@@ -179,18 +155,18 @@ class gespal3d_exports:
                 edgeMax = e
         ## Get the angle between edge and X axis and rotate object
         vec = DraftGeomUtils.vec(edgeMax)
-        vecZ = FreeCAD.Vector(vec[0], vec[1], 0.0)
+        vecZ = App.Vector(vec[0], vec[1], 0.0)
         pos2 = obj.Placement.Base
         rotZ = math.degrees(
-            DraftVecUtils.angle(vecZ, FreeCAD.Vector(1.0, 0.0, 0.0), zv)
+            DraftVecUtils.angle(vecZ, App.Vector(1.0, 0.0, 0.0), zv)
         )
         Draft.rotate([obj], rotZ, pos2, axis=zv, copy=False)
         bb = obj.Shape.BoundBox
         movex = bb.XMin * -1
         movey = bb.YMin * -1
         movez = bb.ZMin * -1
-        Draft.move([obj], FreeCAD.Vector(movex, movey, movez))
-        FreeCAD.ActiveDocument.recompute()
+        Draft.move([obj], App.Vector(movex, movey, movez))
+        App.ActiveDocument.recompute()
         ## Get the boundbox
         analyse = [
             obj.Shape.BoundBox.YLength,
@@ -198,20 +174,18 @@ class gespal3d_exports:
             obj.Shape.BoundBox.XLength,
         ]
         # if not "Shape" in self.export :
-        FreeCAD.ActiveDocument.removeObject(obj.Name)
+        App.ActiveDocument.removeObject(obj.Name)
         return analyse
 
     def makeSpreadsheet(self):
-        if DEBUG:
-            msg = "Start making Spreadsheet..."
-            print_debug([msg])
+        print_debug("Start making Spreadsheet...")
         if self.mySheet:
             self.mySheet.clearAll()
-            FreeCAD.ActiveDocument.recompute()
+            App.ActiveDocument.recompute()
         else:
-            FreeCAD.ActiveDocument.addObject("Spreadsheet::Sheet", "Gespal3DListe")
-            self.mySheet = FreeCAD.ActiveDocument.getObject("Gespal3DListe")
-            FreeCAD.ActiveDocument.recompute()
+            App.ActiveDocument.addObject("Spreadsheet::Sheet", "Gespal3DListe")
+            self.mySheet = App.ActiveDocument.getObject("Gespal3DListe")
+            App.ActiveDocument.recompute()
         mySheet = self.mySheet
         headers = [
             "ID",
@@ -232,11 +206,8 @@ class gespal3d_exports:
             shape = obj.Shape
             label = obj.Label
             analyse = self.shapeAnalyse(shape)
-            if DEBUG:
-                msg = "row %s : object's name is %s." % (n, obj.Name)
-                print_debug([msg])
-                msg2 = analyse
-                print_debug(msg2)
+            print_debug("row %s : object's name is %s." % (n, obj.Name))
+            print_debug(analyse)
             if hasattr(obj, "Height"):
                 width = obj.Width
                 height = obj.Height
@@ -267,41 +238,39 @@ class gespal3d_exports:
             if usinage is not None:
                 mySheet.set("F" + str(n + 1), str(usinage))
             n += 1
-        FreeCAD.ActiveDocument.recompute()
+        App.ActiveDocument.recompute()
         mySheet.exportFile(self.path_csv)
-        if DEBUG:
-            msg = "End making Spreadsheet..."
-            print_debug([msg])
+        print_debug("End making Spreadsheet...")
         return
 
     def makeImage(self):
-        av = FreeCADGui.activeDocument().activeView()
+        av = Gui.activeDocument().activeView()
         av.setAxisCross(False)
         self.objproduct.ViewObject.Visibility = False
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = False
-        if hasattr(FreeCADGui, "Snapper"):
-            FreeCADGui.Snapper.setTrackers()
-            if FreeCADGui.Snapper.grid:
-                if FreeCADGui.Snapper.grid.Visible:
-                    FreeCADGui.Snapper.grid.off()
-                    FreeCADGui.Snapper.forceGridOff = True
-        FreeCADGui.activeDocument().activeView().viewIsometric()
-        FreeCADGui.SendMsgToActiveView("ViewFit")
+        if hasattr(Gui, "Snapper"):
+            Gui.Snapper.setTrackers()
+            if Gui.Snapper.grid:
+                if Gui.Snapper.grid.Visible:
+                    Gui.Snapper.grid.off()
+                    Gui.Snapper.forceGridOff = True
+        Gui.activeDocument().activeView().viewIsometric()
+        Gui.SendMsgToActiveView("ViewFit")
         av.setCameraType("Orthographic")
-        FreeCADGui.Selection.clearSelection()
-        FreeCADGui.Selection.clearPreselection()
+        Gui.Selection.clearSelection()
+        Gui.Selection.clearPreselection()
         # av.setCameraType("Perspective")
         av.saveImage(self.path_image, 2560, 1600, "White")
         self.objproduct.ViewObject.Visibility = True
         for obj in self.grp_dimension:
             obj.ViewObject.Visibility = True
         av.setCameraType("Orthographic")
-        # FreeCADGui.ActiveDocument.ActiveView.setAxisCross(True)
+        # Gui.ActiveDocument.ActiveView.setAxisCross(True)
         return
 
     def makePlan(self, name):
-        doc = FreeCAD.activeDocument()
+        doc = App.activeDocument()
         projgrp_name = "ProjGroup_" + str(name)
         isoview_name = "View_" + str(name)
         # check if page exist
@@ -329,7 +298,7 @@ class gespal3d_exports:
         else:
             orientation = "A4L"
         # Templae path
-        path = FreeCAD.ParamGet(str(PARAMPATH)).GetString("PathTemplate", "")
+        path = App.ParamGet(str(PARAMPATH)).GetString("PathTemplate", "")
         if orientation == "A4P":
             path = os.path.join(path, "A4P.svg")
         else:
@@ -355,14 +324,14 @@ class gespal3d_exports:
         projgroup.Scale = scale
         projgroup.addProjection("Front")
         if orientation == "A4L":
-            projgroup.Anchor.Direction = FreeCAD.Vector(0.000, 0.000, 1.000)
-            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000, 0.000, 0.000)
-            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.Direction = App.Vector(0.000, 0.000, 1.000)
+            projgroup.Anchor.RotationVector = App.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.XDirection = App.Vector(1.000, 0.000, 0.000)
             y = (self.boundbox.Width.Value * projgroup.Scale) / 2 + 40.0
         else:
-            projgroup.Anchor.Direction = FreeCAD.Vector(0.000, -1.000, 0.000)
-            projgroup.Anchor.RotationVector = FreeCAD.Vector(1.000, 0.000, 0.000)
-            projgroup.Anchor.XDirection = FreeCAD.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.Direction = App.Vector(0.000, -1.000, 0.000)
+            projgroup.Anchor.RotationVector = App.Vector(1.000, 0.000, 0.000)
+            projgroup.Anchor.XDirection = App.Vector(1.000, 0.000, 0.000)
             y = 297 - 20 - ((self.boundbox.Height.Value * projgroup.Scale) / 2)
         projgroup.Anchor.recompute()
         if orientation == "A4L":
@@ -382,8 +351,8 @@ class gespal3d_exports:
         iso_view = doc.addObject("TechDraw::DrawViewPart", isoview_name)
         page.addView(iso_view)
         iso_view.Source = self.projgroup_list
-        iso_view.Direction = FreeCAD.Vector(0.577, -0.577, 0.577)
-        iso_view.XDirection = FreeCAD.Vector(0.707, 0.707, -0.000)
+        iso_view.Direction = App.Vector(0.577, -0.577, 0.577)
+        iso_view.XDirection = App.Vector(0.707, 0.707, -0.000)
         iso_view.Scale = scale / 2
         if orientation == "A4L":
             iso_view.X = 240.0
@@ -399,17 +368,17 @@ class gespal3d_exports:
         return
 
     def exportPlanCommercial(self):
-        doc = FreeCAD.ActiveDocument
-        FreeCADGui.Selection.clearSelection()
-        FreeCADGui.Selection.clearPreselection()
+        doc = App.ActiveDocument
+        Gui.Selection.clearSelection()
+        Gui.Selection.clearPreselection()
         page = doc.getObject("plan_commercial")
         TechDrawGui.exportPageAsPdf(page, self.path_pc)
         return
 
     def exportPlanFabrication(self):
-        doc = FreeCAD.ActiveDocument
-        FreeCADGui.Selection.clearSelection()
-        FreeCADGui.Selection.clearPreselection()
+        doc = App.ActiveDocument
+        Gui.Selection.clearSelection()
+        Gui.Selection.clearPreselection()
         page = doc.getObject("plan_fabrication")
         TechDrawGui.exportPageAsPdf(page, self.path_pf)
         return
@@ -440,10 +409,10 @@ class _ListCreator:
         are met or not. This function is optional."""
 
         active = False
-        if FreeCAD.ActiveDocument:
-            doc = FreeCAD.ActiveDocument
+        if App.ActiveDocument:
+            doc = App.ActiveDocument
             if len(doc.FileName) > 0:
-                if hasattr(FreeCADGui.activeDocument().activeView(), "zoomIn"):
+                if hasattr(Gui.activeDocument().activeView(), "zoomIn"):
                     for obj in doc.Objects:
                         if obj.Name == "Product":
                             active = True
@@ -460,7 +429,7 @@ class _ListCreator:
         # Plan
         export.makePlan(name="plan_commercial")
         export.makePlan(name="plan_fabrication")
-
+        App.ActiveDocument.recompute(None,True,True)
         return
 
 
@@ -518,40 +487,8 @@ class _PlanFabrication:
         return
 
 
-class _ShowHelp:
-    """Export plan de fabrication"""
 
-    def GetResources(self):
-        from freecad.workbench_gespal3d import ICONPATH
-
-        return {
-            "Pixmap": os.path.join(ICONPATH, "help-browser.svg"),
-            "Accel": "H,F",
-            "MenuText": "Gespal 3D Aide",
-            "ToolTip": "<html><head/><body><p><b>Affiche la version de Gespal 3D</b> \
-                </p></body></html>",
-        }
-
-    def IsActive(self):
-        """Here you can define if the command must be active or not (greyed) if certain conditions
-        are met or not. This function is optional."""
-
-        active = True
-
-        return active
-
-    def Activated(self):
-        msg = (
-            "<html><head/><body><p><b>Gespal 3D</b> \
-        </p><p>Version : %s</p></body></html>"
-            % (str(wb_version))
-        )
-        reply = QtGui.QMessageBox.information(None, "", msg)
-        return
-
-
-if FreeCAD.GuiUp:
-    FreeCADGui.addCommand("G3D_Listing", _ListCreator())
-    FreeCADGui.addCommand("G3D_CommercialDrawing", _PlanCommercial())
-    FreeCADGui.addCommand("G3D_FabricationDrawing", _PlanFabrication())
-    FreeCADGui.addCommand("G3D_Help", _ShowHelp())
+if App.GuiUp:
+    Gui.addCommand("G3D_Listing", _ListCreator())
+    Gui.addCommand("G3D_CommercialDrawing", _PlanCommercial())
+    Gui.addCommand("G3D_FabricationDrawing", _PlanFabrication())

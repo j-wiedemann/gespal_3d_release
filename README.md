@@ -1,5 +1,15 @@
-# gespal3d
-Atelier FreeCAD de conception de palettes et emballages
+# Gespal 3D
+
+Atelier FreeCAD de conception de palettes et emballages en bois.
+
+## Instalation
+
+Installer FreeCAD version >= 0.19
+
+Ajouter Configure
+        Cocher Automatically Check for Updates
+        Ajouter la ligne suivante dans le rectangle blanc :
+          git@github.com:j-wiedemann/gespal3d.git
 
 
 ### 1. Installation de FreeCAD

@@ -28,6 +28,7 @@ def translate(context, text, disambig=None):
     return QtCore.QCoreApplication.translate(context, text, disambig)
 
 
+
 class ComponentManager(QtGui.QDialog):
     def __init__(self, parent=None):
         super(ComponentManager, self).__init__()
@@ -36,15 +37,18 @@ class ComponentManager(QtGui.QDialog):
         self.form = Gui.PySideUic.loadUi(ui_file)
 
         self.database_path_edit = self.form.findChild(QtGui.QLineEdit, "lineEdit")
-        self.p = App.ParamGet(str(PARAMPATH))
-        no_database = "true"
-        self.dbPath = self.p.GetString("sqlitedb", no_database)
+        #self.p = App.ParamGet(str(PARAMPATH))
+        #no_database = "true"
+        #self.dbPath = self.p.GetString("sqlitedb", no_database)
         
         
-        self.database_path_edit.setText(self.dbPath)
+        #self.database_path_edit.setText(self.dbPath)
 
-        self.dbPathButton = self.form.findChild(QtGui.QPushButton, "pushButtonDBPath")
+        self.dbPathButton = self.form.findChild(QtGui.QPushButton, "pushButton_chooseDB")
         self.dbPathButton.clicked.connect(self.chooseDatabasePath)
+
+        self.dbCreateButton = self.form.findChild(QtGui.QPushButton, "pushButton_createDB")
+        self.dbCreateButton.clicked.connect(self.createNewDatabase)
         
         self.componentTable =  self.form.findChild(QtGui.QTableWidget, "tableWidget")
         self.componentTable.itemChanged.connect(self.updateDB)
@@ -53,6 +57,9 @@ class ComponentManager(QtGui.QDialog):
 
         self.addButton = self.form.findChild(QtGui.QPushButton, "pushButtonAdd")
         self.addButton.clicked.connect(self.addComponent)
+
+        self.duplicateButton = self.form.findChild(QtGui.QPushButton, "pushButtonDuplicate")
+        self.duplicateButton.clicked.connect(self.duplicateComponent)
 
         self.delButton = self.form.findChild(QtGui.QPushButton, "pushButtonDel")
         self.delButton.clicked.connect(self.deleteComponent)
@@ -66,14 +73,35 @@ class ComponentManager(QtGui.QDialog):
 
         self.lastEditItem = {"row" : None, "column" : None, "value" : None}
 
-        self.con = g3d_connect_db.sql_connection()
-        self.cur = self.con.cursor()
-        print_debug("connecting db")
-
-        self.populate()
-        print_debug("populate table")
+        self.init_pop()
         self.form.show()
         print_debug("show dialog")
+
+    def init_pop(self):
+        self.p = App.ParamGet(str(PARAMPATH))
+        no_database = "true"
+        self.dbPath = self.p.GetString("sqlitedb", no_database)
+        print_debug("db path : {}".format(self.dbPath))
+        if self.dbPath == "true":
+            self.con = None
+            QtGui.QMessageBox.warning(
+                None,
+                "Pas de base de données !",
+                "Veuillez définir le chemin de la base de donnée de composants en cliquant sur le bouton Choisir ou Créer dans le gestionnaire de composant.")
+        else:
+            self.database_path_edit.setText(self.dbPath)
+            if self.componentTable.rowCount() > 0:
+                for row in reversed(range(self.componentTable.rowCount())):
+                    self.componentTable.removeRow(row)
+
+            self.con = g3d_connect_db.sql_connection()
+            g3d_connect_db.make_backup()
+            self.cur = self.con.cursor()
+            print_debug("connecting db")
+
+            self.populate()
+            print_debug("populate table")
+
 
     def closeEvent(self, event):
         print_debug(["closeEvent", event])
@@ -81,21 +109,56 @@ class ComponentManager(QtGui.QDialog):
         #event.accept()
         
 
-    def addComponent(self):
+    def addComponent(self, data=None):
         """
-        Add a component
+        Add a component row
+        :param data: tuple
         :return:
         """
         self.componentTable.setSortingEnabled(False)
+        # FIXME: Check max id or read only
         count = self.componentTable.rowCount()
-        data = (count,"Désignation","0","0","1","0","R","0,0,0","0")
-        sql = ''' INSERT INTO Composant(CO_COMPTEUR, CO_NOM, CO_FAMILLE, CO_LONGUEUR, CO_LARGEUR, CO_EPAISSEUR, CO_FORME, CO_COULEUR, CO_MASSE)
-                      VALUES(?,?,?,?,?,?,?,?,?)'''
+        if data is False:
+            data = ("Désignation",1,0,100,20,"R","170,170,127",0)
+        print(data)
+        print(type(data))
+        for x in data:
+            print(x, type(x))
+        sql = '''INSERT INTO Composant(CO_NOM, CO_FAMILLE, CO_LONGUEUR, CO_LARGEUR, CO_EPAISSEUR, CO_FORME, CO_COULEUR, CO_MASSE)
+                      VALUES(?,?,?,?,?,?,?,?)'''
         self.cur.execute(sql, data)
         self.con.commit()
         self.componentTable.insertRow(count)
         self.populate()
         self.componentTable.scrollToBottom()
+
+    def duplicateComponent(self):
+        """
+        Delete a component row by co_compteur
+        :return:
+        """
+        row = self.componentTable.currentRow()
+        if row > -1:
+            co_compteur = self.componentTable.item(row,0).text()
+            self.cur.execute("SELECT * FROM Composant WHERE CO_COMPTEUR = {}".format(co_compteur))
+            data = self.cur.fetchall()
+            data = data[0]
+            # ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
+            des = data[1]
+            cat = data[2]
+            length = data[3]
+            width = data[4]
+            height = data[5]
+            section = data[6]
+            color = data[7]
+            mass = data[8]
+
+            data = (des, cat, length, width, height, section, color, mass)
+            self.addComponent(data)
+        else:
+            print_debug("Select a component in the table first!")
+            QtGui.QMessageBox.warning(None,"Pas de composant sélectionné.","Veuillez sélectionner un composant dans le tableau avant de cliquer sur Dupliquer.")
+
 
     def deleteComponent(self):
         """
@@ -119,6 +182,7 @@ class ComponentManager(QtGui.QDialog):
         FIX ME : Make a backup of the db
         :return:
         """
+        g3d_connect_db.restore_backup()
         self.con.close()
         self.form.close()
         print_debug("cancelAndClose done")
@@ -128,22 +192,53 @@ class ComponentManager(QtGui.QDialog):
         self.form.close()
         print_debug("acceptAndClose done")
 
+    def createNewDatabase(self):
+        """
+        when user click on change button a file dialog pop up to him
+        :return:
+        """
+        print_debug("user clicked on create a new db button")
+        dbPath = QtGui.QFileDialog.getExistingDirectory(
+            None,
+            "Choisir le dossier où sera créé la base de données.",
+            None,)
+        if len(dbPath) > 0:
+            if not self.con is None:
+                self.con.close()
+            dbPath = os.path.join(dbPath, "g3d_component.sqdb")
+            self.database_path_edit.setText(dbPath)
+            self.dbPath = self.p.SetString("sqlitedb", dbPath)
+            print_debug("new db path is : {}".format(self.dbPath))
+            sqliteCon = g3d_connect_db.sql_connection()
+            g3d_connect_db.create_new_db(sqliteCon)
+            self.init_pop()
+        else:
+            print_debug("user cancel creating a new db")
+
     def chooseDatabasePath(self):
         """
         when user click on change button a file dialog pop up to him
         :return:
         """
-        dbPath = QtGui.QFileDialog.getOpenFileName(None, "Chemin de la base de données des composants",self.dbPath, "sqlite file (*.sqdb);;All files (*)")
+        dbPath = QtGui.QFileDialog.getOpenFileName(None,
+            "Chemin de la base de données des composants",
+            self.dbPath,
+            "sqlite file (*.sqdb);;All files (*)")
         if len(dbPath[0]) > 0:
+            if not self.con is None:
+                self.con.close()
             self.database_path_edit.setText(dbPath[0])
             self.dbPath = self.p.SetString("sqlitedb", dbPath[0])
-            self.populate()
+            self.init_pop()
 
     def populate(self):
         self.componentTable.blockSignals(True)
         self.cur.execute("SELECT * FROM Famille_Composant")
         cat_list = self.cur.fetchall()
-        self.cat_name_list = [x[1] for x in cat_list]
+        if len(cat_list) > 0:
+            self.cat_name_list = [x[1] for x in cat_list]
+        else:
+            self.cat_name_list = []
         self.cat_name_list.append("Ajouter...")
         self.cur.execute("SELECT * FROM Composant")
         data = self.cur.fetchall()
@@ -158,7 +253,10 @@ class ComponentManager(QtGui.QDialog):
             self.componentTable.setItem(i, 0, index_item)
             
             # Categorie
-            cat_des = cat_list[int(item[2])-1][1]
+            if len(cat_list) > 0 :
+                cat_des = cat_list[int(item[2])-1][1]
+            else:
+                cat_des = "Ajouter..."
             cat = QtGui.QTableWidgetItem(str(cat_des))
             self.componentTable.setItem(i, 1, cat)
             
@@ -233,7 +331,8 @@ class ComponentManager(QtGui.QDialog):
             comboBox.setProperty('row', row)
             comboBox.setProperty('column', column)
             self.componentTable.blockSignals(False)
-            comboBox.currentIndexChanged.connect(self.Combo_indexchanged)
+            #comboBox.currentIndexChanged.connect(self.Combo_indexchanged)
+            comboBox.activated.connect(self.Combo_indexchanged2)
             #comboBox.currentTextChanged.connect(self.categoryCB_textChanged)
             self.componentTable.setCellWidget(row, column, comboBox)
         elif column == 3: # Section Shape
@@ -321,6 +420,39 @@ class ComponentManager(QtGui.QDialog):
             shape_type = QtGui.QTableWidgetItem(text)
             self.componentTable.setItem(row, column, shape_type)
 
+    @QtCore.Slot()
+    def Combo_indexchanged2(self, idx):
+        combo = self.sender()
+        row = combo.property('row')
+        column = combo.property('column')
+        index = combo.currentIndex()
+        print_debug('Index Changed : combo row %d column %d indexChanged to %d' % (row, column, index))
+        if column == 1: # CATEGORY
+            text = combo.currentText()
+            if text != "Ajouter...":
+                cat = QtGui.QTableWidgetItem(text)
+                self.componentTable.removeCellWidget(row,column)
+                self.componentTable.setItem(row, column, cat)
+            else:
+                (fc_nom, bool_cat) = QtGui.QInputDialog.getText(None,"Categorie", "Nom de la nouvelle catégorie :")
+                if bool_cat:
+                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux.", ["BO","PX"])
+                    if bool_type:
+                        self.cat_name_list.insert(-1, fc_nom)
+                        #data = (index+1,fc_nom,fc_type)
+                        data = (fc_nom,fc_type)
+                        sql = ''' INSERT INTO Famille_Composant(FC_NOM, FC_TYPE)
+                                  VALUES(?,?)'''
+                        self.cur.execute(sql, data)
+                        self.con.commit()
+                        self.componentTable.removeCellWidget(row,column)
+                        cat = QtGui.QTableWidgetItem(fc_nom)
+                        self.componentTable.setItem(row, column, cat)
+        elif column == 3: #Shape type
+            text = combo.currentText()
+            self.componentTable.removeCellWidget(row,column)
+            shape_type = QtGui.QTableWidgetItem(text)
+            self.componentTable.setItem(row, column, shape_type)
 
     @QtCore.Slot()
     def categoryCB_textChanged(self, txt):

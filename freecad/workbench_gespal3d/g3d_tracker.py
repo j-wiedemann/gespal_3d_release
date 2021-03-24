@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import FreeCAD as App
+from FreeCAD import Vector
 import DraftVecUtils
 from draftguitools.gui_trackers import Tracker
 from pivy import coin
@@ -17,112 +18,130 @@ __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
-class boxTracker(Tracker):
-    """A box tracker, can be based on a line object"""
+class beamTracker(Tracker):
+    '''A box tracker, can be based on a line object.'''
 
-    def __init__(self, width=1.0, height=2.0, length=10.0):
+    def __init__(self, line=None, width=0.1, height=1, shaded=False):
         self.trans = coin.SoTransform()
+        m = coin.SoMaterial()
+        m.transparency.setValue(0.8)
+        m.diffuseColor.setValue([0.4, 0.4, 0.6])
         w = coin.SoDrawStyle()
         w.style = coin.SoDrawStyle.LINES
         self.cube = coin.SoCube()
-        self.cube.height.setValue(height)
-        self.cube.width.setValue(width)
-        self.cube.depth.setValue(length)
-        Tracker.__init__(self, children=[self.trans, w, self.cube], name="boxTracker")
+        self.cube.height.setValue(width)
+        self.cube.depth.setValue(height)
+        self.baseline = None
+        if line:
+            self.baseline = line
+            self.update()
+        if shaded:
+            Tracker.__init__(
+                self, children=[self.trans, m, self.cube], name="beamTracker"
+            )
+        else:
+            Tracker.__init__(
+                self, children=[self.trans, w, self.cube], name="beamTracker"
+            )
 
     def update(
-        self, anchor_idx, inclination, base_snap_vertex=None, final_snap_vertex=None
+        self,
+        inclination=0.0,
+        anchor_idx=0,
+        base_snap_vertex=None,
+        final_snap_vertex=None,
     ):
+        '''Update the tracker.'''
+
+        import DraftGeomUtils
+
         if base_snap_vertex == None:
-            base_snap_vertex = App.Vector(0.0, 0.0, 0.0)
+            base_snap_vertex = Vector(0.0, 0.0, 0.0)
         if final_snap_vertex == None:
-            final_snap_vertex = App.Vector(1000.0, 1000.0, 1000.0)
+            final_snap_vertex = Vector(1.0, 0.0, 0.0)
+        
+        bp = base_snap_vertex
+        lvec = final_snap_vertex.sub(bp)
 
-        # Translation pour faire coincider l'objet avec le bon Point Insertion
-        # On reste sur plan XY
-        placement1 = self.getAnchorPoint(anchor_idx)
-        self.trans.translation.setValue(DraftVecUtils.tup(placement1))
+        self.cube.width.setValue(lvec.Length)
 
-        # Set the rotation center
-        rot = App.Placement()
-        rot_center = placement1.negative()
+        inclination = inclination * -1
 
-        vec_z = App.Vector(0.0, 0.0, 1.0)
-        vec_y = App.Vector(0.0, 1.0, 0.0)
-        vec_x = App.Vector(1.0, 0.0, 0.0)
-
-        # Rotation selon orientation du plan et deversement
-        normal = App.DraftWorkingPlane.getNormal()
-        if normal == vec_x:
-            rot.rotate(rot_center, vec_x, -90.0)
-            rot.rotate(rot_center, vec_y, 90.0)
-        elif normal == vec_y:
-            rot.rotate(rot_center, vec_x, -90.0)
-        elif normal == vec_z:
-            pass
-        elif normal == vec_x.negative():
-            rot.rotate(rot_center, vec_z, -90.0)
-            rot.rotate(rot_center, vec_x, 90.0)
-            rot.rotate(rot_center, vec_z, 180.0)
-        elif normal == vec_y.negative():
-            rot.rotate(rot_center, vec_x, -90.0)
-            rot.rotate(rot_center, vec_y, 180.0)
-        elif normal == vec_z.negative():
-            rot.rotate(rot_center, vec_y, 180.0)
+        p = App.Placement()  # objet Placement
+        p.Base = bp  # base est coordonnée bp
+        if lvec.x == 0 and lvec.y == 0:  # orientation verticale
+            up = Vector(0, -1, 0)
+            yaxis = up.cross(lvec)
+            xaxis = lvec.cross(yaxis)
+            if round(lvec.Length, 3) > 0:
+                p.Rotation = App.Rotation(lvec, yaxis, xaxis, "ZXY")
+                p.Rotation = App.Rotation(
+                    p.Rotation.multVec(Vector(1, 0, 0)), inclination
+                ).multiply(p.Rotation)
         else:
-            App.Console.PrintWarning(
-                "Can't determine the DraftWorkingPlane's normal !"
-            )
-            rot.rotate(rot_center, vec_z, 0.0)
+            up = Vector(0, 0, 1)  # vector up = Z
+            yaxis = up.cross(lvec)  # yaxis = produit vectoriel entre Z et lvec
+            xaxis = lvec.cross(yaxis)  # xaxis = produit vectoriel entre lvec et yaxis
+            if round(lvec.Length, 3) > 0:
+                #p.Rotation = App.Rotation(lvec, xaxis, yaxis, "ZXY")
+                p.Rotation = App.Rotation(lvec, yaxis, xaxis, "ZXY")
+                p.Rotation = App.Rotation(
+                    p.Rotation.multVec(Vector(1, 0, 0)), inclination
+                ).multiply(p.Rotation)
 
-        # Apply the rotation for deversement
-        rot.rotate(rot_center, vec_z, inclination)
+        self.setRotation(p.Rotation)
+        delta = self.getDelta(anchor_idx)
+        delta = p.Rotation.multVec(delta)
+        delta = delta.add(lvec.multiply(0.5))
+        bp = bp.add(delta)
+        self.pos(bp)
 
-        # Apply rotation to trans
-        self.trans.rotation.setValue(rot.Rotation.Q)
-
-        # Apply a translation to re set the base placement
-        placement2 = placement1.add(rot.Base)
-        self.trans.translation.setValue(DraftVecUtils.tup(placement2))  # Coin function
-
-        # Décalage sur Snap Point
-        placement3 = placement2.add(base_snap_vertex)
-        self.trans.translation.setValue(DraftVecUtils.tup(placement3))  # Coin function
-
-    def getAnchorPoint(self, bp_idx=5):
-        h = self.height()
-        w = self.width()
-        d = self.length()
-        anchor_points = [
-            App.Vector(w / 2, -h / 2, d / 2),
-            App.Vector(0, -h / 2, d / 2),
-            App.Vector(-w / 2, -h / 2, d / 2),
-            App.Vector(w / 2, 0, d / 2),
-            App.Vector(0, 0, d / 2),
-            App.Vector(-w / 2, 0, d / 2),
-            App.Vector(w / 2, h / 2, d / 2),
-            App.Vector(0, h / 2, d / 2),
-            App.Vector(-w / 2, h / 2, d / 2),
+    def getDelta(self, anchor):
+        h = self.cube.height.getValue() / 2.0
+        d = self.cube.depth.getValue() / 2.0
+        o = 0.0
+        deltas = [
+            Vector(o, -h, d),
+            Vector(o, o, d),
+            Vector(o, h, d),
+            Vector(o, -h, o),
+            Vector(o, o, o),
+            Vector(o, h, o),
+            Vector(o, -h, -d),
+            Vector(o, o, -d),
+            Vector(o, h, -d),
         ]
-        return anchor_points[bp_idx - 1]
+        return deltas[anchor]
+
+    def setRotation(self, rot):
+        '''Set the rotation.'''
+        self.trans.rotation.setValue(rot.Q)
+
+    def pos(self, p):
+        '''Set the translation.'''
+        self.trans.translation.setValue(DraftVecUtils.tup(p))
 
     def width(self, w=None):
+        '''Set the width.'''
         if w:
-            self.cube.width.setValue(w)
+            self.cube.height.setValue(w)
+        else:
+            return self.cube.height.getValue()
+
+    def length(self, l=None):
+        '''Set the length.'''
+        if l:
+            self.cube.width.setValue(l)
         else:
             return self.cube.width.getValue()
 
-    def length(self, vlength=None):
-        if vlength:
-            self.cube.depth.setValue(vlength)
+    def height(self, h=None):
+        '''Set the height.'''
+        if h:
+            self.cube.depth.setValue(h)
+            self.update()
         else:
             return self.cube.depth.getValue()
-
-    def height(self, h=None):
-        if h:
-            self.cube.height.setValue(h)
-        else:
-            return self.cube.height.getValue()
 
 
 class arrayBoxTracker(Tracker):
@@ -155,7 +174,7 @@ class rectangleTracker(Tracker):
     def __init__(self, dotted=False, scolor=None, swidth=None, face=False):
         if DEBUG_T:
             App.Console.PrintMessage("rectangle tracker : __init__ \n")
-        self.origin = App.Vector(0.0, 0.0, 0.0)
+        self.origin = Vector(0.0, 0.0, 0.0)
         line = coin.SoLineSet()
         line.numVertices.setValue(5)
         self.coords = coin.SoCoordinate3()  # this is the coordinate
@@ -224,27 +243,27 @@ class rectangleTracker(Tracker):
         if point:
             self.setorigin(point)
         else:
-            return App.Vector(self.coords.point.getValues()[0].getValue())
+            return Vector(self.coords.point.getValues()[0].getValue())
 
     def p2(self):
         """gets the second point (on u axis) of the rectangle"""
-        return App.Vector(self.coords.point.getValues()[3].getValue())
+        return Vector(self.coords.point.getValues()[3].getValue())
 
     def p3(self, point=None):
         """sets or gets the opposite (diagonal) point of the rectangle"""
         if point:
             self.update(point)
         else:
-            return App.Vector(self.coords.point.getValues()[2].getValue())
+            return Vector(self.coords.point.getValues()[2].getValue())
 
     def p4(self):
         """gets the fourth point (on v axis) of the rectangle"""
-        return App.Vector(self.coords.point.getValues()[1].getValue())
+        return Vector(self.coords.point.getValues()[1].getValue())
 
     def getSize(self):
         """returns (length,width) of the rectangle"""
-        p1 = App.Vector(self.coords.point.getValues()[0].getValue())
-        p2 = App.Vector(self.coords.point.getValues()[2].getValue())
+        p1 = Vector(self.coords.point.getValues()[0].getValue())
+        p2 = Vector(self.coords.point.getValues()[2].getValue())
         diag = p2.sub(p1)
         return (
             (DraftVecUtils.project(diag, self.u)).Length,

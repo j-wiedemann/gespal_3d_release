@@ -26,11 +26,14 @@ __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
-# Compteur, Nom, Famille, Longueur, Largeur, Epaisseur, Forme
-# def makeProfile(profile=[0, 'REC', 'REC100x100', 'R', 100, 100]):
 def makeProfile(profile=[0, 'REC100x100', 1, 100, 100, 100, 'R']):
-    '''makeProfile(profile): returns a shape with the face defined by the \
-    profile data'''
+    """
+    makeProfile(profile): returns a shape with the face defined by the \
+    profile data
+    # Compteur, Nom, Famille, Longueur, Largeur, Epaisseur, Forme
+    :param profile: list[int, str, int, int, int, int, str]
+    """
+
 
     if not App.ActiveDocument:
         App.Console.PrintError("No active document. Aborting\n")

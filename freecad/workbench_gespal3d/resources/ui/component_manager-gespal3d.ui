@@ -40,9 +40,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonDBPath">
+      <widget class="QPushButton" name="pushButton_chooseDB">
        <property name="text">
-        <string>Changer</string>
+        <string>Choisir</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_createDB">
+       <property name="text">
+        <string>Créer</string>
        </property>
       </widget>
      </item>
@@ -203,6 +210,13 @@
        </property>
        <property name="text">
         <string>Ajouter</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonDuplicate">
+       <property name="text">
+        <string>Dupliquer</string>
        </property>
       </widget>
      </item>

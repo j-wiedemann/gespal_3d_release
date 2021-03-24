@@ -11,7 +11,7 @@ __license__ = "LGPLv2.1"
 __url__ = "https://freecad-france.com"
 
 
-print("Gespal3D version", __version__)
+print("Gespal3D v{} loaded".format(__version__))
 
 RESOURCESPATH = os.path.join(os.path.dirname(__file__), "resources")
 ICONPATH = os.path.join(RESOURCESPATH, "icons")
@@ -29,9 +29,7 @@ def print_debug(messages):
         if type(messages) is list:
             for msg in messages:
                 msg = str(msg) + "\n"
-                # FreeCAD.Console.PrintMessage("\n")
                 FreeCAD.Console.PrintMessage(msg)
         else:
             messages = messages + "\n"
-            # FreeCAD.Console.PrintMessage("\n")
             FreeCAD.Console.PrintMessage(messages)

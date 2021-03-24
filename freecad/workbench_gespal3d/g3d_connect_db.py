@@ -1,10 +1,97 @@
-import FreeCAD as App
+# coding: utf-8
+
+import os
 import sqlite3
 from sqlite3 import Error
+
+import FreeCAD as App
+from freecad.workbench_gespal3d import g3d_component_manager
 from freecad.workbench_gespal3d import print_debug
 from freecad.workbench_gespal3d import DEBUG_DB
 from freecad.workbench_gespal3d import PARAMPATH
 
+
+__title__ = "Gespal3D Connect DB"
+__license__ = "LGPLv2.1"
+__author__ = "Jonathan Wiedemann"
+__url__ = "https://freecad-france.com"
+
+
+def progress(status, remaining, total):
+    print(f'Copied {total - remaining} of {total} pages...')
+
+def make_backup():
+    path = App.ParamGet(str(PARAMPATH))
+    no_database = "true"
+    og_path = path.GetString("sqlitedb", no_database)
+    print("og_path : {}".format(og_path))
+    head_path = os.path.split(og_path)[0]
+    backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
+    try:
+        # existing DB
+        sqliteCon = sqlite3.connect(og_path)
+        # copy into this DB
+        backupCon = sqlite3.connect(backup_path)
+        with backupCon:
+            sqliteCon.backup(backupCon, pages=3, progress=progress)
+        print("backup successful")
+    except sqlite3.Error as error:
+        print("Error while taking backup: ", error)
+    finally:
+        if backupCon:
+            backupCon.close()
+            sqliteCon.close()
+    return
+
+def restore_backup():
+    path = App.ParamGet(str(PARAMPATH))
+    no_database = "true"
+    og_path = path.GetString("sqlitedb", no_database)
+    head_path = os.path.split(og_path)[0]
+    backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
+    try:
+        # existing DB
+        sqliteCon = sqlite3.connect(backup_path)
+        # copy into this DB
+        backupCon = sqlite3.connect(og_path)
+        with backupCon:
+            sqliteCon.backup(backupCon, pages=3, progress=progress)
+        print("backup successful")
+    except sqlite3.Error as error:
+        print("Error while taking backup: ", error)
+    finally:
+        if backupCon:
+            backupCon.close()
+            sqliteCon.close()
+    return
+
+def create_new_db(sqliteCon):
+    #con = sqlite3.connect('SQLite_Python.db')
+    cursorObj = sqliteCon.cursor()
+    # code SQL pour la table Famille_Composant
+    cursorObj.execute("DROP TABLE IF EXISTS Famille_Composant;")
+    sqliteCon.commit()
+    cursorObj.execute('''CREATE TABLE Famille_Composant (
+                         FC_COMPTEUR INTEGER PRIMARY KEY,
+                         FC_NOM VARCHAR(80),
+                         FC_TYPE VARCHAR(2));''')
+    sqliteCon.commit()
+
+    # code SQL pour la table composant
+    cursorObj.execute("DROP TABLE IF EXISTS Composant;")
+    sqliteCon.commit()
+    cursorObj.execute('''CREATE TABLE Composant (
+                        CO_COMPTEUR INTEGER PRIMARY KEY,
+                        CO_NOM VARCHAR(200),
+                        CO_FAMILLE INTEGER,
+                        CO_LONGUEUR INTEGER,
+                        CO_LARGEUR INTEGER,
+                        CO_EPAISSEUR INTEGER,
+                        CO_FORME VARCHAR(1),
+                        CO_COULEUR VARCHAR(11),
+                        CO_MASSE INTEGER);''')
+    sqliteCon.commit()
+    sqliteCon.close()
 
 def sql_connection():
     p = App.ParamGet(str(PARAMPATH))
@@ -12,7 +99,8 @@ def sql_connection():
     sqlite_db = p.GetString("sqlitedb", no_database)
     if sqlite_db == "true":
         print_debug(["define database path in BaseApp/Preferences/Mod/Gespal3D"])
-        return
+        g3d_component_manager.G3D_ComponentsManager.Activated()
+        #return
     try:
         con = sqlite3.connect(sqlite_db)
         if DEBUG_DB:

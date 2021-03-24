@@ -110,6 +110,7 @@ def makeEnveloppe(id=None, name=None, length=1000, width=1000, height=1000):
         dim.ViewObject.DimOvershoot = "15 mm"
         dim.ViewObject.Decimals = 0
 
+    doc.recompute(None, True, True)
     Gui.Selection.clearSelection()
 
 
@@ -165,58 +166,38 @@ class _EnveloppeTaskPanel:
         self.grid.setObjectName("grid")
         # ID row
         self.id = QtGui.QLabel(self.form)
-        self.grid.addWidget(
-            self.id, 0, 0,
-        )
+        self.grid.addWidget(self.id, 0, 0)
         self.id_input = QtGui.QLineEdit(self.form)
-        self.grid.addWidget(
-            self.id_input, 0, 1,
-        )
+        self.grid.addWidget(self.id_input, 0, 1)
         # Name row
         self.name = QtGui.QLabel(self.form)
-        self.grid.addWidget(
-            self.name, 1, 0,
-        )
+        self.grid.addWidget(self.name, 1, 0)
         self.name_input = QtGui.QLineEdit(self.form)
-        self.grid.addWidget(
-            self.name_input, 1, 1,
-        )
+        self.grid.addWidget(self.name_input, 1, 1)
         # Length row
         self.length_label = QtGui.QLabel(self.form)
-        self.grid.addWidget(
-            self.length_label, 2, 0,
-        )
+        self.grid.addWidget(self.length_label, 2, 0)
         self.length_input = ui.createWidget("Gui::InputField")
         self.length_input.setText(
             App.Units.Quantity(1200.00, App.Units.Length).UserString
         )
-        self.grid.addWidget(
-            self.length_input, 2, 1,
-        )
+        self.grid.addWidget(self.length_input, 2, 1)
         # Width row
         self.width_label = QtGui.QLabel(self.form)
-        self.grid.addWidget(
-            self.width_label, 3, 0,
-        )
+        self.grid.addWidget(self.width_label, 3, 0)
         self.width_input = ui.createWidget("Gui::InputField")
         self.width_input.setText(
             App.Units.Quantity(900.00, App.Units.Length).UserString
         )
-        self.grid.addWidget(
-            self.width_input, 3, 1,
-        )
+        self.grid.addWidget(self.width_input, 3, 1)
         # Height row
         self.height_label = QtGui.QLabel(self.form)
-        self.grid.addWidget(
-            self.height_label, 4, 0,
-        )
+        self.grid.addWidget(self.height_label, 4, 0)
         self.height_input = ui.createWidget("Gui::InputField")
         self.height_input.setText(
             App.Units.Quantity(560.00, App.Units.Length).UserString
         )
-        self.grid.addWidget(
-            self.height_input, 4, 1,
-        )
+        self.grid.addWidget(self.height_input, 4, 1)
         self.retranslateUi(self.form)
 
     def accept(self):
@@ -229,6 +210,9 @@ class _EnveloppeTaskPanel:
         length = self.length_input.property("rawValue")
         width = self.width_input.property("rawValue")
         height = self.height_input.property("rawValue")
+        App.Console.PrintMessage(
+            "Création de produit L={},l={},h={}.\n".format(length,width,height)
+        )
         App.ActiveDocument.openTransaction(translate("Gespal3D", "Create Product"))
         Gui.addModule("freecad.workbench_gespal3d.g3d_product")
         Gui.doCommand(

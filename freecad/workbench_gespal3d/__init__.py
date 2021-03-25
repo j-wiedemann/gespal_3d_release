@@ -19,7 +19,6 @@ UIPATH = os.path.join(RESOURCESPATH, "ui")
 PARAMPATH = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
 
 DEBUG = False  # general
-DEBUG_U = False  # beam update
 DEBUG_T = False  # tracker
 DEBUG_DB = False  # database connect
 

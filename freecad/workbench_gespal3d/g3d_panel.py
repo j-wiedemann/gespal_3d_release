@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import os
 import FreeCAD as App
 
 if App.GuiUp:
@@ -9,7 +10,9 @@ if App.GuiUp:
     from freecad.workbench_gespal3d import g3d_tracker
     from freecad.workbench_gespal3d import g3d_connect_db
     from freecad.workbench_gespal3d import PARAMPATH
+    from freecad.workbench_gespal3d import ICONPATH
     from freecad.workbench_gespal3d import DEBUG
+    from freecad.workbench_gespal3d import print_debug
     from PySide import QtCore, QtGui
     from PySide.QtCore import QT_TRANSLATE_NOOP
 else:
@@ -29,23 +32,13 @@ __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
 
-def typecheck(args_and_types, name="?"):
-    """typecheck([arg1,type),(arg2,type),...]): checks arguments types"""
-    for v, t in args_and_types:
-        if not isinstance(v, t):
-            w = "typecheck[" + str(name) + "]: "
-            w += str(v) + " is not " + str(t) + "\n"
-            App.Console.PrintWarning(w)
-            raise TypeError("Draft." + str(name))
-
-
 class _CommandPanel:
 
     "the Gespal3D Panel command definition"
 
     def __init__(self):
         self.thickness = 10.00
-        pass
+        
 
     def GetResources(self):
 
@@ -72,6 +65,7 @@ class _CommandPanel:
         return active
 
     def Activated(self):
+        print_debug("G3D PANEL ACTIVATED")
         # parameters
         self.p = App.ParamGet(str(PARAMPATH))
 
@@ -79,6 +73,8 @@ class _CommandPanel:
 
         # fetch data from sqlite database
         self.categories = g3d_connect_db.getCategories(include=["PX"])
+        print_debug("self.categories = ")
+        print_debug([cat for cat in self.categories])
 
         self.wp = App.DraftWorkingPlane
         self.basepoint = None
@@ -96,12 +92,12 @@ class _CommandPanel:
         "this function is called by the snapper when it has a 3D point"
         # no point
         if point is None:
-            print("no point : finalize panel tracker")
+            print_debug("no point : finalize panel tracker")
             self.TrackerRect.finalize()
             return
         # first clic : pick rectangle origin
         if self.basepoint is None:
-            print("first point : set origin panel tracker")
+            print_debug("first point : set origin panel tracker")
             self.setWorkingPlane(point=point)
             self.TrackerRect.setorigin(point)
             self.basepoint = point
@@ -115,9 +111,9 @@ class _CommandPanel:
             )
             return
         # second clic : make panel
-        print("second point : finalize panel tracker")
+        print_debug("second point : finalize panel tracker")
         self.TrackerRect.finalize()
-        print("second point : make panel transaction")
+        print_debug("second point : make panel transaction")
         self.makeTransaction(point)
 
     def update(self, point, info):
@@ -153,7 +149,14 @@ class _CommandPanel:
         # presets box
         presets_label = QtGui.QLabel(translate("Gespal3D", "Plan"))
         self.wp_cb = QtGui.QComboBox()
-        self.wp_cb.addItems(["+XY", "+XZ", "+YZ", "-XY", "-XZ", "-YZ"])
+        self.wp_cb.addItems(["Dessus", "Dessous", "Devant", "Derrière", "Droite", "Gauche"])
+        self.wp_cb.setItemIcon(0,QtGui.QIcon(os.path.join(ICONPATH,"view-top.svg")))
+        self.wp_cb.setItemIcon(1,QtGui.QIcon(os.path.join(ICONPATH,"view-bottom.svg")))
+        self.wp_cb.setItemIcon(2,QtGui.QIcon(os.path.join(ICONPATH,"view-front.svg")))
+        self.wp_cb.setItemIcon(3,QtGui.QIcon(os.path.join(ICONPATH,"view-rear.svg")))
+        self.wp_cb.setItemIcon(4,QtGui.QIcon(os.path.join(ICONPATH,"view-right.svg")))
+        self.wp_cb.setItemIcon(5,QtGui.QIcon(os.path.join(ICONPATH,"view-left.svg")))
+
         grid.addWidget(presets_label, 4, 0, 1, 1)
         grid.addWidget(self.wp_cb, 4, 1, 1, 1)
 
@@ -209,21 +212,25 @@ class _CommandPanel:
         return taskwidget
 
     def restoreParams(self):
-        if DEBUG:
-            App.Console.PrintMessage("Panel restoreParams \n")
-        stored_composant = self.p.GetInt("PanelPreset", 5)
+        print_debug("Panel restoreParams")
+        stored_composant = self.p.GetInt("PanelPreset", 0)
         stored_wp = wp = self.p.GetInt("PanelWP", 0)
 
-        if stored_composant:
+        if stored_composant != 0:
             if DEBUG:
                 App.Console.PrintMessage("restore composant \n")
             comp = g3d_connect_db.getComposant(id=stored_composant)
             cat = comp[2]
+            got_panel_cat = False
             n = 0
             for x in self.categories:
                 if x[0] == cat:
                     self.categories_cb.setCurrentIndex(n)
+                    got_panel_cat = True
                 n += 1
+            if got_panel_cat == False:
+                self.setCategory(i=0)
+                return
             self.composant_items = g3d_connect_db.getComposants(categorie=cat)
             self.composant_cb.clear()
             self.composant_cb.addItems([x[1] for x in self.composant_items])
@@ -232,6 +239,8 @@ class _CommandPanel:
                 if x[0] == stored_composant:
                     self.composant_cb.setCurrentIndex(n)
                 n += 1
+        else:
+            self.setCategory(i=0)
 
         if stored_wp:
             self.wp_cb.setCurrentIndex(wp)
@@ -261,27 +270,6 @@ class _CommandPanel:
             else:
                 self.thickness_input.setDisabled(False)
 
-            """# height
-            if float(comp[4]) > 0.0:
-                self.height_input.setText(
-                    App.Units.Quantity(
-                        float(comp[4]),
-                        App.Units.Length).UserString)
-                self.height_input.setDisabled(True)
-            else:
-                self.height_input.setDisabled(False)
-
-            # length
-            if float(comp[3]) > 0.0:
-                self.length_input.setText(
-                    App.Units.Quantity(
-                        float(comp[3]),
-                        App.Units.Length).UserString)
-                self.length_input.setDisabled(True)
-            else:
-                self.setDirection()
-                self.length_input.setDisabled(False)"""
-
             self.p.SetInt("PanelPreset", comp[0])
 
     def setWorkingPlane(self, idx=None, point=None):
@@ -290,21 +278,21 @@ class _CommandPanel:
         else:
             self.p.SetInt("PanelWP", idx)
         axis_list = [
-            App.Vector(0.0, 0.0, 1.0),
-            App.Vector(0.0, 1.0, 0.0),
-            App.Vector(1.0, 0.0, 0.0),
-            App.Vector(0.0, 0.0, -1.0),
-            App.Vector(0.0, -1.0, 0.0),
-            App.Vector(-1.0, 0.0, 0.0),
+            App.Vector( 0.0,  0.0,  1.0),
+            App.Vector( 0.0,  0.0, -1.0),
+            App.Vector( 0.0, -1.0,  0.0),
+            App.Vector( 0.0,  1.0,  0.0),
+            App.Vector( 1.0,  0.0,  0.0),
+            App.Vector(-1.0,  0.0,  0.0),
         ]
 
         upvec_list = [
-            App.Vector(0.0, 1.0, 0.0),
-            App.Vector(1.0, 0.0, 0.0),
-            App.Vector(0.0, 0.0, 1.0),
-            App.Vector(0.0, -1.0, 0.0),
-            App.Vector(-1.0, 0.0, 0.0),
-            App.Vector(0.0, 0.0, -1.0),
+            App.Vector( 0.0,  1.0,  0.0),
+            App.Vector( 0.0,  1.0,  0.0),
+            App.Vector( 0.0,  0.0,  1.0),
+            App.Vector( 0.0,  0.0,  1.0),
+            App.Vector( 0.0,  0.0,  1.0),
+            App.Vector( 0.0,  0.0,  1.0),
         ]
 
         if point is None:
@@ -333,66 +321,74 @@ class _CommandPanel:
             Gui.draftToolBar.continueMode = bool(i)
         self.p.SetBool("PanelContinue", bool(i))
 
-    def makeTransaction(self, point=None):
-        if point is not None:
-            p1 = self.basepoint
-            p3 = point
-            diagonal = p3.sub(p1)
-            p2 = p1.add(DraftVecUtils.project(diagonal, self.wp.v))
-            p4 = p1.add(DraftVecUtils.project(diagonal, self.wp.u))
-            length = p4.sub(p1).Length
-            a = abs(DraftVecUtils.angle(p4.sub(p1), self.wp.u, self.wp.axis))
-            if a > 1:
-                length = -length
-            height = p2.sub(p1).Length
-            a = abs(DraftVecUtils.angle(p2.sub(p1), self.wp.v, self.wp.axis))
-            if a > 1:
-                height = -height
-            base = p1
-            p = self.wp.getRotation()
-            qr = p.Rotation.Q
-            qr = (
-                "("
-                + str(qr[0])
-                + ","
-                + str(qr[1])
-                + ","
-                + str(qr[2])
-                + ","
-                + str(qr[3])
-                + ")"
-            )
+    def makeTransaction(self, point):
+        p1 = self.basepoint
+        p3 = point
+        diagonal = p3.sub(p1)
+        p2 = p1.add(DraftVecUtils.project(diagonal, self.wp.v))
+        p4 = p1.add(DraftVecUtils.project(diagonal, self.wp.u))
+        length = p4.sub(p1).Length
+        a = abs(DraftVecUtils.angle(p4.sub(p1), self.wp.u, self.wp.axis))
+        if a > 1:
+            length = -length
+        height = p2.sub(p1).Length
+        a = abs(DraftVecUtils.angle(p2.sub(p1), self.wp.v, self.wp.axis))
+        if a > 1:
+            height = -height
+        base = p1
+        p = self.wp.getRotation()
+        qr = p.Rotation.Q
+        qr = (
+            "("
+            + str(qr[0])
+            + ","
+            + str(qr[1])
+            + ","
+            + str(qr[2])
+            + ","
+            + str(qr[3])
+            + ")"
+        )
+        warn = False
+        if (length > 0) and (height > 0):
+            print_debug("length > 0) and (height > 0)")
+            base = base.add(diagonal.scale(0.5, 0.5, 0.5))
+        
+        elif (length == 0) or (height == 0):
+            print_debug("(length == 0) or (height == 0)")
+            print_debug("Abort")
+            warn = True
 
-            if (length > 0) and (height > 0):
-                print("length > 0) and (height > 0)")
-                base = base.add(diagonal.scale(0.5, 0.5, 0.5))
-            elif (length == 0) or (height == 0):
-                print("(length == 0) or (height == 0)")
-                print("Abort")
-                return
-            elif (length < 0) and (height < 0):
-                print("(length < 0) and (height < 0)")
-                length = -length
-                height = -height
-                base = base.add(diagonal.scale(0.5, 0.5, 0.5))
-            elif length < 0:
-                print("length < 0")
-                length = -length
-                base = base.add(diagonal.scale(0.5, 0.5, 0.5))
-            elif height < 0:
-                print("height < 0")
-                height = -height
-                base = base.add(diagonal.scale(0.5, 0.5, 0.5))
-            else:
-                print("Situation inconnue. Veuillez contacter le support.")
-                print("Abort")
-                return
+        elif (length < 0) and (height < 0):
+            print_debug("(length < 0) and (height < 0)")
+            length = -length
+            height = -height
+            base = base.add(diagonal.scale(0.5, 0.5, 0.5))
+        
+        elif length < 0:
+            print_debug("length < 0")
+            length = -length
+            base = base.add(diagonal.scale(0.5, 0.5, 0.5))
+        
+        elif height < 0:
+            print_debug("height < 0")
+            height = -height
+            base = base.add(diagonal.scale(0.5, 0.5, 0.5))
+        
+        else:
+            print_debug("Situation inconnue. Veuillez contacter le support.")
+            print_debug("Abort")
+            warn = True
 
+        print_debug("Start Panel transaction")
+        if warn == False:
+            print_debug("The if condition is True")
             App.ActiveDocument.openTransaction(
                 translate("Gespal3D", "Ajouter un panneau")
             )
+            print_debug("open transaction : Ok")
             Gui.addModule("Arch")
-
+            print_debug("addModule Arch : Ok")
             # Create panel wit Arch Tool
             Gui.doCommand(
                 "p = Arch.makePanel("
@@ -427,10 +423,19 @@ class _CommandPanel:
                 "p.ViewObject.ShapeColor = (" + r + "," + g + "," + b + ")"
             )
 
+            print_debug("all doCommand : Ok")
             App.ActiveDocument.commitTransaction()
+            print_debug("commitTransaction : Ok")
             App.ActiveDocument.recompute()
-            if self.continueCmd:
-                self.Activated()
+            print_debug("activeDoc recompute : Ok")
+        
+        else:
+            App.Console.PrintWarning(u"Annulation de la commande")
+            App.Console.PrintWarning(u"La sélection des points est incompatible avec le plan choisi.")
+            #msg = QtGui.QMessageBox.information(Gui.getMainWindow(), u"Annulation de la commande", u"La sélection des points est incompatible avec le plan choisi.")
+
+        if self.continueCmd:
+            self.Activated()
 
 
 if App.GuiUp:

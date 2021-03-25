@@ -74,18 +74,21 @@ class gespal3d_workbench(Gui.Workbench):
         """
         App.Console.PrintMessage("Initialisation de l'atelier Gespal3D \n")
 
-        App.ParamGet(str(PARAMPATH))
+        p = App.ParamGet(str(PARAMPATH))
         c = App.ParamGet("User parameter:BaseApp/Preferences/Document")
         c.SetBool("DuplicateLabels", True)
+        d = App.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+        d.SetBool("grid", False)
 
-        self.appendToolbar("Gespal3D", self.toolbox_gespal3d)
-        self.appendMenu("Gespal3D", self.toolbox_gespal3d)
 
-        self.appendToolbar("Modification", self.toolbox_mod)
-        self.appendMenu("Modification", self.toolbox_mod)
+        self.appendToolbar(u"G3D Ajouter", self.toolbox_gespal3d)
+        self.appendMenu(u"G3D Ajouter", self.toolbox_gespal3d)
 
-        self.appendToolbar(u"Creation", self.toolbox_create)
-        self.appendMenu(u"Creation", self.toolbox_create)
+        self.appendToolbar(u"G3D Modifier", self.toolbox_mod)
+        self.appendMenu(u"G3D Modifier", self.toolbox_mod)
+
+        self.appendToolbar(u"G3D Dessiner", self.toolbox_create)
+        self.appendMenu(u"G3D Dessiner", self.toolbox_create)
 
     def Activated(self):
         """
@@ -98,8 +101,6 @@ class gespal3d_workbench(Gui.Workbench):
 
         if hasattr(Gui, "draftToolBar"):
             Gui.draftToolBar.Activated()
-        if hasattr(Gui, "Snapper"):
-            Gui.Snapper.show()
 
     def Deactivated(self):
         """

@@ -126,7 +126,7 @@ def getCategories(include=[], exclude=[]):
             if not row[2] in exclude:
                 categories_list.append(row)
     if DEBUG_DB:
-        messages = ["getCategories :"]
+        messages = ["g3d_connect_db.getCategories :"]
         messages.append(categories_list)
         print_debug(messages)
 
@@ -144,7 +144,7 @@ def getComposants(categorie=None):
         )
         rows = cursorObj.fetchall()
         if DEBUG_DB:
-            messages = ["getComposants :"]
+            messages = ["g3d_connect_db.getComposants :"]
             messages.append(rows)
             print_debug(messages)
         
@@ -160,6 +160,6 @@ def getComposant(id=1):
         component = rows[0]
     else:
         component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
-    print_debug(["getComposant :", component])
+    print_debug(["g3d_connect_db.getComposant :", component])
     
     return component

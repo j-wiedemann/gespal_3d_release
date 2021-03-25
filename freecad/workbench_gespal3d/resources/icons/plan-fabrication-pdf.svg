@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   sodipodi:docname="document-print.svg"
-   sodipodi:docbase="/home/jimmac/src/cvs/tango-icon-theme/scalable/actions"
-   inkscape:version="0.43+devel"
+   sodipodi:docname="plan-fabrication-pdf.svg"
+   inkscape:version="1.0.2 (1.0.2+r75+1)"
    sodipodi:version="0.32"
    id="svg2994"
    height="48px"
-   width="48px">
+   width="48px"
+   version="1.1">
   <defs
      id="defs3">
     <radialGradient
@@ -312,19 +311,19 @@
        inkscape:collect="always" />
   </defs>
   <sodipodi:namedview
-     inkscape:window-y="349"
-     inkscape:window-x="331"
-     inkscape:window-height="659"
-     inkscape:window-width="872"
+     inkscape:window-y="0"
+     inkscape:window-x="1920"
+     inkscape:window-height="1056"
+     inkscape:window-width="1920"
      inkscape:guide-bbox="true"
      showguides="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
      showgrid="false"
      inkscape:current-layer="layer1"
-     inkscape:cy="-18.264187"
-     inkscape:cx="89.408089"
-     inkscape:zoom="1"
+     inkscape:cy="23.63142"
+     inkscape:cx="2.1330265"
+     inkscape:zoom="8"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="0.090196078"
@@ -332,7 +331,9 @@
      pagecolor="#ffffff"
      id="base"
      inkscape:showpageshadow="false"
-     fill="#729fcf" />
+     fill="#729fcf"
+     inkscape:document-rotation="0"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata4">
     <rdf:RDF>
@@ -341,7 +342,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title>Print Document</dc:title>
+        <dc:title></dc:title>
         <dc:creator>
           <cc:Agent>
             <dc:title>Jakub Steiner</dc:title>
@@ -516,15 +517,32 @@
          x="14.000000"
          y="13.000000" />
     </g>
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer2"
-     inkscape:label="arrow">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:27.6841px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.692106;stroke-miterlimit:4;stroke-dasharray:none"
+       x="3.2766826"
+       y="41.448101"
+       id="text909"><tspan
+         sodipodi:role="line"
+         id="tspan907"
+         x="3.2766826"
+         y="41.448101"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.692106;stroke-miterlimit:4;stroke-dasharray:none">PF</tspan></text>
     <path
        sodipodi:nodetypes="cccccccc"
        id="path8643"
        d="M 21.02159,20.989431 L 27.989391,20.989431 L 27.989391,16.064984 L 31,16.064984 L 24.553756,8 L 17.435622,15.986875 L 21.023684,15.986875 L 21.02159,20.989431 z "
        style="opacity:1;color:#000000;fill:#a7a7a7;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.99999958;stroke-linecap:round;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.78857px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.244717;stroke-miterlimit:4;stroke-dasharray:none"
+       x="13.842288"
+       y="13.262018"
+       id="text909-3"><tspan
+         id="tspan907-6"
+         x="13.842288"
+         y="13.262018"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';stroke-width:0.244717;stroke-miterlimit:4;stroke-dasharray:none"
+         sodipodi:role="line">PDF</tspan></text>
   </g>
 </svg>

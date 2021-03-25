@@ -440,7 +440,7 @@ class _PlanCommercial:
         from freecad.workbench_gespal3d import ICONPATH
 
         return {
-            "Pixmap": os.path.join(ICONPATH, "document-print.svg"),
+            "Pixmap": os.path.join(ICONPATH, "plan-commercial-pdf.svg"),
             "Accel": "P,C",
             "MenuText": "Gespal 3D Export",
             "ToolTip": "<html><head/><body><p><b>Exporte le plan commercial.</b> \
@@ -467,7 +467,7 @@ class _PlanFabrication:
         from freecad.workbench_gespal3d import ICONPATH
 
         return {
-            "Pixmap": os.path.join(ICONPATH, "document-print.svg"),
+            "Pixmap": os.path.join(ICONPATH, "plan-fabrication-pdf.svg"),
             "Accel": "P,F",
             "MenuText": "Gespal 3D Export",
             "ToolTip": "<html><head/><body><p><b>Exporte le plan de fabrication</b> \

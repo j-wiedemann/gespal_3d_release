@@ -79,10 +79,9 @@ class ComponentManager(QtGui.QDialog):
 
     def init_pop(self):
         self.p = App.ParamGet(str(PARAMPATH))
-        no_database = "true"
-        self.dbPath = self.p.GetString("sqlitedb", no_database)
+        self.dbPath = self.p.GetString("sqlitedb", "no_db")
         print_debug("db path : {}".format(self.dbPath))
-        if self.dbPath == "true":
+        if self.dbPath == "no_db":
             self.con = None
             QtGui.QMessageBox.warning(
                 None,
@@ -183,7 +182,8 @@ class ComponentManager(QtGui.QDialog):
         :return:
         """
         g3d_connect_db.restore_backup()
-        self.con.close()
+        if self.con:
+            self.con.close()
         self.form.close()
         print_debug("cancelAndClose done")
 

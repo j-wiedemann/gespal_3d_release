@@ -211,7 +211,7 @@ class _EnveloppeTaskPanel:
         width = self.width_input.property("rawValue")
         height = self.height_input.property("rawValue")
         App.Console.PrintMessage(
-            "Création de produit L={},l={},h={}.\n".format(length,width,height)
+            "Création de produit :\n L={}, l={}, h={}.\n".format(length,width,height)
         )
         App.ActiveDocument.openTransaction(translate("Gespal3D", "Create Product"))
         Gui.addModule("freecad.workbench_gespal3d.g3d_product")

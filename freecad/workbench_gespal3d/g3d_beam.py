@@ -514,7 +514,7 @@ class _CommandComposant:
         return taskwidget
 
     def restoreParams(self):
-        print_debug(["", '-------', 'restoreParams'])
+        print_debug(["", "Start restoreParams"])
 
         self.composant = self.params.GetInt("BeamPreset", 1)
         self.Width = self.params.GetFloat("BeamWidth", 100)
@@ -629,7 +629,7 @@ class _CommandComposant:
                 self.tracker.on()
 
         if DEBUG:
-            messages = ["","------------","Params :"]
+            messages = ["", "End of restore params :"]
             messages.append("détails de la liste des points cliqués :")
             messages.append("longueur = {}".format(len(self.clicked_points)))
             for p in self.clicked_points:
@@ -646,6 +646,7 @@ class _CommandComposant:
             messages.append("array_qty = {}".format(self.distribution_qty))
             messages.append("continueCmd = {}".format(self.continueCmd))
             messages.append("fixed = {}".format(str(self.fixed_length)))
+            messages.append("")
             print_debug(messages)
 
     def getPoint(self, point=None, obj=None):
@@ -767,29 +768,20 @@ class _CommandComposant:
         else:
             Gui.Snapper.toggleGrid()
 
-    def setCategory(self, i):
+    def setCategory(self, idx):
         self.composant_cb.clear()
-        fc_compteur = self.categories[i][0]
+        fc_compteur = self.categories[idx][0]
         self.composant_items = g3d_connect_db.getComposants(categorie=fc_compteur)
         self.composant_cb.addItems([x[1] for x in self.composant_items])
 
-    def setComposant(self, i):
+    def setComposant(self, i=0):
+        print_debug(["", "Start setComposant :"])
         self.Profile = None
-        id = self.composant_items[i][0]
-        comp = g3d_connect_db.getComposant(id=id)
-
-        print_debug([
-            "",
-            "--------",
-            "tracker dimensions",
-            "width : {}".format(self.tracker.width()),
-            "length : {}".format(self.tracker.length()),
-            "height : {}".format(self.tracker.height()),
-            "profile dimensions",
-            "w = {} ; h = {} ; l = {}".format(float(comp[5]), float(comp[4]), float(comp[3])),
-        ])
+        idx = self.composant_items[i][0]
+        comp = g3d_connect_db.getComposant(id=idx)
 
         if comp:
+            print_debug("composant : w = {} ; h = {} ; l = {}".format(float(comp[5]), float(comp[4]), float(comp[3])))
             self.Profile = comp
             # width
             if float(comp[5]) > 0.0:
@@ -826,6 +818,9 @@ class _CommandComposant:
                 )
                 
             self.params.SetInt("BeamPreset", comp[0])
+        else:
+            print_debug("no composant")
+        print_debug(["End setComposant", ""])
 
     def get_final_point(self, dir='+x'):
         l = self.Length
@@ -841,13 +836,14 @@ class _CommandComposant:
         return final_point[dir]
 
     def setDirection(self):
+        print_debug(["", "Start setDirection :"])
         directions = ['+x', '+y', '+z', '-x', '-y', '-z', 'line']
         idx = self.direction_cb.currentIndex()
-        if DEBUG:
             print_debug("setDirection : idx={}, str={}".format(idx, directions[idx]))
         self.params.SetString("BeamDirection", directions[idx])
         self.direction = directions[idx]
         if self.fixed_length == False:
+            print_debug("self.fixed_length is False")
             if 'x' in self.direction:
                 self.Length = self.product[0]
                 self.length_input.setText(
@@ -863,7 +859,9 @@ class _CommandComposant:
                 self.length_input.setText(
                     App.Units.Quantity(self.Length, App.Units.Length).UserString
                 )
-
+        else:
+            print_debug("self.fixed_length is True")
+        print_debug(["End setDirection", ""])
 
     def setAnchor(self):
         self.anchor_idx = self.insert_group.checkedId()

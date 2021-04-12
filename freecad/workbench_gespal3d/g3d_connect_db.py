@@ -144,8 +144,9 @@ def getComposants(categorie=None):
         )
         rows = cursorObj.fetchall()
         if DEBUG_DB:
-            messages = ["g3d_connect_db.getComposants :"]
+            messages = ["", "g3d_connect_db.getComposants :"]
             messages.append(rows)
+            messages.append("")
             print_debug(messages)
         
         return rows
@@ -160,6 +161,6 @@ def getComposant(id=1):
         component = rows[0]
     else:
         component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
-    print_debug(["g3d_connect_db.getComposant :", component])
+    print_debug(["", "g3d_connect_db.getComposant :", component, ""])
     
     return component

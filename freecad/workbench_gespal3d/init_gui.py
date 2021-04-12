@@ -29,7 +29,7 @@ class gespal3d_workbench(Gui.Workbench):
 
     MenuText = "Gespal 3D"
     ToolTip = "Fabrication de palettes"
-    Icon = os.path.join(ICONPATH, "template_resource.svg")
+    Icon = os.path.join(ICONPATH, "gespal3d_wb.svg")
     toolbox_gespal3d = [
         "G3D_Product",
         "G3D_BeamComposant",

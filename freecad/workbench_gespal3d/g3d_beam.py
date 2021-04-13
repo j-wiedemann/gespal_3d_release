@@ -548,6 +548,12 @@ class _CommandComposant:
                 App.Units.Quantity(self.Length, App.Units.Length).UserString
             )
 
+        if self.direction is not None:
+            print_debug("restore direction")
+            directions = ['+x', '+y', '+z', '-x', '-y', '-z', 'line']
+            idx = directions.index(self.direction)
+            self.direction_cb.setCurrentIndex(idx)
+
         if self.composant is not None:
             print_debug("restore composant")
             comp = g3d_connect_db.getComposant(id=self.composant)
@@ -567,14 +573,9 @@ class _CommandComposant:
             for x in self.composant_items:
                 if x[0] == self.composant:
                     self.composant_cb.setCurrentIndex(n)
+                    self.setComposant(n)
                     break
                 n += 1
-
-        if self.direction is not None:
-            print_debug("restore direction")
-            directions = ['+x', '+y', '+z', '-x', '-y', '-z', 'line']
-            idx = directions.index(self.direction)
-            self.direction_cb.setCurrentIndex(idx)
 
         if self.inclination is not None:
             print_debug("restore inclination")
@@ -779,6 +780,7 @@ class _CommandComposant:
         self.composant_items = g3d_connect_db.getComposants(categorie=fc_compteur)
         self.composant_cb.addItems([x[1] for x in self.composant_items])
         self.composant_cb.blockSignals(False)
+        self.setComposant()
 
     def setComposant(self, i=0):
         print_debug(["", "Start setComposant :"])
@@ -824,6 +826,7 @@ class _CommandComposant:
                 )
                 
             self.params.SetInt("BeamPreset", comp[0])
+            self.setDirection()
         else:
             print_debug("no composant")
         print_debug(["End setComposant", ""])
@@ -845,9 +848,17 @@ class _CommandComposant:
         print_debug(["", "Start setDirection :"])
         directions = ['+x', '+y', '+z', '-x', '-y', '-z', 'line']
         idx = self.direction_cb.currentIndex()
-            print_debug("setDirection : idx={}, str={}".format(idx, directions[idx]))
+        print_debug("setDirection : idx={}, str={}".format(idx, directions[idx]))
         self.params.SetString("BeamDirection", directions[idx])
         self.direction = directions[idx]
+        if self.direction == 'line':
+            self.setFixedLength(0)
+            self.fixlength_checkbox.setChecked(False)
+            self.fixlength_checkbox.setDisabled(True)
+            self.length_input.setDisabled(True)
+        else:
+            self.fixlength_checkbox.setDisabled(False)
+            self.length_input.setDisabled(False)
         if self.fixed_length == False:
             print_debug("self.fixed_length is False")
             if 'x' in self.direction:
@@ -879,6 +890,7 @@ class _CommandComposant:
 
     def setFixedLength(self, i):
         self.params.SetBool("BeamFixLength", bool(i))
+        self.fixed_length = bool(i)
 
     def setLength(self, d):
         self.Length = d

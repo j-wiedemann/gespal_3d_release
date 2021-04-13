@@ -556,14 +556,18 @@ class _CommandComposant:
             for x in self.categories:
                 if x[0] == cat:
                     self.categories_cb.setCurrentIndex(n)
+                    break
                 n += 1
             self.composant_items = g3d_connect_db.getComposants(categorie=cat)
+            self.composant_cb.blockSignals(True)
             self.composant_cb.clear()
             self.composant_cb.addItems([x[1] for x in self.composant_items])
+            self.composant_cb.blockSignals(False)
             n = 0
             for x in self.composant_items:
                 if x[0] == self.composant:
                     self.composant_cb.setCurrentIndex(n)
+                    break
                 n += 1
 
         if self.direction is not None:
@@ -769,10 +773,12 @@ class _CommandComposant:
             Gui.Snapper.toggleGrid()
 
     def setCategory(self, idx):
+        self.composant_cb.blockSignals(True)
         self.composant_cb.clear()
         fc_compteur = self.categories[idx][0]
         self.composant_items = g3d_connect_db.getComposants(categorie=fc_compteur)
         self.composant_cb.addItems([x[1] for x in self.composant_items])
+        self.composant_cb.blockSignals(False)
 
     def setComposant(self, i=0):
         print_debug(["", "Start setComposant :"])

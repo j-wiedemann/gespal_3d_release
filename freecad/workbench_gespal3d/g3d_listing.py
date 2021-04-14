@@ -4,6 +4,7 @@ import os
 import string
 import math
 from datetime import datetime
+from fractions import Fraction
 
 import FreeCAD as App
 
@@ -16,6 +17,7 @@ if App.GuiUp:
     from freecad.workbench_gespal3d import __version__ as wb_version
     from freecad.workbench_gespal3d import PARAMPATH
     from freecad.workbench_gespal3d import print_debug
+    from freecad.workbench_gespal3d import RESOURCESPATH
 
 
 __title__ = "Gespal 3D Listing"
@@ -42,7 +44,10 @@ class gespal3d_exports:
         self.path_pc = os.path.join(path_project[0], pc_pdf)
         self.path_pf = os.path.join(path_project[0], pf_pdf)
         self.p = App.ParamGet(str(PARAMPATH))
-        self.path_template = self.p.GetString("PathTemplate", "")
+        self.path_template = self.p.GetString(
+            "PathTemplate",
+            os.path.join(RESOURCESPATH, "templates"))
+        print_debug(["PathTemplates :", self.path_template])
 
         objs = doc.Objects
         self.objlist = []
@@ -298,11 +303,10 @@ class gespal3d_exports:
         else:
             orientation = "A4L"
         # Templae path
-        path = App.ParamGet(str(PARAMPATH)).GetString("PathTemplate", "")
         if orientation == "A4P":
-            path = os.path.join(path, "A4P.svg")
+            path = os.path.join(self.path_template, "A4P.svg")
         else:
-            path = os.path.join(path, "A4L.svg")
+            path = os.path.join(self.path_template, "A4L.svg")
         template.Template = path
         page.Template = template
 
@@ -315,7 +319,7 @@ class gespal3d_exports:
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)
-        template.setEditFieldContent("FC-SC", str(scale))
+        template.setEditFieldContent("FC-SC", str(Fraction(str(scale))))
         # ProjGroup
         projgroup = doc.addObject("TechDraw::DrawProjGroup", projgrp_name)
         page.addView(projgroup)
@@ -353,6 +357,7 @@ class gespal3d_exports:
         iso_view.Source = self.projgroup_list
         iso_view.Direction = App.Vector(0.577, -0.577, 0.577)
         iso_view.XDirection = App.Vector(0.707, 0.707, -0.000)
+        iso_view.ScaleType = u"Custom"
         iso_view.Scale = scale / 2
         if orientation == "A4L":
             iso_view.X = 240.0

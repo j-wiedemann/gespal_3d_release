@@ -529,6 +529,7 @@ class _CommandComposant:
         self.direction = self.params.GetString("BeamDirection", '+x')  # direction could be line, +x, -x, +y, -y, +z, -z
         self.pattern = self.params.GetString("BeamPattern", 'none')  # pattern could be 'none', 'distribution', 'filling'
         self.fixed_length = self.params.GetBool("BeamFixLength", 0)
+        self.fixed_component = False
 
         if self.Width is not None:
             print_debug("restore beam width")
@@ -811,16 +812,18 @@ class _CommandComposant:
 
             # length
             if float(comp[3]) > 0.0:
+                self.fixed_component = True
                 self.length_input.setText(
                     App.Units.Quantity(float(comp[3]), App.Units.Length).UserString
                 )
                 self.length_input.setDisabled(True)
                 self.fixlength_checkbox.setDisabled(True)
-                self.fixlength_checkbox.setChecked(True)
+                self.fixlength_checkbox.setChecked(False)
+                self.setFixedLength(0)
             else:
+                self.fixed_component = False
                 self.length_input.setDisabled(False)
                 self.fixlength_checkbox.setDisabled(False)
-                self.fixlength_checkbox.setChecked(False)
                 self.length_input.setText(
                     App.Units.Quantity(self.Length, App.Units.Length).UserString
                 )
@@ -852,14 +855,11 @@ class _CommandComposant:
         self.params.SetString("BeamDirection", directions[idx])
         self.direction = directions[idx]
         if self.direction == 'line':
-            self.setFixedLength(0)
-            self.fixlength_checkbox.setChecked(False)
-            self.fixlength_checkbox.setDisabled(True)
-            self.length_input.setDisabled(True)
-        else:
-            self.fixlength_checkbox.setDisabled(False)
-            self.length_input.setDisabled(False)
-        if self.fixed_length == False:
+            if self.fixed_component == True:
+                self.direction = directions[0]
+                self.direction_cb.setCurrentIndex(0)
+
+        if self.fixed_length == False and self.fixed_component == False:
             print_debug("self.fixed_length is False")
             if 'x' in self.direction:
                 self.Length = self.product[0]
@@ -891,6 +891,7 @@ class _CommandComposant:
     def setFixedLength(self, i):
         self.params.SetBool("BeamFixLength", bool(i))
         self.fixed_length = bool(i)
+        self.setDirection()
 
     def setLength(self, d):
         self.Length = d

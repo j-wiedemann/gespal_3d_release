@@ -39,10 +39,14 @@ class gespal3d_exports:
         name_csv = "CP_" + id + ".csv"
         pc_pdf = "PC_" + id + ".pdf"
         pf_pdf = "PF_" + id + ".pdf"
+        pc_svg = "PC_" + id + ".svg"
+        pf_svg = "PF_" + id + ".svg"
         self.path_image = os.path.join(path_project[0], name_image)
         self.path_csv = os.path.join(path_project[0], name_csv)
-        self.path_pc = os.path.join(path_project[0], pc_pdf)
-        self.path_pf = os.path.join(path_project[0], pf_pdf)
+        self.path_pc_pdf = os.path.join(path_project[0], pc_pdf)
+        self.path_pf_pdf = os.path.join(path_project[0], pf_pdf)
+        self.path_pc_svg = os.path.join(path_project[0], pc_svg)
+        self.path_pf_svg = os.path.join(path_project[0], pf_svg)
         self.p = App.ParamGet(str(PARAMPATH))
         self.path_template = self.p.GetString(
             "PathTemplate",
@@ -377,7 +381,8 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = doc.getObject("plan_commercial")
-        TechDrawGui.exportPageAsPdf(page, self.path_pc)
+        TechDrawGui.exportPageAsPdf(page, self.path_pc_pdf)
+        TechDrawGui.exportPageAsSvg(page, self.path_pc_svg)
         return
 
     def exportPlanFabrication(self):
@@ -385,7 +390,8 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = doc.getObject("plan_fabrication")
-        TechDrawGui.exportPageAsPdf(page, self.path_pf)
+        TechDrawGui.exportPageAsPdf(page, self.path_pf_pdf)
+        TechDrawGui.exportPageAsSvg(page, self.path_pf_svg)
         return
 
 

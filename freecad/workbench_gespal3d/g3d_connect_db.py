@@ -89,7 +89,8 @@ def create_new_db(sqliteCon):
                         CO_EPAISSEUR INTEGER,
                         CO_FORME VARCHAR(1),
                         CO_COULEUR VARCHAR(11),
-                        CO_MASSE INTEGER);''')
+                        CO_MASSE INTEGER),
+                        CO_FICHIER_CAD VARCHAR(255);''')
     sqliteCon.commit()
     sqliteCon.close()
 

@@ -415,7 +415,7 @@ class _CommandPanel:
             Gui.doCommand('p.Tag = u"Gespal"')
             Gui.doCommand('p.Description = "' + str(self.Profile[0]) + '"')
 
-            color = self.Profile[-2].split(",")
+            color = self.Profile[7].split(",")
             r = str(int(color[0]) / 255)
             g = str(int(color[1]) / 255)
             b = str(int(color[2]) / 255)

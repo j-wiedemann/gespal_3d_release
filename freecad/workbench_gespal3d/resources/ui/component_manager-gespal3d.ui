@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>967</width>
-    <height>635</height>
+    <width>959</width>
+    <height>679</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -197,6 +197,11 @@
       </property>
       <property name="textAlignment">
        <set>AlignLeading|AlignVCenter</set>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>CAO</string>
       </property>
      </column>
     </widget>

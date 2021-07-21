@@ -161,7 +161,8 @@ def getComposant(id=1):
     if rows:
         component = rows[0]
     else:
-        component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350']
+        component = ['1', 'Composant', '1', '0', '100', '22', 'R', '203,193,124', '350', None]
     print_debug(["", "g3d_connect_db.getComposant :", component, ""])
     
     return component
+    

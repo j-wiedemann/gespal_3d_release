@@ -80,6 +80,7 @@ class ComponentManager(QtGui.QDialog):
     def init_pop(self):
         self.p = App.ParamGet(str(PARAMPATH))
         self.dbPath = self.p.GetString("sqlitedb", "no_db")
+        self.cao_path = self.p.GetString("PathCAO", "no_path_cao")
         print_debug("db path : {}".format(self.dbPath))
         if self.dbPath == "no_db":
             self.con = None
@@ -295,6 +296,10 @@ class ComponentManager(QtGui.QDialog):
             # Mass volumique
             massvol = QtGui.QTableWidgetItem(str(item[8]))
             self.componentTable.setItem(i, 8, massvol)
+            
+            # CAO
+            cao_file = QtGui.QTableWidgetItem(str(item[9]))
+            self.componentTable.setItem(i, 9, cao_file)
         
         self.componentTable.blockSignals(False)
         print_debug("populate done")
@@ -385,6 +390,18 @@ class ComponentManager(QtGui.QDialog):
             spinbox.valueChanged.connect(self.SpinBox_valuechanged)
             self.componentTable.blockSignals(False)
             self.componentTable.setCellWidget(row, column, spinbox)
+        elif column == 9: # CAO
+            #self.componentTable.blockSignals(True)
+            #value = oldvalue
+            #self.componentTable.removeCellWidget(row, column)
+            fileName = QtGui.QFileDialog.getOpenFileName(self,
+                "Choisir composant", self.cao_path, "Fichier CAO (*.igs *.iges *.stp *.step)")
+            if fileName:
+                itm.setText(os.path.relpath(fileName[0], self.cao_path))
+            #else:
+
+            #self.componentTable.blockSignals(False)
+            #self.componentTable.setCellWidget(row, column, spinbox)
 
 
     @QtCore.Slot()
@@ -403,7 +420,7 @@ class ComponentManager(QtGui.QDialog):
             else:
                 (fc_nom, bool_cat) = QtGui.QInputDialog.getText(None,"Categorie", "Nom de la nouvelle catégorie :")
                 if bool_cat:
-                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux.", ["BO","PX"])
+                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QC pour les composnats de type Quincaillerie.", ["BO","PX","QC"])
                     if bool_type:
                         self.cat_name_list.insert(-1, fc_nom)
                         data = (index+1,fc_nom,fc_type)
@@ -525,6 +542,11 @@ class ComponentManager(QtGui.QDialog):
         if column == 8:
             sql = ''' UPDATE Composant
                       SET CO_MASSE = ?
+                      WHERE CO_COMPTEUR = ?'''
+
+        if column == 9:
+            sql = ''' UPDATE Composant
+                      SET CO_FICHIER_CAD = ?
                       WHERE CO_COMPTEUR = ?'''
 
         self.cur.execute(sql, (value, co_compteur))

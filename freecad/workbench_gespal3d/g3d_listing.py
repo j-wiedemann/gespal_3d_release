@@ -30,10 +30,10 @@ class gespal3d_exports:
     def __init__(self):
         doc = App.ActiveDocument
         path_doc = doc.FileName
-        if len(doc.Name.split("PL_")) > 1:
-            id = doc.Name.split("PL_")[1]
+        if len(doc.Label.split("PL_")) > 1:
+            id = doc.Label.split("PL_")[1]
         else:
-            id = doc.Name
+            id = doc.Label
         path_project = os.path.split(path_doc)
         name_image = "3D_" + id + ".png"
         name_csv = "CP_" + id + ".csv"
@@ -212,32 +212,38 @@ class gespal3d_exports:
             count += 1
         n = 1
         for obj in self.objlist:
-            shape = obj.Shape
             label = obj.Label
-            analyse = self.shapeAnalyse(shape)
-            print_debug("row %s : object's name is %s." % (n, obj.Name))
-            print_debug(analyse)
-            if hasattr(obj, "Height"):
-                width = obj.Width
-                height = obj.Height
-                length = str(analyse[2]) + " mm"
-            elif hasattr(obj, "Thickness"):
-                width = obj.Thickness
-                m = 0
-                for dim in analyse:
-                    if dim == width:
-                        analyse.pop(m)
-                    m += 1
-                height = str(min(analyse)) + " mm"
-                length = str(max(analyse)) + " mm"
+            usinage = None
+            if not hasattr(obj, "EquipmentPower"):
+                shape = obj.Shape
+                print_debug("row %s : object's name is %s." % (n, obj.Name))
+                analyse = self.shapeAnalyse(shape)
+                print_debug("row %s : object's name is %s." % (n, obj.Name))
+                print_debug(analyse)
+                if hasattr(obj, "Height"):
+                    width = obj.Width
+                    height = obj.Height
+                    length = str(analyse[2]) + " mm"
+                elif hasattr(obj, "Thickness"):
+                    width = obj.Thickness
+                    m = 0
+                    for dim in analyse:
+                        if dim == width:
+                            analyse.pop(m)
+                        m += 1
+                    height = str(min(analyse)) + " mm"
+                    length = str(max(analyse)) + " mm"
+                else:
+                    width = str(analyse[0]) + " mm"
+                    height = str(analyse[1]) + " mm"
+                    length = str(analyse[2]) + " mm"
+                if hasattr(obj, "Substractions"):
+                    if len(obj.Subtractions) > 0:
+                        usinage = "C"
             else:
-                width = str(analyse[0]) + " mm"
-                height = str(analyse[1]) + " mm"
-                length = str(analyse[2]) + " mm"
-            if len(obj.Subtractions) > 0:
-                usinage = "C"
-            else:
-                usinage = None
+                width = ""
+                height = ""
+                length = ""
             desc = "'" + str(obj.Description)
             mySheet.set("A" + str(n + 1), str(desc))
             mySheet.set("B" + str(n + 1), str(label))

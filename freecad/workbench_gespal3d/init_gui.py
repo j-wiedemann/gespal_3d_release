@@ -5,6 +5,7 @@ import FreeCADGui as Gui
 import FreeCAD as App
 from freecad.workbench_gespal3d import ICONPATH
 from freecad.workbench_gespal3d import PARAMPATH
+from freecad.workbench_gespal3d import g3d_connect_db
 from freecad.workbench_gespal3d import g3d_product
 from freecad.workbench_gespal3d import g3d_beam
 from freecad.workbench_gespal3d import g3d_panel
@@ -100,6 +101,8 @@ class gespal3d_workbench(Gui.Workbench):
         App.Console.PrintMessage("Bienvenue sur l'atelier Gespal 3D \n")
         msg = "Version : " + str(wb_version) + "\n"
         App.Console.PrintMessage(msg)
+
+        g3d_connect_db.sql_connection()
 
         if hasattr(Gui, "draftToolBar"):
             Gui.draftToolBar.Activated()

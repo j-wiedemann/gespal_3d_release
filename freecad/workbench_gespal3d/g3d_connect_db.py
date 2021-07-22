@@ -104,6 +104,7 @@ def sql_connection():
         #return
     try:
         con = sqlite3.connect(sqlite_db)
+        checkDBintegrity(con)
         if DEBUG_DB:
             print_debug(["DB Connection is established."])
     except Error:
@@ -166,3 +167,13 @@ def getComposant(id=1):
     
     return component
     
+
+def checkDBintegrity(con):
+    print_debug("Vérification de l'intégrité de la base.")
+    cur = con.cursor()
+    columns = [i[1] for i in cur.execute('PRAGMA table_info(Composant)')]
+
+    if 'CO_FICHIER_CAD' not in columns:
+        print_debug("Création de la colonne CO_FICHIER_CAD")
+        cur.execute('ALTER TABLE Composant ADD COLUMN CO_FICHIER_CAD VARCHAR(255)')
+        con.commit()

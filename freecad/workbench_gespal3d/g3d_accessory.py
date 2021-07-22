@@ -2,6 +2,7 @@
 
 import os
 import FreeCAD as App
+import Draft
 
 if App.GuiUp:
     import FreeCADGui as Gui
@@ -33,19 +34,57 @@ __url__ = "https://freecad-france.com"
 def add_accesory(g3d_profile):
     p = App.ParamGet(str(PARAMPATH))
     cao_path = p.GetString("PathCAO", "no_path_cao")
-    doc = App.ActiveDocument
+    project_doc = App.ActiveDocument
 
     path = os.path.join(cao_path, g3d_profile[9])
     import Part
     print(path)
     Part.open(path)
-    import Draft
-    _objs_ = Draft.upgrade(App.ActiveDocument.Objects, delete=True)
+    accessory_doc = App.ActiveDocument
+    for obj in accessory_doc.Objects:
+        if len(obj.Shape.Shells) == 0:
+            if obj.Shape.isClosed() == False:
+                try:
+                    _ = Part.Shell([]+ obj.Shape.Faces)
+                    if _.isNull(): raise RuntimeError('Failed to create shell')
+                    accessory_doc.addObject('Part::Feature','Shell').Shape = _.removeSplitter()
+                    del _
+                    accessory_doc.removeObject(obj.Name)
+                except:
+                    pass
+
+    for obj in accessory_doc.Objects:
+        if len(obj.Shape.Solids) == 0:
+            try:
+                shell = obj.Shape
+                if shell.ShapeType != 'Shell': raise RuntimeError('Part object is not a shell')
+                _=Part.Solid(shell)
+                if _.isNull(): raise RuntimeError('Failed to create solid')
+                accessory_doc.addObject('Part::Feature','Solid').Shape=_.removeSplitter()
+                del _
+                accessory_doc.removeObject(obj.Name)
+            except:
+                pass
+    links = accessory_doc.Objects
+    if len(links) > 1:
+        obj = accessory_doc.addObject("Part::Compound","Compound")
+        obj.Links = links
+        accessory_doc.recompute()
+        Draft.move(
+            obj.OutList,
+            App.Vector(
+                -obj.Shape.BoundBox.XMin,
+                -obj.Shape.BoundBox.YMin,
+                -obj.Shape.BoundBox.ZMin
+                )
+            )
+        accessory_doc.recompute()
+    else:
+        obj = App.ActiveDocument.Objects[0]
     App.ActiveDocument.recompute()
-    obj = App.ActiveDocument.Objects[-1]
     if obj.Shape.isValid():
         import Arch
-        obj = Arch.makeEquipment(App.ActiveDocument.Objects[-1])
+        obj = Arch.makeEquipment(obj)
     else:
         obj.addProperty("App::PropertyString", "Description")
         obj.addProperty("App::PropertyString", "Tag")
@@ -64,10 +103,9 @@ def add_accesory(g3d_profile):
     obj.Tag = u"Gespal"
     obj.Description = str(g3d_profile[0])
     App.ActiveDocument.recompute()
-    transient_file_name = App.ActiveDocument.Name
-    obj = doc.copyObject(obj, True)
-    App.closeDocument(transient_file_name)
-    Gui.Selection.addSelection(doc.Name, obj.Name)
+    obj = project_doc.copyObject(obj, True)
+    App.closeDocument(accessory_doc.Name)
+    Gui.Selection.addSelection(project_doc.Name, obj.Name)
     Gui.runCommand('Draft_Move',0)
 
 

@@ -52,10 +52,18 @@ class gespal3d_exports:
             "PathTemplate",
             os.path.join(RESOURCESPATH, "templates"))
         print_debug(["PathTemplates :", self.path_template])
+        
+        accessoryBB_group = doc.getObject('AccessoiresBB')
+        if accessoryBB_group is None:
+            accessoryBB_group = doc.addObject('App::DocumentObjectGroup','AccessoiresBB')
+        else:
+            accessoryBB_group.removeObjectsFromDocument()
+        doc.recompute()
 
         objs = doc.Objects
         self.objlist = []
         self.projgroup_list = []
+        
         objother = []
         self.objproduct = None
         self.boundbox = None
@@ -69,7 +77,31 @@ class gespal3d_exports:
                     if hasattr(obj, "Description"):
                         if obj.Description is not None:
                             self.objlist.append(obj)
-                            self.projgroup_list.append(obj)
+                            if hasattr(obj, "EquipmentPower"):
+                                if obj.Shape.isClosed() == False:
+                                    bb = doc.addObject("Part::Box","Box")
+                                    bb.Label = obj.Label
+                                    if obj.Shape.ShapeType == 'Compound':
+                                        bbox = App.BoundBox()
+                                        for out in obj.OutList:
+                                            bbox.add(out.Shape.BoundBox)
+                                        bb.Length = bbox.XLength
+                                        bb.Width = bbox.YLength
+                                        bb.Height = bbox.ZLength
+                                        bb.Placement.Base = (bbox.XMin, bbox.YMin, bbox.ZMin)
+                                        bb.Placement.Rotation = obj.Placement.Rotation
+                                        Draft.move([bb], App.Vector(obj.Placement.Base.x, obj.Placement.Base.y, obj.Placement.Base.z), copy=False)
+                                    else:
+                                        bb.Length = obj.Shape.BoundBox.XLength
+                                        bb.Width = obj.Shape.BoundBox.YLength
+                                        bb.Height = obj.Shape.BoundBox.ZLength
+                                        bb.Placement.Base = [obj.Shape.BoundBox.XMin,obj.Shape.BoundBox.YMin,obj.Shape.BoundBox.ZMin]
+                                        bb.Placement.Rotation = obj.Placement.Rotation
+                                    accessoryBB_group.addObject(bb)
+                                else:
+                                    self.projgroup_list.append(obj)
+                            else:
+                                self.projgroup_list.append(obj)
                             print_debug("%s added to the objlist." % obj.Name)
             elif obj.TypeId == "Part::Mirroring":
                 src = self.getSource(obj)
@@ -97,6 +129,8 @@ class gespal3d_exports:
         else:
             print_debug("There is %s object in objlist :" % len(self.objlist))
             print_debug([obj.Name for obj in self.objlist])
+        accessoryBB_group.ViewObject.Visibility = False
+        self.projgroup_list.append(accessoryBB_group)
 
     def getSource(self, obj):
         print_debug("Looking for source of %s." % obj.Name)

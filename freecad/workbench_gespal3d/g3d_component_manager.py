@@ -337,7 +337,7 @@ class ComponentManager(QtGui.QDialog):
             comboBox.setProperty('column', column)
             self.componentTable.blockSignals(False)
             #comboBox.currentIndexChanged.connect(self.Combo_indexchanged)
-            comboBox.activated.connect(self.Combo_indexchanged2)
+            comboBox.activated.connect(self.Combo_indexchanged)
             #comboBox.currentTextChanged.connect(self.categoryCB_textChanged)
             self.componentTable.setCellWidget(row, column, comboBox)
         elif column == 3: # Section Shape
@@ -405,7 +405,7 @@ class ComponentManager(QtGui.QDialog):
 
 
     @QtCore.Slot()
-    def Combo_indexchanged(self, idx):
+    def Combo_indexchanged_old(self, idx):
         combo = self.sender()
         row = combo.property('row')
         column = combo.property('column')
@@ -420,7 +420,7 @@ class ComponentManager(QtGui.QDialog):
             else:
                 (fc_nom, bool_cat) = QtGui.QInputDialog.getText(None,"Categorie", "Nom de la nouvelle catégorie :")
                 if bool_cat:
-                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QC pour les composnats de type Quincaillerie.", ["BO","PX","QC"])
+                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QU pour les composnats de type Quincaillerie.", ["BO","PX","QU"])
                     if bool_type:
                         self.cat_name_list.insert(-1, fc_nom)
                         data = (index+1,fc_nom,fc_type)
@@ -438,7 +438,7 @@ class ComponentManager(QtGui.QDialog):
             self.componentTable.setItem(row, column, shape_type)
 
     @QtCore.Slot()
-    def Combo_indexchanged2(self, idx):
+    def Combo_indexchanged(self, idx):
         combo = self.sender()
         row = combo.property('row')
         column = combo.property('column')
@@ -453,7 +453,7 @@ class ComponentManager(QtGui.QDialog):
             else:
                 (fc_nom, bool_cat) = QtGui.QInputDialog.getText(None,"Categorie", "Nom de la nouvelle catégorie :")
                 if bool_cat:
-                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux.", ["BO","PX"])
+                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QU pour les composnats de type Quincaillerie.", ["BO","PX","QU"])
                     if bool_type:
                         self.cat_name_list.insert(-1, fc_nom)
                         #data = (index+1,fc_nom,fc_type)

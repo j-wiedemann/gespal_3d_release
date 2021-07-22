@@ -6,9 +6,8 @@ import FreeCAD as App
 if App.GuiUp:
     import FreeCADGui as Gui
     from DraftTools import translate
-    import DraftVecUtils
-    from freecad.workbench_gespal3d import g3d_tracker
     from freecad.workbench_gespal3d import g3d_connect_db
+    from freecad.workbench_gespal3d import g3d_component_manager
     from freecad.workbench_gespal3d import PARAMPATH
     from freecad.workbench_gespal3d import ICONPATH
     from freecad.workbench_gespal3d import DEBUG
@@ -26,7 +25,7 @@ else:
     # \endcond
 
 
-__title__ = "Gespal3D Panel tool"
+__title__ = "Gespal3D Accessory tool"
 __license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
@@ -88,6 +87,8 @@ class _AccessoryTaskPanel:
         self.form = QtGui.QWidget()
         self.form.setObjectName("TaskPanel")
         grid = QtGui.QGridLayout(self.form)
+        self.indication_label = QtGui.QLabel(self.form)
+        grid.addWidget(self.indication_label, 0, 0, 1, 2)
 
 
         # categories box
@@ -117,6 +118,7 @@ class _AccessoryTaskPanel:
             self.continueCmd = Gui.draftToolBar.continueMode
         grid.addWidget(continue_label, 17, 0, 1, 1)
         grid.addWidget(continue_cb, 17, 1, 1, 1)
+        self.retranslateUi(self.form)
 
         # connect slots
         QtCore.QObject.connect(
@@ -145,14 +147,14 @@ class _AccessoryTaskPanel:
                 App.Console.PrintMessage("restore composant \n")
             comp = g3d_connect_db.getComposant(id=stored_composant)
             cat = comp[2]
-            got_panel_cat = False
+            get_category = False
             n = 0
             for x in self.categories:
                 if x[0] == cat:
                     self.categories_cb.setCurrentIndex(n)
-                    got_panel_cat = True
+                    get_category = True
                 n += 1
-            if got_panel_cat == False:
+            if get_category == False:
                 self.setCategory(i=0)
                 return
             self.composant_items = g3d_connect_db.getComposants(categorie=cat)
@@ -200,7 +202,7 @@ class _AccessoryTaskPanel:
     def retranslateUi(self, TaskPanel):
         TaskPanel.setWindowTitle("Ajouter un acccessoire")
         self.indication_label.setText(
-            "Choisir un accessoire dans la liste puis cliquer sur Ok."
+            "Choisir un accessoire dans la liste puis cliquer sur Ok.\nUne fois importé, l'objet peut être déplacé."
         )
 
 
@@ -234,9 +236,33 @@ class _CommandAccessory:
         return active
 
     def Activated(self):
-
-        panel = _AccessoryTaskPanel()
-        Gui.Control.showDialog(panel)
+        warning = False
+        categories = g3d_connect_db.getCategories(include=["QU"])
+        if len(categories) == 0:
+            warning = True
+        else:
+            composant_items = []
+            c = 0
+            for x in categories:
+                composant_items.append(g3d_connect_db.getComposants(categorie=categories[c][0]))
+                c += 1
+            warning = True
+            for x in composant_items:
+                if len(x) > 0 :
+                    warning = False
+        if warning == False:
+            panel = _AccessoryTaskPanel()
+            Gui.Control.showDialog(panel)
+        else:
+            msg = QtGui.QMessageBox.information(
+                None,
+                "Pas d'accessoires !",
+                "Il n'y a pas d'accessoire dans la base de données. Cliquer sur OK pour ouvrir le gestionnaire de composants.",
+                QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Ok)
+            #print(msg)
+            if msg == QtGui.QMessageBox.Ok:
+                Gui.runCommand('G3D_ComponentsManager',0)
+                #form = g3d_component_manager.ComponentManager()
 
 
 if App.GuiUp:

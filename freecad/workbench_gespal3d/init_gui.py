@@ -104,6 +104,14 @@ class gespal3d_workbench(Gui.Workbench):
 
         g3d_connect_db.sql_connection()
 
+        if App.ActiveDocument:
+            pages = App.ActiveDocument.findObjects("TechDraw::DrawPage")
+            if len(pages) > 0:
+                for page in pages:
+                    page.ViewObject.hide()
+                    App.Console.PrintMessage("Closing TechdrawPage : {}.".format(page.Label))
+                    page.KeepUpdated = False
+
         if hasattr(Gui, "draftToolBar"):
             Gui.draftToolBar.Activated()
 
@@ -111,6 +119,11 @@ class gespal3d_workbench(Gui.Workbench):
         """
         code which should be computed when this workbench is deactivated
         """
+        if App.ActiveDocument:
+            pages = App.ActiveDocument.findObjects("TechDraw::DrawPage")
+            if len(pages) > 0:
+                for page in pages:
+                    page.KeepUpdated = True
         pass
 
 

@@ -50,8 +50,7 @@ class _CommandMachining:
             "Pixmap": os.path.join(ICONPATH, "PartDesign_Pocket.svg"),
             "MenuText": QT_TRANSLATE_NOOP("Gespal3D", "Usinage"),
             "Accel": "U, S",
-            "ToolTip": "<html><head/><body><p><b>Créer un usinage</b> \
-                    (hors panneaux). \
+            "ToolTip": "<html><head/><body><p><b>Créer un usinage.</b> \
                     <br><br> \
                     Sélectionner la face de l'objet ou faire l'usinage, \
                     choisir un outil draft (rectangle ou cercle) pour dessiner l'usinage, \

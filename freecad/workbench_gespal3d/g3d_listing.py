@@ -29,30 +29,65 @@ __url__ = "https://freecad-france.com"
 class gespal3d_exports:
     def __init__(self):
         self.doc = App.ActiveDocument
-        path_doc = self.doc.FileName
-        if len(self.doc.Label.split("PL_")) > 1:
-            id = self.doc.Label.split("PL_")[1]
-        else:
-            id = self.doc.Label
-        path_project = os.path.split(path_doc)
-        name_image = "3D_" + id + ".png"
-        name_csv = "CP_" + id + ".csv"
-        pc_pdf = "PC_" + id + ".pdf"
-        pf_pdf = "PF_" + id + ".pdf"
-        pc_svg = "PC_" + id + ".svg"
-        pf_svg = "PF_" + id + ".svg"
-        self.path_image = os.path.join(path_project[0], name_image)
-        self.path_csv = os.path.join(path_project[0], name_csv)
-        self.path_pc_pdf = os.path.join(path_project[0], pc_pdf)
-        self.path_pf_pdf = os.path.join(path_project[0], pf_pdf)
-        self.path_pc_svg = os.path.join(path_project[0], pc_svg)
-        self.path_pf_svg = os.path.join(path_project[0], pf_svg)
-        self.p = App.ParamGet(str(PARAMPATH))
-        self.path_template = self.p.GetString(
-            "PathTemplate",
-            os.path.join(RESOURCESPATH, "templates"))
-        print_debug(["PathTemplates :", self.path_template])
         
+        if len(self.doc.Label.split("PL_")) > 1:
+            self.project_id = self.doc.Label.split("PL_")[1]
+        else:
+            self.project_id = self.doc.Label
+        self.path_project = os.path.split(self.doc.FileName)[0]
+
+        self.p = App.ParamGet(str(PARAMPATH))
+
+        #self.GespalObjetcs = []
+        self.GespalListing = []
+        self.GespalBOM = []
+        self.GespalObjectsToDrawings = []
+
+        self.gespal_ProjectProduct = None
+        self.gespal_ProductBBox = None
+        self.gespal_DimensionsFolder = []
+        self.InventoryList_Sheet = None
+        self.CuttingList_Sheet = None
+  
+        self.makeListing()
+        self.makeCondensedListing()
+
+    def makeListing(self):
+        # get all objects in the current document
+        objs = self.doc.Objects
+        print_debug("There is %s object in document." % len(objs))
+
+        _gespal_objects = []
+        _objother = []
+        # sorting out gespal objects
+        for obj in objs:
+            print_debug("Checking object : {} ({}).".format(obj.Name, obj.Label, obj.TypeId))
+            if self.is_gespal_object(obj):
+                _gespal_objects.append(obj)
+            elif obj.TypeId == "Part::Mirroring":
+                src = self.getSource(obj)
+                if self.is_gespal_object(src):
+                    _gespal_objects.append(obj)
+            elif obj.Name == "Product":
+                self.gespal_ProjectProduct = obj
+            elif obj.Name == "Box":
+                self.gespal_ProductBBox = obj
+            elif "Dimension" in obj.Name:
+                self.gespal_DimensionsFolder.append(obj)
+            elif obj.Name == "Gespal3DListe":
+                self.InventoryList_Sheet = obj
+            elif obj.Name == "Gespal3DDebit":
+                self.CuttingList_Sheet = obj
+            else:
+                _objother.append(obj)
+
+        if len(_gespal_objects) < 0:
+            App.Console.PrintMessage("La liste des composants Gespal est vide.\n")
+        else:
+            print_debug("There is %s object in GespalObjetcs :" % len(_gespal_objects))
+            #print_debug([obj.Name for obj in self.GespalObjetcs])
+
+        # special folder for accessory
         accessoryBB_group = self.doc.getObject('AccessoiresBB')
         if accessoryBB_group is None:
             accessoryBB_group = self.doc.addObject('App::DocumentObjectGroup','AccessoiresBB')
@@ -60,68 +95,138 @@ class gespal3d_exports:
             accessoryBB_group.removeObjectsFromDocument()
         self.doc.recompute()
 
-        objs = self.doc.Objects
-        self.GespalObjetcs = []
-        self.GespalListing = []
-        self.GespalDrawings = []
-        
-        objother = []
-        self.objproduct = None
-        self.boundbox = None
-        self.grp_dimension = []
-        self.mySheet = None
-        print_debug("There is %s object in document." % len(objs))
-
-        for obj in objs:
-            print_debug("Checking object : {} ({}).".format(obj.Name, obj.Label))
-            if obj.Name == "Product":
-                self.objproduct = obj
-            elif obj.Name == "Box":
-                self.boundbox = obj
-            elif "Dimension" in obj.Name:
-                self.grp_dimension.append(obj)
-            elif obj.Name == "Gespal3DListe":
-                self.mySheet = obj
-            elif obj.TypeId == "Part::Mirroring":
-                src = self.getSource(obj)
-                if self.checking_gespal_object(src):
-                    self.GespalObjetcs.append(obj)
-            elif self.checking_gespal_object(obj):
-                self.GespalObjetcs.append(obj)
-            else:
-                objother.append(obj)
-
-        if len(self.GespalObjetcs) < 0:
-            App.Console.PrintMessage("La liste des composants Gespal est vide.\n")
-        else:
-            print_debug("There is %s object in GespalObjetcs :" % len(self.GespalObjetcs))
-            #print_debug([obj.Name for obj in self.GespalObjetcs])
-  
-        for obj in self.GespalObjetcs:
+        _gespal_listing = []
+        for obj in _gespal_objects:
             if obj.TypeId == "Part::Mirroring":
                 src = self.getSource(obj)
-                self.GespalListing.append(src)
+                _gespal_listing.append(src)
                 if hasattr(src, "EquipmentPower"):
                     bb = self.makeEquipmentBBox(obj)
                     accessoryBB_group.addObject(bb)
-                    self.GespalDrawings.append(bb)
+                    self.GespalObjectsToDrawings.append(bb)
                 else:
-                    self.GespalDrawings.append(obj)
+                    self.GespalObjectsToDrawings.append(obj)
             else:
-                self.GespalListing.append(obj)
+                _gespal_listing.append(obj)
                 if hasattr(obj, "EquipmentPower"):
                     bb = self.makeEquipmentBBox(obj)
                     accessoryBB_group.addObject(bb)
-                    self.GespalDrawings.append(bb)
+                    self.GespalObjectsToDrawings.append(bb)
                 else:
-                    self.GespalDrawings.append(obj)
+                    self.GespalObjectsToDrawings.append(obj)
 
-        print_debug("There is %s object in GespalDrawings :" % len(self.GespalDrawings))
-        
-        
         accessoryBB_group.ViewObject.Visibility = False
+        print_debug("There is %s object in GespalObjectsToDrawings :" % len(self.GespalObjectsToDrawings))
 
-    def checking_gespal_object(self, obj):
+        for obj in _gespal_listing:
+
+            component = {"ID":int,
+                    "Label":str,
+                    "Type":str,
+                    "Width":float,
+                    "Height":float,
+                    "Length":float,
+                    "Machining":bool,}
+
+            component["ID"] = int(obj.Description)
+            component["Label"] = str(obj.Label)
+            component["Machining"] = False
+
+            if not hasattr(obj, "EquipmentPower"):
+                #shape = obj.Shape
+                boundbox = self.getAlignedBoundBox(obj.Shape)
+                #print_debug("row %s : object's name is %s." % (n, obj.Name))
+                #print_debug(boundbox)
+                boundbox0 = round(float(boundbox[0]), 2)
+                boundbox1 = round(float(boundbox[1]), 2)
+                boundbox2 = round(float(boundbox[2]), 2)
+                if hasattr(obj, "Height"):
+                    component["Type"] = "Barre"
+                    width = boundbox1
+                    height = boundbox0
+                    length = boundbox2
+                elif hasattr(obj, "Thickness"):
+                    component["Type"] = "Panneaux"
+                    width = obj.Thickness
+                    m = 0
+                    for dim in boundbox:
+                        print_debug([dim, width.Value])
+                        if round(dim,2) == width.Value:
+                            boundbox.pop(m)
+                        m += 1
+                    height = float(min(boundbox))
+                    length = float(max(boundbox))
+                else:
+                    component["Type"] = "Barre"
+                    width = boundbox0
+                    height = boundbox1
+                    length = boundbox2
+                if hasattr(obj, "Subtractions"):
+                    if len(obj.Subtractions) > 0:
+                        component["Machining"] = True
+            else:
+                component["Type"] = "Quincaillerie"
+                width = 0.00
+                height = 0.00
+                length = 0.00
+            
+            component["Width"] = width
+            component["Height"] = height
+            component["Length"] = length
+            
+            self.GespalListing.append(component)
+
+    def makeCondensedListing(self, combined_machining=True):
+        for obj in self.GespalListing:
+            if len(self.GespalBOM) > 0:
+                listed = False
+                for comp in self.GespalBOM:
+                    if obj["ID"] == comp["ID"]:
+                        if obj["Length"] == obj["Length"]:
+                            if combined_machining == True:
+                                comp["Quantity"] += 1
+                                listed = True
+                            else:
+                                if obj["Machining"] == comp["Machining"]:
+                                    comp["Quantity"] += 1
+                                    listed = True
+                        
+                if listed == False:
+                    component = self.createComponent(obj)
+                    if combined_machining == True:
+                        component["Machining"] = False
+                    else:
+                        component["Machining"] = True
+                    self.GespalBOM.append(component)
+            else:
+                component = self.createComponent(obj)
+                if combined_machining == True:
+                    component["Machining"] = False
+                else:
+                    component["Machining"] = True
+                self.GespalBOM.append(component)
+
+    def createComponent(self, obj):
+        component = {"ID":int,
+                "Label":str,
+                "Type":str,
+                "Width":float,
+                "Height":float,
+                "Length":float,
+                "Machining":bool,
+                "Quantity":int}
+        component["Quantity"] = 1
+        component["ID"] = obj["ID"]
+        component["Label"] = obj["Label"]
+        component["Type"] = obj["Type"]
+        component["Width"] = obj["Width"]
+        component["Height"] = obj["Height"]
+        component["Length"] = obj["Length"]
+        component["Machining"] = obj["Machining"]
+        return component
+
+
+    def is_gespal_object(self, obj):
         if hasattr(obj, "Tag"):
             if obj.Tag == "Gespal":
                 if hasattr(obj, "Description"):
@@ -169,10 +274,10 @@ class gespal3d_exports:
                 listeCouple.append([faces[n], faces[n + 1]])
         return listeCouple
 
-    def shapeAnalyse(self, shape):
+    def getAlignedBoundBox(self, shape):
         ## Create a new object with the shape of the current arch object
         ## His placment is set to 0,0,0
-        obj = App.ActiveDocument.addObject("Part::Feature", "shapeAnalyse")
+        obj = App.ActiveDocument.addObject("Part::Feature", "AlignedBoundBox")
         obj.Shape = shape
         obj.Placement.Base = App.Vector(0.0, 0.0, 0.0)
         obj.Placement.Rotation = App.Rotation(App.Vector(0.0, 0.0, 1.0), 0.0)
@@ -225,16 +330,18 @@ class gespal3d_exports:
         App.ActiveDocument.removeObject(obj.Name)
         return analyse
 
-    def makeSpreadsheet(self):
+
+    def makeInventory_Sheet(self):
         print_debug("Start making Spreadsheet...")
-        if self.mySheet:
-            self.mySheet.clearAll()
-            App.ActiveDocument.recompute()
+        if self.InventoryList_Sheet:
+            self.InventoryList_Sheet.clearAll()
         else:
             App.ActiveDocument.addObject("Spreadsheet::Sheet", "Gespal3DListe")
-            self.mySheet = App.ActiveDocument.getObject("Gespal3DListe")
-            App.ActiveDocument.recompute()
-        mySheet = self.mySheet
+            self.InventoryList_Sheet = App.ActiveDocument.getObject("Gespal3DListe")
+        App.ActiveDocument.recompute()
+
+        spreadsheet = self.InventoryList_Sheet
+        debitSheet = self.CuttingList_Sheet
         headers = [
             "ID",
             "Désignation",
@@ -247,61 +354,95 @@ class gespal3d_exports:
         count = 0
         for header in headers:
             index = str(columns[count]) + "1"
-            mySheet.set(index, headers[count])
+            spreadsheet.set(index, headers[count])
             count += 1
         n = 2
-        for obj in self.GespalListing:
-            label = "'" + str(obj.Label)
-            usinage = None
-            if not hasattr(obj, "EquipmentPower"):
-                shape = obj.Shape
-                analyse = self.shapeAnalyse(shape)
-                print_debug("row %s : object's name is %s." % (n, obj.Name))
-                print_debug(analyse)
-                if hasattr(obj, "Height"):
-                    width = str(analyse[1]) + " mm"
-                    height = str(analyse[0]) + " mm"
-                    length = str(analyse[2]) + " mm"
-                elif hasattr(obj, "Thickness"):
-                    width = obj.Thickness
-                    m = 0
-                    for dim in analyse:
-                        print_debug([dim, width.Value])
-                        if round(dim,2) == width.Value:
-                            analyse.pop(m)
-                        m += 1
-                    height = str(min(analyse)) + " mm"
-                    length = str(max(analyse)) + " mm"
-                else:
-                    width = str(analyse[0]) + " mm"
-                    height = str(analyse[1]) + " mm"
-                    length = str(analyse[2]) + " mm"
-                if hasattr(obj, "Subtractions"):
-                    if len(obj.Subtractions) > 0:
-                        usinage = "C"
-            else:
-                width = ""
-                height = ""
-                length = ""
-            desc = "'" + str(obj.Description)
-            mySheet.set("A" + str(n), str(desc))
-            mySheet.set("B" + str(n), str(label))
-            mySheet.set("C" + str(n), str(width))
-            mySheet.set("D" + str(n), str(height))
-            mySheet.set("E" + str(n), str(length))
-            if usinage is not None:
-                mySheet.set("F" + str(n), str(usinage))
+        for component in self.GespalListing:
+            id_format = "'" + str(component["ID"])
+            spreadsheet.set("A" + str(n), id_format)
+            label_format = "'" + str(component["Label"])
+            spreadsheet.set("B" + str(n), label_format)
+            spreadsheet.set("C" + str(n), str(component["Width"]))
+            spreadsheet.setDisplayUnit("C" + str(n), 'mm')
+            spreadsheet.set("D" + str(n), str(component["Height"]))
+            spreadsheet.setDisplayUnit("D" + str(n), 'mm')
+            spreadsheet.set("E" + str(n), str(component["Length"]))
+            spreadsheet.setDisplayUnit("E" + str(n), 'mm')
+            if component["Machining"] is True:
+                spreadsheet.set("F" + str(n), "C")
             n += 1
+
         App.ActiveDocument.recompute()
-        mySheet.exportFile(self.path_csv)
-        print_debug("End making Spreadsheet...")
+        name_csv = "CP_" + self.project_id + ".csv"
+        path_csv = os.path.join(self.path_project, name_csv)
+        spreadsheet.exportFile(path_csv)
+
+        print_debug("End making Iventory Spreadsheet...")
         return
+
+
+    def makeCuttingList_Sheet(self):
+        print_debug("Start making Cutting list Spreadsheet...")
+        if self.CuttingList_Sheet:
+            self.CuttingList_Sheet.clearAll()
+        else:
+            App.ActiveDocument.addObject("Spreadsheet::Sheet", "Gespal3DDebit")
+            self.CuttingList_Sheet = App.ActiveDocument.getObject("Gespal3DDebit")
+        App.ActiveDocument.recompute()
+
+        spreadsheet = self.CuttingList_Sheet
+        headers = [
+            "ID",
+            "Désignation",
+            "Largeur",
+            "Hauteur",
+            "Longueur",
+            "Quantité",
+            #"Volume",
+        ]
+        columns = list(string.ascii_uppercase)
+        count = 0
+        for header in headers:
+            index = str(columns[count]) + "1"
+            spreadsheet.set(index, headers[count])
+            count += 1
+        n = 2
+        for component in self.GespalBOM:
+            id_format = "'" + str(component["ID"])
+            spreadsheet.set("A" + str(n), id_format)
+
+            label_format = "'" + str(component["Label"])
+            if component["Machining"] is True:
+                label_format += " (Usinage)"
+            spreadsheet.set("B" + str(n), label_format)
+
+            spreadsheet.set("C" + str(n), str(component["Width"]))
+            spreadsheet.setDisplayUnit("C" + str(n), 'mm')
+
+            spreadsheet.set("D" + str(n), str(component["Height"]))
+            spreadsheet.setDisplayUnit("D" + str(n), 'mm')
+
+            spreadsheet.set("E" + str(n), str(component["Length"]))
+            spreadsheet.setDisplayUnit("E" + str(n), 'mm')
+            
+            qty_format = "'" + str(component["Quantity"])
+            spreadsheet.set("F" + str(n), qty_format)
+            n += 1
+
+        App.ActiveDocument.recompute()
+        name_csv = "BOM_" + self.project_id + ".csv"
+        path_csv = os.path.join(self.path_project, name_csv)
+        spreadsheet.exportFile(path_csv)
+
+        print_debug("End making Cutting list Spreadsheet...")
+        return
+
 
     def makeImage(self):
         av = Gui.activeDocument().activeView()
         av.setAxisCross(False)
-        self.objproduct.ViewObject.Visibility = False
-        for obj in self.grp_dimension:
+        self.gespal_ProjectProduct.ViewObject.Visibility = False
+        for obj in self.gespal_DimensionsFolder:
             obj.ViewObject.Visibility = False
         if hasattr(Gui, "Snapper"):
             Gui.Snapper.setTrackers()
@@ -315,9 +456,11 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         # av.setCameraType("Perspective")
-        av.saveImage(self.path_image, 2560, 1600, "White")
-        self.objproduct.ViewObject.Visibility = True
-        for obj in self.grp_dimension:
+        name_image = "3D_" + self.project_id + ".png"
+        path_image = os.path.join(self.path_project, name_image)
+        av.saveImage(path_image, 2560, 1600, "White")
+        self.gespal_ProjectProduct.ViewObject.Visibility = True
+        for obj in self.gespal_DimensionsFolder:
             obj.ViewObject.Visibility = True
         av.setCameraType("Orthographic")
         # Gui.ActiveDocument.ActiveView.setAxisCross(True)
@@ -331,9 +474,9 @@ class gespal3d_exports:
         page = self.doc.getObject(name)
         if self.doc.getObject(name):
             if self.doc.getObject(projgrp_name):
-                self.doc.getObject(projgrp_name).Source = self.GespalDrawings
+                self.doc.getObject(projgrp_name).Source = self.GespalObjectsToDrawings
             if self.doc.getObject(isoview_name):
-                self.doc.getObject(isoview_name).Source = self.GespalDrawings
+                self.doc.getObject(isoview_name).Source = self.GespalObjectsToDrawings
             return
 
         # Page
@@ -343,28 +486,36 @@ class gespal3d_exports:
 
         # Portrait or Landscape
         max_length = max(
-            self.boundbox.Length.Value,
-            self.boundbox.Width.Value,
-            self.boundbox.Height.Value,
+            self.gespal_ProductBBox.Length.Value,
+            self.gespal_ProductBBox.Width.Value,
+            self.gespal_ProductBBox.Height.Value,
         )
-        if max_length == self.boundbox.Height.Value:
+        if max_length == self.gespal_ProductBBox.Height.Value:
             orientation = "A4P"
         else:
             orientation = "A4L"
-        # Templae path
+        
+        # Template path
+        path_template = self.p.GetString(
+            "PathTemplate",
+            os.path.join(RESOURCESPATH, "templates"))
+
+        print_debug(["PathTemplates :", path_template])
+
         if orientation == "A4P":
-            path = os.path.join(self.path_template, "A4P.svg")
+            path = os.path.join(path_template, "A4P.svg")
         else:
-            path = os.path.join(self.path_template, "A4L.svg")
+            path = os.path.join(path_template, "A4L.svg")
         template.Template = path
         page.Template = template
 
-        r = template.Width.Value / self.boundbox.Length.Value
+
+        r = template.Width.Value / self.gespal_ProductBBox.Length.Value
         r = template.Height.Value / max_length
         r = r / 2
         scale = round(r, 2)
         template.setEditFieldContent("NOM", self.doc.Comment)
-        template.setEditFieldContent("FC-SH", self.objproduct.Label)
+        template.setEditFieldContent("FC-SH", self.gespal_ProjectProduct.Label)
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         template.setEditFieldContent("FC-DATE", dt_string)
@@ -372,7 +523,7 @@ class gespal3d_exports:
         # ProjGroup
         projgroup = self.doc.addObject("TechDraw::DrawProjGroup", projgrp_name)
         page.addView(projgroup)
-        projgroup.Source = self.GespalDrawings
+        projgroup.Source = self.GespalObjectsToDrawings
         projgroup.ScaleType = u"Custom"
         projgroup.Scale = scale
         projgroup.addProjection("Front")
@@ -380,12 +531,12 @@ class gespal3d_exports:
             projgroup.Anchor.Direction = App.Vector(0.000, -1.000, 0.000)
             projgroup.Anchor.RotationVector = App.Vector(1.000, 0.000, 0.000)
             projgroup.Anchor.XDirection = App.Vector(1.000, 0.000, 0.000)
-            y = 297/2 + self.boundbox.Height.Value * projgroup.Scale * 2.5
+            y = 297/2 + self.gespal_ProductBBox.Height.Value * projgroup.Scale * 2.5
         else:
             projgroup.Anchor.Direction = App.Vector(0.000, -1.000, 0.000)
             projgroup.Anchor.RotationVector = App.Vector(1.000, 0.000, 0.000)
             projgroup.Anchor.XDirection = App.Vector(1.000, 0.000, 0.000)
-            y = 297 - 20 - ((self.boundbox.Height.Value * projgroup.Scale) / 2)
+            y = 297 - 20 - ((self.gespal_ProductBBox.Height.Value * projgroup.Scale) / 2)
         projgroup.Anchor.recompute()
         if orientation == "A4L":
             projgroup.addProjection("Top")
@@ -396,7 +547,7 @@ class gespal3d_exports:
         for view in projgroup.Views:
             view.Perspective = True
             view.Focus = "100 m"
-        x = 20 + (self.boundbox.Length.Value * projgroup.Scale) / 2
+        x = 20 + (self.gespal_ProductBBox.Length.Value * projgroup.Scale) / 2
         projgroup.X = x
         projgroup.Y = y
         projgroup.AutoDistribute = True
@@ -404,7 +555,7 @@ class gespal3d_exports:
         # Iso View
         iso_view = self.doc.addObject("TechDraw::DrawViewPart", isoview_name)
         page.addView(iso_view)
-        iso_view.Source = self.GespalDrawings
+        iso_view.Source = self.GespalObjectsToDrawings
         iso_view.Direction = App.Vector(0.577, -0.577, 0.577)
         iso_view.XDirection = App.Vector(0.707, 0.707, -0.000)
         iso_view.ScaleType = u"Custom"
@@ -428,8 +579,12 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = self.doc.getObject("plan_commercial")
-        TechDrawGui.exportPageAsPdf(page, self.path_pc_pdf)
-        TechDrawGui.exportPageAsSvg(page, self.path_pc_svg)
+        pc_pdf = "PC_" + self.project_id + ".pdf"
+        pc_svg = "PC_" + self.project_id + ".svg"
+        path_pc_pdf = os.path.join(self.path_project, pc_pdf)
+        path_pc_svg = os.path.join(self.path_project, pc_svg)
+        TechDrawGui.exportPageAsPdf(page, path_pc_pdf)
+        TechDrawGui.exportPageAsSvg(page, path_pc_svg)
         return
 
     def exportPlanFabrication(self):
@@ -437,8 +592,12 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = self.doc.getObject("plan_fabrication")
-        TechDrawGui.exportPageAsPdf(page, self.path_pf_pdf)
-        TechDrawGui.exportPageAsSvg(page, self.path_pf_svg)
+        pf_pdf = "PF_" + self.project_id + ".pdf"
+        pf_svg = "PF_" + self.project_id + ".svg"
+        path_pf_pdf = os.path.join(self.path_project, pf_pdf)
+        path_pf_svg = os.path.join(self.path_project, pf_svg)
+        TechDrawGui.exportPageAsPdf(page, path_pf_pdf)
+        TechDrawGui.exportPageAsSvg(page, path_pf_svg)
         return
 
 
@@ -490,7 +649,9 @@ class _ListCreator:
         pb.show()
         Gui.updateGui()
         
-        export.makeSpreadsheet()
+        export.makeInventory_Sheet()
+        #print(export.GespalBOM)
+        export.makeCuttingList_Sheet()
         
         pb.setValue(40)
         pb.show()

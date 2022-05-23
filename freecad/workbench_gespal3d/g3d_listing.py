@@ -182,7 +182,7 @@ class gespal3d_exports:
                 listed = False
                 for comp in self.GespalBOM:
                     if obj["ID"] == comp["ID"]:
-                        if obj["Length"] == obj["Length"]:
+                        if obj["Length"] == comp["Length"]:
                             if combined_machining == True:
                                 comp["Quantity"] += 1
                                 listed = True

@@ -31,14 +31,14 @@ __license__ = "LGPLv2.1"
 __author__ = "Jonathan Wiedemann"
 __url__ = "https://freecad-france.com"
 
-def add_accesory(g3d_profile):
+def add_accessory(g3d_profile):
     p = App.ParamGet(str(PARAMPATH))
     cao_path = p.GetString("PathCAO", "no_path_cao")
     project_doc = App.ActiveDocument
 
     path = os.path.join(cao_path, g3d_profile[9])
     import Part
-    print(path)
+    print_debug(path)
     Part.open(path)
     accessory_doc = App.ActiveDocument
     for obj in accessory_doc.Objects:
@@ -228,7 +228,7 @@ class _AccessoryTaskPanel:
         self.p.SetBool("PanelContinue", bool(i))
 
     def accept(self):
-        add_accesory(self.Profile)
+        add_accessory(self.Profile)
     
     def reject(self):
         App.Console.PrintMessage("Annulation de l'ajout d'un accessoire.\n")

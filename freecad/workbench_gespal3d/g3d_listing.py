@@ -554,7 +554,7 @@ class gespal3d_exports:
             projgroup.addProjection("Top")
             projgroup.addProjection("Left")
         for view in projgroup.Views:
-            view.Perspective = True
+            view.Perspective = False
             view.Focus = "100 m"
         x = 20 + (self.gespal_ProductBBox.Length.Value * projgroup.Scale) / 2
         projgroup.X = x

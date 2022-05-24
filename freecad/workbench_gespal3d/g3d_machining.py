@@ -59,10 +59,12 @@ class _CommandMachining:
         }
 
     def IsActive(self):
-        """Always active...
-
-        TODO: Active only if there is at least 1 composant or 1 panel"""
-        active = True
+        "Conditions for the tool to be active"
+        active = False
+        if App.ActiveDocument:
+            for obj in App.ActiveDocument.Objects:
+                if "Structure" in obj.Name or "Panel" in obj.Name:
+                    active = True
         return active
 
     def Activated(self):

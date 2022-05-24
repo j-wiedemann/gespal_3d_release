@@ -85,7 +85,6 @@ class gespal3d_exports:
             App.Console.PrintMessage("La liste des composants Gespal est vide.\n")
         else:
             print_debug("There is %s object in GespalObjetcs :" % len(_gespal_objects))
-            #print_debug([obj.Name for obj in self.GespalObjetcs])
 
         # special folder for accessory
         accessoryBB_group = self.doc.getObject('AccessoiresBB')
@@ -133,13 +132,17 @@ class gespal3d_exports:
             component["Machining"] = False
 
             if not hasattr(obj, "EquipmentPower"):
-                #shape = obj.Shape
                 boundbox = self.getAlignedBoundBox(obj.Shape)
                 #print_debug("row %s : object's name is %s." % (n, obj.Name))
                 #print_debug(boundbox)
-                boundbox0 = round(float(boundbox[0]), 2)
-                boundbox1 = round(float(boundbox[1]), 2)
-                boundbox2 = round(float(boundbox[2]), 2)
+                boundbox = [round(float(boundbox[0]), 2),
+                            round(float(boundbox[1]), 2),
+                            round(float(boundbox[2]), 2)]
+
+                boundbox0 = boundbox[0]
+                boundbox1 = boundbox[1]
+                boundbox2 = boundbox[2]
+
                 if hasattr(obj, "Height"):
                     component["Type"] = "Barre"
                     width = boundbox1
@@ -147,11 +150,11 @@ class gespal3d_exports:
                     length = boundbox2
                 elif hasattr(obj, "Thickness"):
                     component["Type"] = "Panneaux"
-                    width = obj.Thickness
+                    width = obj.Thickness.Value
                     m = 0
                     for dim in boundbox:
-                        print_debug([dim, width.Value])
-                        if round(dim,2) == width.Value:
+                        print_debug([dim, width])
+                        if round(dim,2) == width:
                             boundbox.pop(m)
                         m += 1
                     height = float(min(boundbox))
@@ -176,34 +179,30 @@ class gespal3d_exports:
             
             self.GespalListing.append(component)
 
-    def makeCondensedListing(self, combined_machining=True):
+    def makeCondensedListing(self):
         for obj in self.GespalListing:
             if len(self.GespalBOM) > 0:
                 listed = False
                 for comp in self.GespalBOM:
                     if obj["ID"] == comp["ID"]:
                         if obj["Length"] == comp["Length"]:
-                            if combined_machining == True:
+                            if obj["Width"] == comp["Width"] and obj["Height"] == comp["Height"] :
                                 comp["Quantity"] += 1
                                 listed = True
-                            else:
-                                if obj["Machining"] == comp["Machining"]:
-                                    comp["Quantity"] += 1
-                                    listed = True
+                                print_debug("{} is already listed, let's add +1 to qty.".format(obj))
                         
                 if listed == False:
+                    print_debug("{} is not listed yet, creating a new component.".format(obj))
                     component = self.createComponent(obj)
-                    if combined_machining == True:
-                        component["Machining"] = False
-                    else:
-                        component["Machining"] = True
+                    component["Reference"] = reference_count
+                    reference_count += 1
                     self.GespalBOM.append(component)
             else:
+                print_debug("{} is not listed yet, creating a new component.".format(obj))
                 component = self.createComponent(obj)
-                if combined_machining == True:
-                    component["Machining"] = False
-                else:
-                    component["Machining"] = True
+                reference_count = 1
+                component["Reference"] = reference_count
+                reference_count += 1
                 self.GespalBOM.append(component)
 
     def createComponent(self, obj):
@@ -214,7 +213,8 @@ class gespal3d_exports:
                 "Height":float,
                 "Length":float,
                 "Machining":bool,
-                "Quantity":int}
+                "Quantity":int,
+                "Reference":int}
         component["Quantity"] = 1
         component["ID"] = obj["ID"]
         component["Label"] = obj["Label"]
@@ -223,6 +223,7 @@ class gespal3d_exports:
         component["Height"] = obj["Height"]
         component["Length"] = obj["Length"]
         component["Machining"] = obj["Machining"]
+        component["Reference"] = 0
         return component
 
 
@@ -394,10 +395,11 @@ class gespal3d_exports:
         headers = [
             "ID",
             "Désignation",
+            "Quantité",
             "Largeur",
             "Hauteur",
             "Longueur",
-            "Quantité",
+            "Référence plan"
             #"Volume",
         ]
         columns = list(string.ascii_uppercase)
@@ -416,17 +418,24 @@ class gespal3d_exports:
                 label_format += " (Usinage)"
             spreadsheet.set("B" + str(n), label_format)
 
-            spreadsheet.set("C" + str(n), str(component["Width"]))
-            spreadsheet.setDisplayUnit("C" + str(n), 'mm')
+            spreadsheet.set("D" + str(n), str(component["Width"]))
+            #spreadsheet.setDisplayUnit("D" + str(n), 'mm')
 
-            spreadsheet.set("D" + str(n), str(component["Height"]))
-            spreadsheet.setDisplayUnit("D" + str(n), 'mm')
+            spreadsheet.set("E" + str(n), str(component["Height"]))
+            #spreadsheet.setDisplayUnit("E" + str(n), 'mm')
 
-            spreadsheet.set("E" + str(n), str(component["Length"]))
-            spreadsheet.setDisplayUnit("E" + str(n), 'mm')
+            spreadsheet.set("F" + str(n), str(component["Length"]))
+            #spreadsheet.setDisplayUnit("F" + str(n), 'mm')
             
             qty_format = "'" + str(component["Quantity"])
-            spreadsheet.set("F" + str(n), qty_format)
+            spreadsheet.set("C" + str(n), qty_format)
+            spreadsheet.setAlignment("C" + str(n), 'center', 'keep')
+
+            ref_format = "'" + str(component["Reference"])
+            spreadsheet.set("G" + str(n), ref_format)
+            spreadsheet.setStyle("G" + str(n), 'bold', 'add')
+            spreadsheet.setAlignment("G" + str(n), 'center', 'keep')
+
             n += 1
 
         App.ActiveDocument.recompute()

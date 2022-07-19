@@ -48,6 +48,7 @@ class gespal3d_exports:
         self.gespal_DimensionsFolder = []
         self.InventoryList_Sheet = None
         self.CuttingList_Sheet = None
+        self.BoundBoxs_Sheet = None
   
         self.makeListing()
         self.makeCondensedListing()
@@ -78,6 +79,8 @@ class gespal3d_exports:
                 self.InventoryList_Sheet = obj
             elif obj.Name == "Gespal3DDebit":
                 self.CuttingList_Sheet = obj
+            elif obj.Name == "BoundBoxs_Sheet":
+                self.BoundBoxs_Sheet = obj
             else:
                 _objother.append(obj)
 
@@ -333,7 +336,7 @@ class gespal3d_exports:
 
 
     def makeInventory_Sheet(self):
-        print_debug("Start making Spreadsheet...")
+        print_debug("Start making Inventory sheet...")
         if self.InventoryList_Sheet:
             self.InventoryList_Sheet.clearAll()
         else:
@@ -378,12 +381,12 @@ class gespal3d_exports:
         path_csv = os.path.join(self.path_project, name_csv)
         spreadsheet.exportFile(path_csv)
 
-        print_debug("End making Iventory Spreadsheet...")
+        print_debug("Iventory sheet done.")
         return
 
 
     def makeCuttingList_Sheet(self):
-        print_debug("Start making Cutting list Spreadsheet...")
+        print_debug("Start making Cutting list sheet...")
         if self.CuttingList_Sheet:
             self.CuttingList_Sheet.clearAll()
         else:
@@ -443,11 +446,12 @@ class gespal3d_exports:
         path_csv = os.path.join(self.path_project, name_csv)
         spreadsheet.exportFile(path_csv)
 
-        print_debug("End making Cutting list Spreadsheet...")
+        print_debug("Cutting list sheet done.")
         return
 
 
     def makeImage(self):
+        print_debug("Start making project Image...")
         av = Gui.activeDocument().activeView()
         av.setAxisCross(False)
         self.gespal_ProjectProduct.ViewObject.Visibility = False
@@ -473,9 +477,12 @@ class gespal3d_exports:
             obj.ViewObject.Visibility = True
         av.setCameraType("Orthographic")
         # Gui.ActiveDocument.ActiveView.setAxisCross(True)
+
+        print_debug("Project image done.")
         return
 
     def makePlan(self, name):
+        print_debug("Start making {}...".format(name))
         self.doc = App.activeDocument()
         projgrp_name = "ProjGroup_" + str(name)
         isoview_name = "View_" + str(name)
@@ -580,7 +587,9 @@ class gespal3d_exports:
         # Recompute
         page.recompute(True)
         #page.ViewObject.show()
+        print_debug("{} done.".format(name))
         page.KeepUpdated = False
+        print_debug("End making plan.")
         return
 
     def exportPlanCommercial(self):
@@ -607,6 +616,54 @@ class gespal3d_exports:
         path_pf_svg = os.path.join(self.path_project, pf_svg)
         TechDrawGui.exportPageAsPdf(page, path_pf_pdf)
         TechDrawGui.exportPageAsSvg(page, path_pf_svg)
+        return
+
+    def getBoundBoxs(self):
+        internalBB = self.gespal_ProductBBox.Shape.BoundBox
+        externalBB = App.BoundBox()
+        externalBB_with_accessory = App.BoundBox()
+        for obj in self.GespalObjectsToDrawings:
+            externalBB_with_accessory.add(obj.Shape.BoundBox)
+            if not "BBox" in obj.Name:
+            #if not hasattr(obj, "EquipmentPower"):
+                externalBB.add(obj.Shape.BoundBox)
+
+        return internalBB, externalBB, externalBB_with_accessory
+
+    def makeBoundBox_sheet(self):
+        print_debug("Start making BoundBox dimensions sheet...")
+        if self.BoundBoxs_Sheet:
+            self.BoundBoxs_Sheet.clearAll()
+        else:
+            App.ActiveDocument.addObject("Spreadsheet::Sheet", "BoundBoxs_Sheet")
+            self.BoundBoxs_Sheet = App.ActiveDocument.getObject("BoundBoxs_Sheet")
+        
+
+        self.BoundBoxs_Sheet.set("B1", "Longeur")
+        self.BoundBoxs_Sheet.set("C1", "Largeur")
+        self.BoundBoxs_Sheet.set("D1", "Hauteur")
+        self.BoundBoxs_Sheet.set("A2", "Dimensions intérieur")
+        self.BoundBoxs_Sheet.set("A3", "Dimensions extérieur sans quincaillerie")
+        self.BoundBoxs_Sheet.set("A4", "Dimensions extérieur avec quincaillerie")
+        
+        boundbox = self.getBoundBoxs()
+
+        self.BoundBoxs_Sheet.set("B2", str(boundbox[0].XLength))
+        self.BoundBoxs_Sheet.set("C2", str(boundbox[0].YLength))
+        self.BoundBoxs_Sheet.set("D2", str(boundbox[0].ZLength))
+        self.BoundBoxs_Sheet.set("B3", str(boundbox[1].XLength))
+        self.BoundBoxs_Sheet.set("C3", str(boundbox[1].YLength))
+        self.BoundBoxs_Sheet.set("D3", str(boundbox[1].ZLength))
+        self.BoundBoxs_Sheet.set("B4", str(boundbox[2].XLength))
+        self.BoundBoxs_Sheet.set("C4", str(boundbox[2].YLength))
+        self.BoundBoxs_Sheet.set("D4", str(boundbox[2].ZLength))
+
+        App.ActiveDocument.recompute()
+        name_csv = "DIM_" + self.project_id + ".csv"
+        path_csv = os.path.join(self.path_project, name_csv)
+        self.BoundBoxs_Sheet.exportFile(path_csv)
+
+        print_debug("BoundBox dimensions sheet done.")
         return
 
 
@@ -661,6 +718,8 @@ class _ListCreator:
         export.makeInventory_Sheet()
         #print(export.GespalBOM)
         export.makeCuttingList_Sheet()
+
+        export.makeBoundBox_sheet()
         
         pb.setValue(40)
         pb.show()

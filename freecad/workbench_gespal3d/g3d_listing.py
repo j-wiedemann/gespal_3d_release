@@ -597,12 +597,14 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = self.doc.getObject("plan_commercial")
+        page.ViewObject.show()
         pc_pdf = "PC_" + self.project_id + ".pdf"
         pc_svg = "PC_" + self.project_id + ".svg"
         path_pc_pdf = os.path.join(self.path_project, pc_pdf)
         path_pc_svg = os.path.join(self.path_project, pc_svg)
         TechDrawGui.exportPageAsPdf(page, path_pc_pdf)
         TechDrawGui.exportPageAsSvg(page, path_pc_svg)
+        page.ViewObject.hide()
         return
 
     def exportPlanFabrication(self):
@@ -610,12 +612,14 @@ class gespal3d_exports:
         Gui.Selection.clearSelection()
         Gui.Selection.clearPreselection()
         page = self.doc.getObject("plan_fabrication")
+        page.ViewObject.show()
         pf_pdf = "PF_" + self.project_id + ".pdf"
         pf_svg = "PF_" + self.project_id + ".svg"
         path_pf_pdf = os.path.join(self.path_project, pf_pdf)
         path_pf_svg = os.path.join(self.path_project, pf_svg)
         TechDrawGui.exportPageAsPdf(page, path_pf_pdf)
         TechDrawGui.exportPageAsSvg(page, path_pf_svg)
+        page.ViewObject.hide()
         return
 
     def getBoundBoxs(self):

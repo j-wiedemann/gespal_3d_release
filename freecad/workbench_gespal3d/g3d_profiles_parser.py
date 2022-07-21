@@ -45,10 +45,12 @@ def makeProfile(profile=[0, 'REC100x100', 1, 100, 100, 100, 'R']):
     obj.Label = profile[1]
     if profile[6] == "C":
         _ProfileC(obj, profile)
-    elif profile[6] == "H":
-        _ProfileH(obj, profile)
     elif profile[6] == "R":
         _ProfileR(obj, profile)
+    elif profile[6] == "T":
+        _ProfileT(obj, profile)
+    elif profile[6] == "H":
+        _ProfileH(obj, profile)
     elif profile[6] == "RH":
         _ProfileRH(obj, profile)
     elif profile[6] == "U":
@@ -164,6 +166,38 @@ class _ProfileR(_Profile):
         obj.Placement = pl
 
 
+class _ProfileT(_Profile):
+
+    '''A parametric triangular beam profile based on [Width, Height]'''
+
+    def __init__(self, obj, profile):
+        obj.addProperty(
+            "App::PropertyLength",
+            "Width",
+            "Draft",
+            QT_TRANSLATE_NOOP("App::Property", "Width of the beam")
+            ).Width = profile[5]
+        obj.addProperty(
+            "App::PropertyLength",
+            "Height",
+            "Draft",
+            QT_TRANSLATE_NOOP("App::Property", "Height of the beam")
+            ).Height = profile[4]
+        _Profile.__init__(self, obj, profile)
+
+    def execute(self, obj):
+        pl = obj.Placement
+        p1 = App.Vector(-obj.Height.Value/2, -obj.Width.Value/2, 0)
+        p2 = App.Vector(-obj.Height.Value/2, obj.Width.Value/2, 0)
+        p3 = App.Vector(obj.Height.Value/2, -obj.Width.Value/2, 0)
+        #p4 = App.Vector(obj.Height.Value/2, -obj.Width.Value/2, 0)
+        p = Part.makePolygon([p1, p2, p3, p1])
+        p = Part.Face(p)
+        p.reverse()
+        obj.Shape = p
+        obj.Placement = pl
+
+
 class _ProfileRH(_Profile):
 
     '''A parametric Rectangular hollow beam profile. Profile data: [width, height, thickness]'''
@@ -267,6 +301,8 @@ class ProfileTaskPanel:
             self.type = "RH"
         elif isinstance(self.obj.Proxy, _ProfileU):
             self.type = "U"
+        elif isinstance(self.obj.Proxy, _ProfileT):
+            self.type = "T"
         else:
             self.type = "Undefined"
         self.form = QtGui.QWidget()
@@ -340,7 +376,7 @@ class ProfileTaskPanel:
 
         if self.profile:
             self.obj.Label = self.profile[1]
-            if self.type in ["H", "R", "RH", "U"]:
+            if self.type in ["H", "R", "RH", "U", "T"]:
                 self.obj.Width = self.profile[5]
                 self.obj.Height = self.profile[5]
                 if self.type in ["H", "U"]:

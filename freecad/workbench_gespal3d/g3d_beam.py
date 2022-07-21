@@ -80,6 +80,9 @@ def makeG3DBeam(
     if g3d_profile[6] == 'R':
         height = section.Height
         width = section.Width
+    elif g3d_profile[6] == 'T':
+        height = section.Height
+        width = section.Width
     elif g3d_profile[6] == 'C':
         height = width = section.Diameter
 

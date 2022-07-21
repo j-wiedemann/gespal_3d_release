@@ -347,7 +347,7 @@ class ComponentManager(QtGui.QDialog):
             self.componentTable.setItem(row, column, shape_type)
             comboBox = QtGui.QComboBox()
             comboBox.setEditable(False)
-            comboBox.addItems(['R','C'])
+            comboBox.addItems(['R', 'C', 'T'])
             index = comboBox.findText(shape_type_name, QtCore.Qt.MatchFixedString)
             comboBox.setCurrentIndex(index)
             comboBox.setProperty('row', row)
@@ -420,7 +420,7 @@ class ComponentManager(QtGui.QDialog):
             else:
                 (fc_nom, bool_cat) = QtGui.QInputDialog.getText(None,"Categorie", "Nom de la nouvelle catégorie :")
                 if bool_cat:
-                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QU pour les composnats de type Quincaillerie.", ["BO","PX","QU"])
+                    (fc_type, bool_type) =  QtGui.QInputDialog.getItem(None,"Categorie", "Choisir BO pour des composants de type Bois Massif, choisir PX pour les composants de type Panneaux, choisir QU pour les composants de type Quincaillerie.", ["BO","PX","QU"])
                     if bool_type:
                         self.cat_name_list.insert(-1, fc_nom)
                         data = (index+1,fc_nom,fc_type)

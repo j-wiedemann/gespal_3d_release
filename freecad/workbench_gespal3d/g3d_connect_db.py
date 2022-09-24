@@ -5,10 +5,11 @@ import sqlite3
 from sqlite3 import Error
 
 import FreeCAD as App
-from freecad.workbench_gespal3d import g3d_component_manager
-from freecad.workbench_gespal3d import print_debug
-from freecad.workbench_gespal3d import DEBUG_DB
-from freecad.workbench_gespal3d import PARAMPATH
+from freecad.workbench_gespal3d import (DEBUG_DB,
+                                        PARAMPATH,
+                                        BDDPATH,
+                                        print_debug,
+                                        g3d_component_manager)
 
 
 __title__ = "Gespal3D Connect DB"
@@ -21,49 +22,53 @@ def progress(status, remaining, total):
     print(f'Copied {total - remaining} of {total} pages...')
 
 def make_backup():
-    path = App.ParamGet(str(PARAMPATH))
-    no_database = "true"
-    og_path = path.GetString("sqlitedb", no_database)
+    params = App.ParamGet(str(PARAMPATH))
+    og_path = params.GetString("sqlitedb")
     print("og_path : {}".format(og_path))
-    head_path = os.path.split(og_path)[0]
-    backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
-    try:
-        # existing DB
-        sqliteCon = sqlite3.connect(og_path)
-        # copy into this DB
-        backupCon = sqlite3.connect(backup_path)
-        with backupCon:
-            sqliteCon.backup(backupCon, pages=3, progress=progress)
-        print("backup successful")
-    except sqlite3.Error as error:
-        print("Error while taking backup: ", error)
-    finally:
-        if backupCon:
-            backupCon.close()
-            sqliteCon.close()
-    return
+    if og_path != '':
+        head_path = os.path.split(og_path)[0]
+        backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
+        try:
+            # existing DB
+            sqliteCon = sqlite3.connect(og_path)
+            # copy into this DB
+            backupCon = sqlite3.connect(backup_path)
+            with backupCon:
+                sqliteCon.backup(backupCon, pages=3, progress=progress)
+            print("backup successful")
+        except sqlite3.Error as error:
+            print("Error while taking backup: ", error)
+        finally:
+            if backupCon:
+                backupCon.close()
+                sqliteCon.close()
+        return
+    else:
+        return
 
 def restore_backup():
-    path = App.ParamGet(str(PARAMPATH))
-    no_database = "true"
-    og_path = path.GetString("sqlitedb", no_database)
-    head_path = os.path.split(og_path)[0]
-    backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
-    try:
-        # existing DB
-        sqliteCon = sqlite3.connect(backup_path)
-        # copy into this DB
-        backupCon = sqlite3.connect(og_path)
-        with backupCon:
-            sqliteCon.backup(backupCon, pages=3, progress=progress)
-        print("backup successful")
-    except sqlite3.Error as error:
-        print("Error while taking backup: ", error)
-    finally:
-        if backupCon:
-            backupCon.close()
-            sqliteCon.close()
-    return
+    params = App.ParamGet(str(PARAMPATH))
+    og_path = params.GetString("sqlitedb")
+    if og_path != '':
+        head_path = os.path.split(og_path)[0]
+        backup_path = os.path.join(head_path, 'Sqlite_backup.sqdb')
+        try:
+            # existing DB
+            sqliteCon = sqlite3.connect(backup_path)
+            # copy into this DB
+            backupCon = sqlite3.connect(og_path)
+            with backupCon:
+                sqliteCon.backup(backupCon, pages=3, progress=progress)
+            print("backup successful")
+        except sqlite3.Error as error:
+            print("Error while taking backup: ", error)
+        finally:
+            if backupCon:
+                backupCon.close()
+                sqliteCon.close()
+        return
+    else:
+        return
 
 def create_new_db(sqliteCon):
     #con = sqlite3.connect('SQLite_Python.db')
@@ -95,12 +100,12 @@ def create_new_db(sqliteCon):
     sqliteCon.close()
 
 def sql_connection():
-    p = App.ParamGet(str(PARAMPATH))
-    no_database = "true"
-    sqlite_db = p.GetString("sqlitedb", no_database)
-    if sqlite_db == "true":
+    params = App.ParamGet(str(PARAMPATH))
+    sqlite_db = params.GetString("sqlitedb")
+    if sqlite_db == '':
         print_debug(["define database path in BaseApp/Preferences/Mod/Gespal3D"])
-        g3d_component_manager.G3D_ComponentsManager.Activated()
+        sqlite_db = os.path.join(str(BDDPATH),'component.sqdb')
+        #g3d_component_manager.G3D_ComponentsManager.Activated()
         #return
     try:
         con = sqlite3.connect(sqlite_db)

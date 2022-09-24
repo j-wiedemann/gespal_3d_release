@@ -16,6 +16,8 @@ print("Gespal3D v{} loaded".format(__version__))
 RESOURCESPATH = os.path.join(os.path.dirname(__file__), "resources")
 ICONPATH = os.path.join(RESOURCESPATH, "icons")
 UIPATH = os.path.join(RESOURCESPATH, "ui")
+BDDPATH = os.path.join(RESOURCESPATH, "bdd")
+ACCESSORIESPATH = os.path.join(RESOURCESPATH, "accessories")
 PARAMPATH = "User parameter:BaseApp/Preferences/Mod/Gespal3D"
 
 DEBUG = False  # general

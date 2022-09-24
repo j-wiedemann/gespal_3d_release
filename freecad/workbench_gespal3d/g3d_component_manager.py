@@ -9,12 +9,12 @@ import FreeCAD as App
 if App.GuiUp:
     import FreeCADGui as Gui
     from PySide import QtCore, QtGui
-    from freecad.workbench_gespal3d import print_debug
-    from freecad.workbench_gespal3d import DEBUG_DB
-    from freecad.workbench_gespal3d import PARAMPATH
-    from freecad.workbench_gespal3d import ICONPATH
-    from freecad.workbench_gespal3d import UIPATH
-    from freecad.workbench_gespal3d import g3d_connect_db
+    from freecad.workbench_gespal3d import (DEBUG_DB,
+                                            PARAMPATH,
+                                            ICONPATH,
+                                            UIPATH,
+                                            g3d_connect_db,
+                                            print_debug)
 
 
 __title__ = "Gespal 3D Components Manager"
@@ -572,7 +572,13 @@ class G3D_ComponentsManager:
     def IsActive(self):
         """Here you can define if the command must be active or not (greyed) if certain conditions
         are met or not. This function is optional."""
-        return True
+
+        params = App.ParamGet(str(PARAMPATH))
+        sqlite_db = params.GetString("sqlitedb")
+        if sqlite_db != '':
+            return True
+        else:
+            return False
 
     def Activated(self):
         self.form = ComponentManager()

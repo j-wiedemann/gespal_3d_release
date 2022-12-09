@@ -42,7 +42,7 @@ def makeProfile(profile=[0, 'REC100x100', 1, 100, 100, 100, 'R']):
     name = "Profile"
     obj = App.ActiveDocument.addObject(
         "Part::Part2DObjectPython", name)
-    obj.Label = profile[1]
+    obj.Label = "Profile:" + str(profile[1])
     if profile[6] == "C":
         _ProfileC(obj, profile)
     elif profile[6] == "R":
@@ -83,13 +83,7 @@ class _ProfileC(_Profile):
             "Draft",
             QT_TRANSLATE_NOOP("App::Property", "Outside Diameter")
             ).Diameter = profile[4]
-
-        """obj.addProperty(
-            "App::PropertyLength",
-            "Thickness",
-            "Draft",
-            QT_TRANSLATE_NOOP("App::Property", "Wall thickness")
-            ).Thickness = profile[5]"""
+            
         _Profile.__init__(self, obj, profile)
 
     def execute(self, obj):
@@ -98,7 +92,9 @@ class _ProfileC(_Profile):
             App.Vector(0.0, 0.0, 0.0),
             App.Vector(0.0, 0.0, 1.0),
             obj.Diameter.Value/2)
-        obj.Shape = c.toShape()
+        w = Part.Wire(c.toShape())
+        f = Part.Face(w)
+        obj.Shape = f
         obj.Placement = pl
 
 

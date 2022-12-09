@@ -28,7 +28,6 @@ def translate(context, text, disambig=None):
     return QtCore.QCoreApplication.translate(context, text, disambig)
 
 
-
 class ComponentManager(QtGui.QDialog):
     def __init__(self, parent=None):
         super(ComponentManager, self).__init__()
@@ -37,12 +36,6 @@ class ComponentManager(QtGui.QDialog):
         self.form = Gui.PySideUic.loadUi(ui_file)
 
         self.database_path_edit = self.form.findChild(QtGui.QLineEdit, "lineEdit")
-        #self.p = App.ParamGet(str(PARAMPATH))
-        #no_database = "true"
-        #self.dbPath = self.p.GetString("sqlitedb", no_database)
-        
-        
-        #self.database_path_edit.setText(self.dbPath)
 
         self.dbPathButton = self.form.findChild(QtGui.QPushButton, "pushButton_chooseDB")
         self.dbPathButton.clicked.connect(self.chooseDatabasePath)
@@ -106,7 +99,6 @@ class ComponentManager(QtGui.QDialog):
     def closeEvent(self, event):
         print_debug(["closeEvent", event])
         self.con.close()
-        #event.accept()
         
 
     def addComponent(self, data=None):
@@ -248,8 +240,6 @@ class ComponentManager(QtGui.QDialog):
         for i, item in enumerate(data):
             index_item = QtGui.QTableWidgetItem()
             index_item.setData(QtCore.Qt.EditRole, int(item[0]))
-            # EDITABLE = QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
-            # NONEDITABLE = QtCore.Qt.ItemIsEnabled
             index_item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.componentTable.setItem(i, 0, index_item)
             
@@ -327,18 +317,14 @@ class ComponentManager(QtGui.QDialog):
         if column == 1: # Category
             self.componentTable.blockSignals(True)
             cat_des = oldvalue
-            #cat = QtGui.QTableWidgetItem(str(""))
             comboBox = QtGui.QComboBox()
-            #comboBox.setEditable(True)
             comboBox.addItems(self.cat_name_list)
             index = comboBox.findText(cat_des, QtCore.Qt.MatchFixedString)
             comboBox.setCurrentIndex(index)
             comboBox.setProperty('row', row)
             comboBox.setProperty('column', column)
             self.componentTable.blockSignals(False)
-            #comboBox.currentIndexChanged.connect(self.Combo_indexchanged)
             comboBox.activated.connect(self.Combo_indexchanged)
-            #comboBox.currentTextChanged.connect(self.categoryCB_textChanged)
             self.componentTable.setCellWidget(row, column, comboBox)
         elif column == 3: # Section Shape
             self.componentTable.blockSignals(True)
@@ -354,7 +340,6 @@ class ComponentManager(QtGui.QDialog):
             comboBox.setProperty('column', column)
             self.componentTable.blockSignals(False)
             comboBox.currentIndexChanged.connect(self.Combo_indexchanged)
-            #comboBox.currentTextChanged.connect(self.categoryCB_textChanged)
             self.componentTable.setCellWidget(row, column, comboBox)
         elif column == 4 or column == 5 or column == 6: # WIDTH or HEIGHT or LENGTH
             self.componentTable.blockSignals(True)
@@ -391,17 +376,10 @@ class ComponentManager(QtGui.QDialog):
             self.componentTable.blockSignals(False)
             self.componentTable.setCellWidget(row, column, spinbox)
         elif column == 9: # CAO
-            #self.componentTable.blockSignals(True)
-            #value = oldvalue
-            #self.componentTable.removeCellWidget(row, column)
             fileName = QtGui.QFileDialog.getOpenFileName(self,
                 "Choisir composant", self.cao_path, "Fichier CAO (*.igs *.iges *.stp *.step)")
             if fileName:
                 itm.setText(os.path.relpath(fileName[0], self.cao_path))
-            #else:
-
-            #self.componentTable.blockSignals(False)
-            #self.componentTable.setCellWidget(row, column, spinbox)
 
 
     @QtCore.Slot()
@@ -529,7 +507,6 @@ class ComponentManager(QtGui.QDialog):
         if column == 7:
             value = ""
             comma = 0
-            #print_debug(itmWid.backgroundColor().getRgb())
             for c in itmWid.backgroundColor().getRgb()[0:3]:
                 value += str(c)
                 if comma < 2:
@@ -586,7 +563,6 @@ class G3D_ComponentsManager:
 
 
 if App.GuiUp:
-    # register the FreeCAD command
     Gui.addCommand("G3D_ComponentsManager", G3D_ComponentsManager())
 
 App.Console.PrintLog("Loading G3D Component Manager... done\n")

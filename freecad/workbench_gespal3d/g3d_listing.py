@@ -516,7 +516,7 @@ class gespal3d_exports:
             "PathTemplate",
             os.path.join(RESOURCESPATH, "templates"))
 
-        print_debug(["PathTemplates :", path_template])
+        print_debug(["PathTemplate :", path_template])
 
         if orientation == "A4P":
             path = os.path.join(path_template, "A4P.svg")

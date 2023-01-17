@@ -1,5 +1,8 @@
 # coding: utf-8
 
+# Development reload oneliner:
+def re(): from importlib import reload;import g3d_beam;reload(g3d_beam);
+
 import FreeCAD as App
 
 if App.GuiUp:
@@ -406,16 +409,18 @@ class _CommandComposant:
 
         # remplissage
         self.filling_cb = QtGui.QCheckBox(translate("Gespal3D", "Rem&plissage"))
-        self.filling_cb.setDisabled(True)
+        #self.filling_cb.setDisabled(True)
         remplissage_label = QtGui.QLabel(translate("Gespal3D", "Claire voie"))
         self.filling_input = ui.createWidget("Gui::InputField")
-        self.filling_input.setDisabled(True)
+        #self.filling_input.setDisabled(True)
         self.filling_input.setText(
             App.Units.Quantity(0.0, App.Units.Length).UserString
         )
+        self.filling_start_cb = QtGui.QCheckBox("au début ?")
         layout_remplissage.addWidget(self.filling_cb, 0, 0, 1, 1)
         layout_remplissage.addWidget(remplissage_label, 1, 0, 1, 1)
         layout_remplissage.addWidget(self.filling_input, 1, 1, 1, 1)
+        layout_remplissage.addWidget(self.filling_start_cb, 1, 2, 1, 1)
 
         # continue button
         continue_label = QtGui.QLabel(translate("Gespal3D", "&Continuer"))
@@ -510,7 +515,12 @@ class _CommandComposant:
             QtCore.SIGNAL("valueChanged(double)"),
             self.setFillingSpace,
         )
-        
+        QtCore.QObject.connect(
+            self.filling_start_cb,
+            QtCore.SIGNAL("stateChanged(int)"),
+            self.setFillingStart
+        )
+
         # restore preset
         self.restoreParams()
 
@@ -605,14 +615,20 @@ class _CommandComposant:
                         self.distribution_end.setChecked(True)
                 elif self.pattern == 'filling':
                     self.filling_cb.setChecked(True)
+                    if self.filling_start is not None:
+                        if self.filling_start is True:
+                            self.filling_start_cb.setChecked(True)
             else:
                 #print_debug("len clicked point <= 0")
                 self.filling_cb.setChecked(False)
                 self.distribution_cb.setChecked(False)
+                self.filling_start_cb.setChecked(False)
+                self.filling_start = False
                 self.params.SetBool("BeamDistributionStart", False)
                 self.params.SetBool("BeamDistributionEnd", False)
                 self.pattern = 'none'
                 self.params.SetString("BeamPattern", 'none')
+                
             print_debug(self.pattern)
 
         if self.distribution_qty is not None:
@@ -914,6 +930,9 @@ class _CommandComposant:
         self.tracker.update(anchor_idx=self.anchor_idx, inclination=self.inclination)
         self.params.SetFloat("BeamHeight", d)
 
+    def getHeight(self):
+        return float(self.Profile[4])
+
     def setContinue(self, i):
         self.continueCmd = bool(i)
         self.params.SetBool("BeamContinue", bool(i))
@@ -970,6 +989,14 @@ class _CommandComposant:
         self.fill_space = d
         self.params.SetFloat("BeamFillingSpace", d)
 
+    def setFillingStart(self, state):
+        print_debug("setFillingStart state = {}".format(state))
+        if state == 2:
+            self.filling_start = True
+        else:
+            self.filling_start = False
+        print_debug("self.filling_start = {}".format(self.filling_start))
+
     def makeTransaction(self, point=None):
         """g3d beam makeTransaction"""
         msg = ["", "----------", "makeTransaction"]
@@ -1025,15 +1052,20 @@ class _CommandComposant:
         elif self.pattern == 'filling':
             transaction_name = "Création d'un remplissage de composants."
             length = DraftVecUtils.dist(self.clicked_points[0], self.clicked_points[2])
-            space = length / (self.distribution_qty + 1)
+            space = self.fill_space + self.getHeight()
+            qty = int(length / space) + 1
             vec = self.clicked_points[2].sub(self.clicked_points[0])
             vec_norm = vec.normalize()
             vec_axe = vec_norm.multiply(space)
+            vec = self.clicked_points[2].sub(self.clicked_points[0])
+            vec_norm = vec.normalize()
+            vec_fill_space = vec_norm.multiply(self.fill_space)
             p1 = self.clicked_points[0]
             p2 = self.clicked_points[1]
-            for qty in range(self.distribution_qty):
-                p1 = p1.add(vec_axe)
-                p2 = p2.add(vec_axe)
+            if self.filling_start is True:
+                p1 += vec_fill_space
+                p2 += vec_fill_space
+            for q in range(qty):
                 command = "freecad.workbench_gespal3d.g3d_beam.makeG3DBeam(" \
                 + "g3d_profile={}, ".format(str(self.Profile)) \
                 + "p1={}, ".format(str(DraftVecUtils.tup(p1, True))) \
@@ -1042,8 +1074,8 @@ class _CommandComposant:
                 + "inclination={}, ".format(self.inclination) \
                 + ")"
                 commands.append(command)
-
-
+                p1 = p1.add(vec_axe)
+                p2 = p2.add(vec_axe)
 
         else:
             App.Console.PrintWarning("This mode is not implemented")
